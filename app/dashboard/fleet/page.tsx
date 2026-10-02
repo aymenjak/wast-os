@@ -207,7 +207,6 @@ export default function FleetPage() {
           );
         })}
       </div>
-      </div>
 
       {showAdd && (
         <AddVehicleModal onClose={() => setShowAdd(false)} />

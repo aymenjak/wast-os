@@ -117,7 +117,6 @@ export default function RoutesPage() {
           </table>
         </div>
       </div>
-      </div>
 
       {showPlan && <PlanRouteModal onClose={() => setShowPlan(false)} />}
     </div>
