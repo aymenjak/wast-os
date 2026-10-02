@@ -5,7 +5,7 @@ import { PageHeader } from '@/components/dashboard/page-header';
 import { ProgressBar } from '@/components/dashboard/badges';
 import { cn } from '@/lib/utils';
 import { routes } from '@/lib/mock-data';
-import { Search, Navigation, Plus, CheckCircle2, Clock, AlertTriangle, MapPin, Truck, Weight } from 'lucide-react';
+import { Search, Navigation, Plus, CheckCircle2, Clock, AlertTriangle, MapPin, Truck, Weight, X } from 'lucide-react';
 
 const statusConfig: Record<string, { label: string; color: string; icon: typeof CheckCircle2 }> = {
   planned: { label: 'Planned', color: 'bg-muted text-muted-foreground', icon: Clock },
@@ -17,6 +17,7 @@ const statusConfig: Record<string, { label: string; color: string; icon: typeof 
 export default function RoutesPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [showPlan, setShowPlan] = useState(false);
 
   const filtered = useMemo(() =>
     routes.filter(r => {
@@ -36,7 +37,7 @@ export default function RoutesPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       <PageHeader title="Routes" description="Plan and track collection routes across zones">
-        <button className="flex items-center gap-1.5 px-3 h-9 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">
+        <button onClick={() => setShowPlan(true)} className="flex items-center gap-1.5 px-3 h-9 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">
           <Plus className="w-4 h-4" /> Plan Route
         </button>
       </PageHeader>
@@ -116,6 +117,55 @@ export default function RoutesPage() {
           </table>
         </div>
       </div>
+      </div>
+
+      {showPlan && <PlanRouteModal onClose={() => setShowPlan(false)} />}
     </div>
+  );
+}
+
+function PlanRouteModal({ onClose }: { onClose: () => void }) {
+  return (
+    <>
+      <div className="fixed inset-0 bg-black/40 z-50 animate-fade-in" onClick={onClose} />
+      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-card rounded-xl border border-border shadow-xl z-50 animate-slide-up max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-5 border-b border-border sticky top-0 bg-card">
+          <h2 className="font-display text-lg font-semibold">Plan New Route</h2>
+          <button onClick={onClose} className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-muted transition-colors"><X className="w-4 h-4" /></button>
+        </div>
+        <form onSubmit={(e) => { e.preventDefault(); onClose(); }} className="p-5 space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Zone</label>
+              <select className="w-full h-10 px-3 text-sm bg-background rounded-lg border border-border focus:outline-none focus:border-primary/40 transition-colors">
+                <option>Zone 1 — Centre</option><option>Zone 2 — Nord</option><option>Zone 3 — Est</option><option>Zone 4 — Sud</option><option>Zone 5 — Ouest</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Driver</label>
+              <input type="text" required placeholder="Driver name" className="w-full h-10 px-3 text-sm bg-background rounded-lg border border-border focus:outline-none focus:border-primary/40 transition-colors" />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Vehicle</label>
+              <input type="text" required placeholder="Plate number" className="w-full h-10 px-3 text-sm bg-background rounded-lg border border-border focus:outline-none focus:border-primary/40 transition-colors" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Number of Stops</label>
+              <input type="number" required placeholder="15" className="w-full h-10 px-3 text-sm bg-background rounded-lg border border-border focus:outline-none focus:border-primary/40 transition-colors" />
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-muted-foreground mb-1.5">Scheduled Date</label>
+            <input type="date" required className="w-full h-10 px-3 text-sm bg-background rounded-lg border border-border focus:outline-none focus:border-primary/40 transition-colors" />
+          </div>
+          <div className="flex gap-2 pt-2">
+            <button type="button" onClick={onClose} className="flex-1 h-10 rounded-lg border border-border text-sm font-medium hover:bg-muted transition-colors">Cancel</button>
+            <button type="submit" className="flex-1 h-10 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">Create Route</button>
+          </div>
+        </form>
+      </div>
+    </>
   );
 }

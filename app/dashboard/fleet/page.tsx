@@ -8,14 +8,34 @@ import type { VehicleStatus } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import {
   Search, Download, Plus, Truck, Fuel, Gauge,
-  MapPin, User, Navigation, Wrench, Eye,
+  MapPin, User, Navigation, Wrench, Eye, X,
 } from 'lucide-react';
+
+function downloadCSV(headers: string[], rows: (string | number)[][], filename: string) {
+  const csv = [headers, ...rows].map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 const statusOptions: (VehicleStatus | 'ALL')[] = ['ALL', 'AVAILABLE', 'ON_ROUTE', 'LOADING', 'MAINTENANCE', 'OFFLINE'];
 
 export default function FleetPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<VehicleStatus | 'ALL'>('ALL');
+  const [showAdd, setShowAdd] = useState(false);
+
+  const handleExport = () => {
+    downloadCSV(
+      ['Plate', 'Type', 'Driver', 'Status', 'Zone', 'Fuel', 'Mileage'],
+      filtered.map(v => [v.plate, v.type, v.driver, v.status, v.zone, `${v.fuel}%`, `${v.mileage} km`]),
+      `fleet-${Date.now()}.csv`,
+    );
+  };
 
   const filtered = useMemo(() => {
     return vehicles.filter((v) => {
@@ -40,10 +60,10 @@ export default function FleetPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       <PageHeader title="Fleet Management" description="Monitor vehicles, drivers, fuel, and maintenance status">
-        <button className="flex items-center gap-1.5 px-3 h-9 rounded-lg bg-card border border-border text-sm font-medium hover:bg-muted transition-colors">
+        <button onClick={handleExport} className="flex items-center gap-1.5 px-3 h-9 rounded-lg bg-card border border-border text-sm font-medium hover:bg-muted transition-colors">
           <Download className="w-4 h-4" /> Export
         </button>
-        <button className="flex items-center gap-1.5 px-3 h-9 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">
+        <button onClick={() => setShowAdd(true)} className="flex items-center gap-1.5 px-3 h-9 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">
           <Plus className="w-4 h-4" /> Add Vehicle
         </button>
       </PageHeader>
@@ -187,6 +207,63 @@ export default function FleetPage() {
           );
         })}
       </div>
+      </div>
+
+      {showAdd && (
+        <AddVehicleModal onClose={() => setShowAdd(false)} />
+      )}
     </div>
+  );
+}
+
+function AddVehicleModal({ onClose }: { onClose: () => void }) {
+  return (
+    <>
+      <div className="fixed inset-0 bg-black/40 z-50 animate-fade-in" onClick={onClose} />
+      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-card rounded-xl border border-border shadow-xl z-50 animate-slide-up max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-5 border-b border-border sticky top-0 bg-card">
+          <h2 className="font-display text-lg font-semibold">Add Vehicle</h2>
+          <button onClick={onClose} className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-muted transition-colors"><X className="w-4 h-4" /></button>
+        </div>
+        <form onSubmit={(e) => { e.preventDefault(); onClose(); }} className="p-5 space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Plate Number</label>
+              <input type="text" required placeholder="e.g. 00123-456-12" className="w-full h-10 px-3 text-sm bg-background rounded-lg border border-border focus:outline-none focus:border-primary/40 transition-colors" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Vehicle Type</label>
+              <select className="w-full h-10 px-3 text-sm bg-background rounded-lg border border-border focus:outline-none focus:border-primary/40 transition-colors">
+                <option>Compactor Truck</option>
+                <option>Side Loader</option>
+                <option>Rear Loader</option>
+                <option>Roll-off Truck</option>
+                <option>Hook Lift</option>
+              </select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Capacity (kg)</label>
+              <input type="number" required placeholder="12000" className="w-full h-10 px-3 text-sm bg-background rounded-lg border border-border focus:outline-none focus:border-primary/40 transition-colors" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Zone</label>
+              <select className="w-full h-10 px-3 text-sm bg-background rounded-lg border border-border focus:outline-none focus:border-primary/40 transition-colors">
+                <option>Zone 1 — Centre</option><option>Zone 2 — Nord</option><option>Zone 3 — Est</option><option>Zone 4 — Sud</option><option>Zone 5 — Ouest</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-muted-foreground mb-1.5">Driver</label>
+            <input type="text" required placeholder="Driver name" className="w-full h-10 px-3 text-sm bg-background rounded-lg border border-border focus:outline-none focus:border-primary/40 transition-colors" />
+          </div>
+          <div className="flex gap-2 pt-2">
+            <button type="button" onClick={onClose} className="flex-1 h-10 rounded-lg border border-border text-sm font-medium hover:bg-muted transition-colors">Cancel</button>
+            <button type="submit" className="flex-1 h-10 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">Add Vehicle</button>
+          </div>
+        </form>
+      </div>
+    </>
   );
 }

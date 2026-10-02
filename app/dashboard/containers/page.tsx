@@ -11,8 +11,19 @@ import type { ContainerStatus } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import {
   Search, Download, Plus, Trash2, QrCode, MapPin,
-  Wifi, Battery, AlertTriangle, Filter,
+  Wifi, Battery, AlertTriangle, Filter, X,
 } from 'lucide-react';
+
+function downloadCSV(headers: string[], rows: (string | number)[][], filename: string) {
+  const csv = [headers, ...rows].map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 const statusOptions: (ContainerStatus | 'ALL')[] = ['ALL', 'ACTIVE', 'FULL', 'DAMAGED', 'MAINTENANCE'];
 const fillBuckets = [
@@ -25,6 +36,15 @@ const fillBuckets = [
 export default function ContainersPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<ContainerStatus | 'ALL'>('ALL');
+  const [showRegister, setShowRegister] = useState(false);
+
+  const handleExport = () => {
+    downloadCSV(
+      ['Container ID', 'Type', 'Waste Type', 'Location', 'Zone', 'Fill Level', 'Status', 'Sensor'],
+      filtered.map(c => [c.containerId, c.type, c.wasteType, c.location, c.zone, `${c.fillLevel}%`, c.status, c.hasSensor ? 'Yes' : 'No']),
+      `containers-${Date.now()}.csv`,
+    );
+  };
 
   const filtered = useMemo(() => {
     return containers.filter((c) => {
@@ -49,10 +69,10 @@ export default function ContainersPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       <PageHeader title="Containers" description="Monitor container fill levels, status, and maintenance">
-        <button className="flex items-center gap-1.5 px-3 h-9 rounded-lg bg-card border border-border text-sm font-medium hover:bg-muted transition-colors">
+        <button onClick={handleExport} className="flex items-center gap-1.5 px-3 h-9 rounded-lg bg-card border border-border text-sm font-medium hover:bg-muted transition-colors">
           <Download className="w-4 h-4" /> Export
         </button>
-        <button className="flex items-center gap-1.5 px-3 h-9 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">
+        <button onClick={() => setShowRegister(true)} className="flex items-center gap-1.5 px-3 h-9 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">
           <Plus className="w-4 h-4" /> Register
         </button>
       </PageHeader>
@@ -192,6 +212,67 @@ export default function ContainersPage() {
           ))
         )}
       </div>
+
+      {showRegister && (
+        <RegisterContainerModal onClose={() => setShowRegister(false)} />
+      )}
     </div>
+  );
+}
+
+function RegisterContainerModal({ onClose }: { onClose: () => void }) {
+  return (
+    <>
+      <div className="fixed inset-0 bg-black/40 z-50 animate-fade-in" onClick={onClose} />
+      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-card rounded-xl border border-border shadow-xl z-50 animate-slide-up max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-5 border-b border-border sticky top-0 bg-card">
+          <h2 className="font-display text-lg font-semibold">Register Container</h2>
+          <button onClick={onClose} className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-muted transition-colors"><X className="w-4 h-4" /></button>
+        </div>
+        <form onSubmit={(e) => { e.preventDefault(); onClose(); }} className="p-5 space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Container Type</label>
+              <select className="w-full h-10 px-3 text-sm bg-background rounded-lg border border-border focus:outline-none focus:border-primary/40 transition-colors">
+                <option>Standard Bin</option>
+                <option>Large Container</option>
+                <option>Underground</option>
+                <option>Bell Container</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Capacity (L)</label>
+              <input type="number" required placeholder="1200" className="w-full h-10 px-3 text-sm bg-background rounded-lg border border-border focus:outline-none focus:border-primary/40 transition-colors" />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Waste Type</label>
+              <select className="w-full h-10 px-3 text-sm bg-background rounded-lg border border-border focus:outline-none focus:border-primary/40 transition-colors">
+                <option>General</option><option>Organic</option><option>Plastic</option><option>Paper</option><option>Glass</option><option>Metal</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Zone</label>
+              <select className="w-full h-10 px-3 text-sm bg-background rounded-lg border border-border focus:outline-none focus:border-primary/40 transition-colors">
+                <option>Zone 1 — Centre</option><option>Zone 2 — Nord</option><option>Zone 3 — Est</option><option>Zone 4 — Sud</option><option>Zone 5 — Ouest</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-muted-foreground mb-1.5">Location</label>
+            <input type="text" required placeholder="Address or landmark" className="w-full h-10 px-3 text-sm bg-background rounded-lg border border-border focus:outline-none focus:border-primary/40 transition-colors" />
+          </div>
+          <div className="flex items-center gap-2">
+            <input type="checkbox" id="hasSensor" className="rounded" />
+            <label htmlFor="hasSensor" className="text-sm text-muted-foreground">Equipped with IoT sensor</label>
+          </div>
+          <div className="flex gap-2 pt-2">
+            <button type="button" onClick={onClose} className="flex-1 h-10 rounded-lg border border-border text-sm font-medium hover:bg-muted transition-colors">Cancel</button>
+            <button type="submit" className="flex-1 h-10 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">Register</button>
+          </div>
+        </form>
+      </div>
+    </>
   );
 }
