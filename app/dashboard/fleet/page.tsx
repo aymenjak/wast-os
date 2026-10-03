@@ -31,8 +31,8 @@ export default function FleetPage() {
 
   const handleExport = () => {
     downloadCSV(
-      ['Plate', 'Type', 'Driver', 'Status', 'Zone', 'Fuel', 'Mileage'],
-      filtered.map(v => [v.plate, v.type, v.driver, v.status, v.zone, `${v.fuel}%`, `${v.mileage} km`]),
+      ['اللوحة', 'النوع', 'السائق', 'الحالة', 'المنطقة', 'الوقود', 'المسافة'],
+      filtered.map(v => [v.plate, v.type, v.driver, v.status, v.zone, `${v.fuel}%`, `${v.mileage} كم`]),
       `fleet-${Date.now()}.csv`,
     );
   };
@@ -59,23 +59,23 @@ export default function FleetPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <PageHeader title="Fleet Management" description="Monitor vehicles, drivers, fuel, and maintenance status">
+      <PageHeader title="إدارة الأسطول" description="مراقبة المركبات والسائقين والوقود والصيانة">
         <button onClick={handleExport} className="flex items-center gap-1.5 px-3 h-9 rounded-lg bg-card border border-border text-sm font-medium hover:bg-muted transition-colors">
-          <Download className="w-4 h-4" /> Export
+          <Download className="w-4 h-4" /> تصدير
         </button>
         <button onClick={() => setShowAdd(true)} className="flex items-center gap-1.5 px-3 h-9 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">
-          <Plus className="w-4 h-4" /> Add Vehicle
+          <Plus className="w-4 h-4" /> إضافة مركبة
         </button>
       </PageHeader>
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         {[
-          { label: 'Total Fleet', value: stats.total, icon: Truck, iconClass: 'text-foreground', bgClass: 'bg-card', borderClass: 'border-border' },
-          { label: 'On Route', value: stats.onRoute, icon: Navigation, iconClass: 'text-primary', bgClass: 'bg-primary/5', borderClass: 'border-primary/20' },
-          { label: 'Available', value: stats.available, icon: Truck, iconClass: 'text-success', bgClass: 'bg-success/5', borderClass: 'border-success/20' },
-          { label: 'In Maintenance', value: stats.maintenance, icon: Wrench, iconClass: 'text-warning', bgClass: 'bg-warning/5', borderClass: 'border-warning/20' },
-          { label: 'Avg Fuel', value: `${stats.avgFuel}%`, icon: Fuel, iconClass: 'text-info', bgClass: 'bg-info/5', borderClass: 'border-info/20' },
+          { label: 'إجمالي الأسطول', value: stats.total, icon: Truck, iconClass: 'text-foreground', bgClass: 'bg-card', borderClass: 'border-border' },
+          { label: 'في الطريق', value: stats.onRoute, icon: Navigation, iconClass: 'text-primary', bgClass: 'bg-primary/5', borderClass: 'border-primary/20' },
+          { label: 'متاح', value: stats.available, icon: Truck, iconClass: 'text-success', bgClass: 'bg-success/5', borderClass: 'border-success/20' },
+          { label: 'في الصيانة', value: stats.maintenance, icon: Wrench, iconClass: 'text-warning', bgClass: 'bg-warning/5', borderClass: 'border-warning/20' },
+          { label: 'متوسط الوقود', value: `${stats.avgFuel}%`, icon: Fuel, iconClass: 'text-info', bgClass: 'bg-info/5', borderClass: 'border-info/20' },
         ].map((s) => {
           const Icon = s.icon;
           return (
@@ -93,7 +93,7 @@ export default function FleetPage() {
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input
             type="text"
             value={search}
@@ -108,7 +108,7 @@ export default function FleetPage() {
           className="h-9 px-3 text-sm bg-card rounded-lg border border-border focus:outline-none focus:border-primary/40 transition-colors cursor-pointer"
         >
           {statusOptions.map((s) => (
-            <option key={s} value={s}>{s === 'ALL' ? 'All Statuses' : s.replace(/_/g, ' ')}</option>
+            <option key={s} value={s}>{s === 'ALL' ? 'كل الحالات' : s.replace(/_/g, ' ')}</option>
           ))}
         </select>
       </div>
@@ -150,14 +150,14 @@ export default function FleetPage() {
                 {/* Driver */}
                 <div className="flex items-center gap-2 text-xs">
                   <User className="w-3.5 h-3.5 text-muted-foreground" />
-                  <span className="text-muted-foreground">Driver:</span>
+                  <span className="text-muted-foreground">السائق:</span>
                   <span className="font-medium text-foreground truncate">{v.driver}</span>
                 </div>
 
                 {/* Zone */}
                 <div className="flex items-center gap-2 text-xs">
                   <MapPin className="w-3.5 h-3.5 text-muted-foreground" />
-                  <span className="text-muted-foreground">Zone:</span>
+                  <span className="text-muted-foreground">المنطقة:</span>
                   <span className="font-medium text-foreground">{v.zone}</span>
                 </div>
 
@@ -165,7 +165,7 @@ export default function FleetPage() {
                 {v.status !== 'OFFLINE' && v.status !== 'AVAILABLE' && (
                   <div>
                     <div className="flex items-center justify-between text-xs mb-1">
-                      <span className="text-muted-foreground">Load Capacity</span>
+                      <span className="text-muted-foreground">سعة الحمل</span>
                       <span className="font-medium">{loadPct}%</span>
                     </div>
                     <ProgressBar
@@ -183,7 +183,7 @@ export default function FleetPage() {
                   <div className="flex items-center justify-between p-2 rounded-lg bg-primary/5 text-xs">
                     <div className="flex items-center gap-1.5">
                       <Navigation className="w-3.5 h-3.5 text-primary" />
-                      <span className="text-muted-foreground">Next:</span>
+                      <span className="text-muted-foreground">التالي:</span>
                       <span className="font-medium text-foreground truncate max-w-[120px]">{v.nextStop}</span>
                     </div>
                     <span className="font-medium text-primary shrink-0">{v.eta}</span>
@@ -194,7 +194,7 @@ export default function FleetPage() {
                 <div className="grid grid-cols-2 gap-3 pt-2 border-t border-border/50">
                   <div className="flex items-center gap-1.5 text-xs">
                     <Fuel className="w-3.5 h-3.5 text-muted-foreground" />
-                    <span className="text-muted-foreground">Fuel:</span>
+                    <span className="text-muted-foreground">الوقود:</span>
                     <span className={cn('font-medium', v.fuel < 40 ? 'text-warning' : 'text-foreground')}>{v.fuel}%</span>
                   </div>
                   <div className="flex items-center gap-1.5 text-xs">
@@ -221,45 +221,45 @@ function AddVehicleModal({ onClose }: { onClose: () => void }) {
       <div className="fixed inset-0 bg-black/40 z-50 animate-fade-in" onClick={onClose} />
       <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-card rounded-xl border border-border shadow-xl z-50 animate-slide-up max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-5 border-b border-border sticky top-0 bg-card">
-          <h2 className="font-display text-lg font-semibold">Add Vehicle</h2>
+          <h2 className="font-display text-lg font-semibold">إضافة مركبة</h2>
           <button onClick={onClose} className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-muted transition-colors"><X className="w-4 h-4" /></button>
         </div>
         <form onSubmit={(e) => { e.preventDefault(); onClose(); }} className="p-5 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Plate Number</label>
-              <input type="text" required placeholder="e.g. 00123-456-12" className="w-full h-10 px-3 text-sm bg-background rounded-lg border border-border focus:outline-none focus:border-primary/40 transition-colors" />
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">رقم اللوحة</label>
+              <input type="text" required placeholder="مثال: 00123-456-12" className="w-full h-10 px-3 text-sm bg-background rounded-lg border border-border focus:outline-none focus:border-primary/40 transition-colors" />
             </div>
             <div>
-              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Vehicle Type</label>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">نوع المركبة</label>
               <select className="w-full h-10 px-3 text-sm bg-background rounded-lg border border-border focus:outline-none focus:border-primary/40 transition-colors">
-                <option>Compactor Truck</option>
-                <option>Side Loader</option>
-                <option>Rear Loader</option>
-                <option>Roll-off Truck</option>
-                <option>Hook Lift</option>
+                <option>شاحنة ضاغطة</option>
+                <option>تحميل جانبي</option>
+                <option>تحميل خلفي</option>
+                <option>شاحنة رول-أوف</option>
+                <option>رافعة خطافية</option>
               </select>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Capacity (kg)</label>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">السعة (كغ)</label>
               <input type="number" required placeholder="12000" className="w-full h-10 px-3 text-sm bg-background rounded-lg border border-border focus:outline-none focus:border-primary/40 transition-colors" />
             </div>
             <div>
-              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Zone</label>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">المنطقة</label>
               <select className="w-full h-10 px-3 text-sm bg-background rounded-lg border border-border focus:outline-none focus:border-primary/40 transition-colors">
-                <option>Zone 1 — Centre</option><option>Zone 2 — Nord</option><option>Zone 3 — Est</option><option>Zone 4 — Sud</option><option>Zone 5 — Ouest</option>
+                <option>المنطقة 1 — الوسط</option><option>المنطقة 2 — الشمال</option><option>المنطقة 3 — الشرق</option><option>المنطقة 4 — الجنوب</option><option>المنطقة 5 — الغرب</option>
               </select>
             </div>
           </div>
           <div>
-            <label className="block text-xs font-medium text-muted-foreground mb-1.5">Driver</label>
-            <input type="text" required placeholder="Driver name" className="w-full h-10 px-3 text-sm bg-background rounded-lg border border-border focus:outline-none focus:border-primary/40 transition-colors" />
+            <label className="block text-xs font-medium text-muted-foreground mb-1.5">السائق</label>
+            <input type="text" required placeholder="اسم السائق" className="w-full h-10 px-3 text-sm bg-background rounded-lg border border-border focus:outline-none focus:border-primary/40 transition-colors" />
           </div>
           <div className="flex gap-2 pt-2">
-            <button type="button" onClick={onClose} className="flex-1 h-10 rounded-lg border border-border text-sm font-medium hover:bg-muted transition-colors">Cancel</button>
-            <button type="submit" className="flex-1 h-10 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">Add Vehicle</button>
+            <button type="button" onClick={onClose} className="flex-1 h-10 rounded-lg border border-border text-sm font-medium hover:bg-muted transition-colors">إلغاء</button>
+            <button type="submit" className="flex-1 h-10 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">إضافة المركبة</button>
           </div>
         </form>
       </div>

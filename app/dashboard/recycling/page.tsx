@@ -15,14 +15,14 @@ export default function RecyclingPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <PageHeader title="Recycling Centers" description="Monitor incoming waste, processing, and material recovery" />
+      <PageHeader title="مراكز إعادة التدوير" description="مراقبة النفايات الواردة والمعالجة واسترجاع المواد" />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: 'Total Capacity', value: `${stats.totalCapacity}t`, icon: Package, color: 'text-foreground', bg: 'bg-card', border: 'border-border' },
-          { label: 'Incoming Today', value: `${stats.totalIncoming}t`, icon: Recycle, color: 'text-info', bg: 'bg-info/5', border: 'border-info/20' },
-          { label: 'Recovered Today', value: `${stats.totalRecovered}t`, icon: TrendingUp, color: 'text-success', bg: 'bg-success/5', border: 'border-success/20' },
-          { label: 'Avg Efficiency', value: `${stats.avgEfficiency}%`, icon: Percent, color: 'text-primary', bg: 'bg-primary/5', border: 'border-primary/20' },
+          { label: 'إجمالي السعة', value: `${stats.totalCapacity}طن`, icon: Package, color: 'text-foreground', bg: 'bg-card', border: 'border-border' },
+          { label: 'وارد اليوم', value: `${stats.totalIncoming}طن`, icon: Recycle, color: 'text-info', bg: 'bg-info/5', border: 'border-info/20' },
+          { label: 'مسترجع اليوم', value: `${stats.totalRecovered}طن`, icon: TrendingUp, color: 'text-success', bg: 'bg-success/5', border: 'border-success/20' },
+          { label: 'متوسط الكفاءة', value: `${stats.avgEfficiency}%`, icon: Percent, color: 'text-primary', bg: 'bg-primary/5', border: 'border-primary/20' },
         ].map(s => {
           const Icon = s.icon;
           return (
@@ -55,25 +55,25 @@ export default function RecyclingPage() {
 
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div className="rounded-lg bg-muted/30 p-3">
-                <div className="text-xs text-muted-foreground">Incoming</div>
-                <div className="font-semibold text-foreground">{c.incomingToday}t</div>
+                <div className="text-xs text-muted-foreground">وارد</div>
+                <div className="font-semibold text-foreground">{c.incomingToday}طن</div>
               </div>
               <div className="rounded-lg bg-muted/30 p-3">
-                <div className="text-xs text-muted-foreground">Processed</div>
-                <div className="font-semibold text-foreground">{c.processedToday}t</div>
+                <div className="text-xs text-muted-foreground">معالج</div>
+                <div className="font-semibold text-foreground">{c.processedToday}طن</div>
               </div>
               <div className="rounded-lg bg-success/5 p-3">
-                <div className="text-xs text-muted-foreground">Recovered</div>
-                <div className="font-semibold text-success">{c.recoveredToday}t</div>
+                <div className="text-xs text-muted-foreground">مسترجع</div>
+                <div className="font-semibold text-success">{c.recoveredToday}طن</div>
               </div>
               <div className="rounded-lg bg-destructive/5 p-3">
-                <div className="text-xs text-muted-foreground">Rejects</div>
-                <div className="font-semibold text-destructive">{c.rejectsToday}t</div>
+                <div className="text-xs text-muted-foreground">مرفوض</div>
+                <div className="font-semibold text-destructive">{c.rejectsToday}طن</div>
               </div>
             </div>
 
             <div className="mt-4 pt-3 border-t border-border/50">
-              <div className="text-xs text-muted-foreground mb-1.5">Materials handled</div>
+              <div className="text-xs text-muted-foreground mb-1.5">المواد المعالجة</div>
               <div className="flex flex-wrap gap-1">
                 {c.materials.map(m => (
                   <span key={m} className="text-[10px] px-2 py-0.5 rounded bg-primary/10 text-primary font-medium">{m}</span>

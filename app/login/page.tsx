@@ -53,7 +53,7 @@ export default function LoginPage() {
               <Recycle className="w-5 h-5 text-white" />
             </div>
             <div>
-              <div className="font-display font-semibold text-foreground text-base tracking-tight">وست سيتي أو إس</div>
+              <div className="font-display font-semibold text-foreground text-base tracking-tight">NEXVO</div>
               <div className="text-[10px] text-muted-foreground tracking-wider">منصة إدارة النفايات الذكية</div>
             </div>
           </Link>
@@ -76,7 +76,7 @@ export default function LoginPage() {
           </div>
 
           <div className="text-xs text-muted-foreground">
-            &copy; 2026 وست سيتي أو إس. جميع الحقوق محفوظة.
+            &copy; 2026 NEXVO. جميع الحقوق محفوظة.
           </div>
         </div>
       </div>
@@ -88,7 +88,7 @@ export default function LoginPage() {
             <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary">
               <Recycle className="w-5 h-5 text-white" />
             </div>
-            <div className="font-display font-semibold text-foreground tracking-tight">وست سيتي أو إس</div>
+            <div className="font-display font-semibold text-foreground tracking-tight">NEXVO</div>
           </div>
 
           <h2 className="font-display text-2xl font-semibold text-foreground">

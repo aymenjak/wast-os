@@ -250,8 +250,8 @@ export default function DashboardPage() {
       <div className="bg-card rounded-xl border border-border overflow-hidden">
         <div className="flex items-center justify-between p-5 border-b border-border">
           <div>
-            <h3 className="font-display font-semibold text-foreground">Recent Citizen Reports</h3>
-            <p className="text-xs text-muted-foreground">Latest reports submitted by citizens</p>
+            <h3 className="font-display font-semibold text-foreground">أحدث بلاغات المواطنين</h3>
+            <p className="text-xs text-muted-foreground">آخر البلاغات المرسلة من المواطنين</p>
           </div>
           <a href="/dashboard/reports" className="flex items-center gap-1 text-xs text-primary hover:underline font-medium">
             عرض الكل <ArrowUpRight className="w-3 h-3" />
@@ -284,7 +284,7 @@ export default function DashboardPage() {
                     />
                   </td>
                   <td className="px-3 py-3 hidden sm:table-cell text-xs text-muted-foreground whitespace-nowrap">
-                    {new Date(report.submittedAt).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                    {new Date(report.submittedAt).toLocaleString('ar-DZ', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
                   </td>
                 </tr>
               ))}

@@ -45,14 +45,14 @@ export default function AuditPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <PageHeader title="Audit Logs" description="Track all sensitive actions with full traceability" />
+      <PageHeader title="سجلات التدقيق" description="تتبع جميع الإجراءات الحساسة بتتبع كامل" />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: 'Total Events', value: auditLogs.length, icon: ScrollText, color: 'text-foreground', bg: 'bg-card', border: 'border-border' },
-          { label: 'Modifications', value: auditLogs.filter(l => l.action.includes('MODIFIED') || l.action.includes('CHANGED')).length, icon: Edit, color: 'text-warning', bg: 'bg-warning/5', border: 'border-warning/20' },
-          { label: 'Creations', value: auditLogs.filter(l => l.action.includes('CREATED')).length, icon: Plus, color: 'text-success', bg: 'bg-success/5', border: 'border-success/20' },
-          { label: 'Permission Changes', value: auditLogs.filter(l => l.action.includes('PERMISSION') || l.action.includes('SLA')).length, icon: Shield, color: 'text-destructive', bg: 'bg-destructive/5', border: 'border-destructive/20' },
+          { label: 'إجمالي الأحداث', value: auditLogs.length, icon: ScrollText, color: 'text-foreground', bg: 'bg-card', border: 'border-border' },
+          { label: 'تعديلات', value: auditLogs.filter(l => l.action.includes('MODIFIED') || l.action.includes('CHANGED')).length, icon: Edit, color: 'text-warning', bg: 'bg-warning/5', border: 'border-warning/20' },
+          { label: 'إنشاءات', value: auditLogs.filter(l => l.action.includes('CREATED')).length, icon: Plus, color: 'text-success', bg: 'bg-success/5', border: 'border-success/20' },
+          { label: 'تغييرات الصلاحيات', value: auditLogs.filter(l => l.action.includes('PERMISSION') || l.action.includes('SLA')).length, icon: Shield, color: 'text-destructive', bg: 'bg-destructive/5', border: 'border-destructive/20' },
         ].map(s => {
           const Icon = s.icon;
           return (
@@ -68,8 +68,8 @@ export default function AuditPage() {
       </div>
 
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by user, action, or entity..." className="w-full h-9 pl-9 pr-4 text-sm bg-card rounded-lg border border-border focus:outline-none focus:border-primary/40 transition-colors" />
+        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="ابحث بالمستخدم، الإجراء، أو الكيان..." className="w-full h-9 pr-9 pl-4 text-sm bg-card rounded-lg border border-border focus:outline-none focus:border-primary/40 transition-colors" />
       </div>
 
       <div className="bg-card rounded-xl border border-border overflow-hidden">
@@ -77,13 +77,13 @@ export default function AuditPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-muted/30">
-                <th className="text-left font-medium text-muted-foreground text-xs px-5 py-3">Action</th>
-                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3">User</th>
-                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3 hidden md:table-cell">Entity</th>
-                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3 hidden lg:table-cell">Before</th>
-                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3 hidden lg:table-cell">After</th>
+                <th className="text-left font-medium text-muted-foreground text-xs px-5 py-3">الإجراء</th>
+                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3">المستخدم</th>
+                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3 hidden md:table-cell">الكيان</th>
+                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3 hidden lg:table-cell">قبل</th>
+                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3 hidden lg:table-cell">بعد</th>
                 <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3 hidden sm:table-cell">IP</th>
-                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3">Time</th>
+                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3">الوقت</th>
               </tr>
             </thead>
             <tbody>

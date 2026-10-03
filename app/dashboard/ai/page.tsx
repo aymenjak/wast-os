@@ -27,69 +27,69 @@ interface SuggestionQuestion {
 const suggestions: SuggestionQuestion[] = [
   {
     icon: MapPin,
-    category: 'Zones',
-    question: 'How much waste did Zone 4 generate this month?',
-    answer: 'Zone 4 — Sud generated 350 tons this month, with a recycling rate of 61% (below the city average of 68.2%). This zone also has the highest number of citizen reports at 67, and the lowest SLA compliance at 89%. I recommend increasing collection frequency in Zone 4 and assigning an additional team to address the report backlog.',
+    category: 'المناطق',
+    question: 'كم نفايات أنتجت المنطقة 4 هذا الشهر؟',
+    answer: 'المنطقة 4 — الجنوب أنتجت 350 طن هذا الشهر، بنسبة إعادة تدوير 61% (أقل من متوسط المدينة 68.2%). هذه المنطقة لديها أيضاً أكبر عدد من بلاغات المواطنين عند 67، وأقل التزام بمستوى الخدمة عند 89%. أوصي بزيادة وتيرة الجمع في المنطقة 4 وتعيين فريق إضافي لمعالجة تراكم البلاغات.',
   },
   {
     icon: AlertTriangle,
-    category: 'Reports',
-    question: 'Which areas have the most complaints?',
-    answer: 'Based on this month\u2019s data, Zone 4 — Sud leads with 67 active reports (28.6% of all reports), followed by Zone 2 — Nord with 58 reports. The primary complaint types in these zones are overflowing containers and illegal dumping. Zone 5 — Ouest has the fewest reports at 36, with a 97% SLA compliance rate.',
+    category: 'البلاغات',
+    question: 'ما هي المناطق الأكثر شكاوى؟',
+    answer: 'بناءً على بيانات هذا الشهر، المنطقة 4 — الجنوب تتصدّر بـ 67 بلاغاً نشطاً (28.6% من إجمالي البلاغات)، تليها المنطقة 2 — الشمال بـ 58 بلاغاً. الأنواع الرئيسية للشكاوى في هذه المناطق هي الحاويات الفائضة والإلقاء غير القانوني. المنطقة 5 — الغرب لديها أقل بلاغات عند 36، مع نسبة التزام بالخدمة 97%.',
   },
   {
     icon: Truck,
-    category: 'Fleet',
-    question: 'Which trucks have poor efficiency?',
-    answer: 'Truck TC-009 has the lowest route efficiency at 64%, currently in maintenance for an oil change. TC-022 and TC-023 are offline. Among active vehicles, TC-017 has the highest fuel consumption relative to collection volume. I recommend scheduling preventive maintenance for TC-017 within the next 7 days.',
+    category: 'الأسطول',
+    question: 'أي شاحنات لديها كفاءة ضعيفة؟',
+    answer: 'الشاحنة TC-009 لديها أدنى كفاءة مسار عند 64%، حالياً في الصيانة لتغيير الزيت. TC-022 و TC-023 غير متصلتين. بين المركبات النشطة، TC-017 لديها أعلى استهلاك وقود نسبةً لحجم الجمع. أوصي بجدولة صيانة وقائية لـ TC-017 خلال الأيام السبعة المقبلة.',
   },
   {
     icon: TrendingUp,
-    category: 'Forecasting',
-    question: 'Predict tomorrow\u2019s collection demand.',
-    answer: 'Based on historical patterns and current fill levels, I predict approximately 62 tons of waste will need collection tomorrow. The highest demand will be in Zone 2 — Nord (18t) and Zone 5 — Ouest (16t). I recommend deploying 12 trucks on active routes, with 2 held in reserve for emergency dispatch. Expected recycling yield: ~42 tons (68%).',
+    category: 'التنبؤ',
+    question: 'توقع طلب الجمع غداً.',
+    answer: 'بناءً على الأنماط التاريخية ومستويات الامتلاء الحالية، أتوقع حوالي 62 طن من النفايات ستحتاج جمعاً غداً. أعلى طلب سيكون في المنطقة 2 — الشمال (18 طن) والمنطقة 5 — الغرب (16 طن). أوصي بنشر 12 شاحنة على مسارات نشطة، مع 2 احتياطية للإرسال الطارئ. العائد المتوقع من إعادة التدوير: ~42 طن (68%).',
   },
   {
     icon: Recycle,
-    category: 'Recycling',
-    question: 'Which businesses generate the most recyclable material?',
-    answer: 'Based on B2B collection records, Hotel El Aurassi contributes the most recyclable material at 8.4 tons/month (primarily cardboard and glass). Carrefour Alger generates 6.2 tons/month (plastic and paper). I suggest offering these businesses enhanced recycling contracts with volume-based pricing incentives.',
+    category: 'إعادة التدوير',
+    question: 'أي الشركات تنتج أكثر مواد قابلة لإعادة التدوير؟',
+    answer: 'بناءً على سجلات جمع الأعمال، فندق الأوراسي يساهم بأكبر كمية من المواد القابلة لإعادة التدوير عند 8.4 طن/شهر (أساساً كرتون وزجاج). كارفور الجزائر ينتج 6.2 طن/شهر (بلاستيك وورق). أقترح عرض عقود إعادة تدوير محسّنة على هذه الشركات بحوافز تسعير قائمة على الحجم.',
   },
   {
     icon: AlertTriangle,
-    category: 'SLA',
-    question: 'Show me SLA violations.',
-    answer: 'There are currently 4 SLA breaches and 7 work orders at risk. The breaches are:\n\n1. WO-2024-0832 — Emergency cleanup, Zone 4 — overdue by 3 hours\n2. WO-2024-0819 — Container maintenance, Zone 2 — overdue by 1 hour\n3. WO-2024-0841 — Illegal dumping, Zone 1 — overdue by 45 minutes\n4. WO-2024-0805 — B2B collection, Zone 3 — overdue by 20 minutes\n\nI recommend immediate escalation to the operations manager.',
+    category: 'الخدمة',
+    question: 'أرني اختراقات مستوى الخدمة.',
+    answer: 'حالياً هناك 4 اختراقات لمستوى الخدمة و 7 أوامر عمل معرضة للخطر. الاختراقات هي:\n\n1. WO-2024-0832 — تنظيف طارئ، المنطقة 4 — متأخر بـ 3 ساعات\n2. WO-2024-0819 — صيانة حاوية، المنطقة 2 — متأخر بساعة\n3. WO-2024-0841 — إلقاء غير قانوني، المنطقة 1 — متأخر بـ 45 دقيقة\n4. WO-2024-0805 — جمع أعمال، المنطقة 3 — متأخر بـ 20 دقيقة\n\nأوصي بالتصعيد الفوري إلى مدير العمليات.',
   },
 ];
 
 const predictionCards = [
   {
     icon: Zap,
-    title: 'Overflow Prediction',
-    value: '8 containers',
-    detail: 'Expected to exceed 90% fill within 24 hours',
+    title: 'تنبؤ بالفيضان',
+    value: '8 حاويات',
+    detail: 'متوقع تجاوز 90% امتلاء خلال 24 ساعة',
     color: 'text-warning bg-warning/10',
   },
   {
     icon: TrendingUp,
-    title: 'Volume Forecast',
-    value: '62 tons',
-    detail: 'Predicted collection demand for tomorrow',
+    title: 'توقع الحجم',
+    value: '62 طن',
+    detail: 'الطلب المتوقع على الجمع غداً',
     color: 'text-primary bg-primary/10',
   },
   {
     icon: Truck,
-    title: 'Maintenance Alert',
-    value: '3 vehicles',
-    detail: 'Predicted to need service within 7 days',
+    title: 'تنبيه صيانة',
+    value: '3 مركبات',
+    detail: 'متوقع احتياجها للصيانة خلال 7 أيام',
     color: 'text-info bg-info/10',
   },
   {
     icon: AlertTriangle,
-    title: 'Anomaly Detection',
-    value: '2 flagged',
-    detail: 'Unusual patterns detected in Zone 4',
+    title: 'كشف الحالات الشاذة',
+    value: '2 مُعلّمة',
+    detail: 'أنماط غير اعتيادية مكتشفة في المنطقة 4',
     color: 'text-destructive bg-destructive/10',
   },
 ];
@@ -99,7 +99,7 @@ export default function AICopilotPage() {
     {
       id: 'init',
       role: 'assistant',
-      content: 'Hello! I\u2019m your Waste City OS AI Copilot. I can answer questions about waste operations, predict trends, identify issues, and recommend actions. Try asking me about zone performance, SLA violations, fleet efficiency, or collection forecasts.',
+      content: 'مرحباً! أنا مساعد NEXVO الذكي. يمكنني الإجابة عن أسئلتك حول عمليات النفايات، التنبؤ بالاتجاهات، تحديد المشاكل، وتقديم توصيات. جرّب السؤال عن أداء المناطق، اختراقات الخدمة، كفاءة الأسطول، أو توقعات الجمع.',
       timestamp: new Date().toISOString(),
     },
   ]);
@@ -162,9 +162,9 @@ export default function AICopilotPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <PageHeader title="AI Copilot" description="Ask questions, get predictions, and receive operational recommendations">
+      <PageHeader title="مساعد الذكاء" description="اطرح أسئلة، احصل على تنبؤات، وتلقّ توصيات تشغيلية">
         <div className="flex items-center gap-2 px-3 h-9 rounded-lg bg-accent/10 text-accent text-sm font-medium">
-          <Brain className="w-4 h-4" /> AI-Powered
+          <Brain className="w-4 h-4" /> مدعوم بالذكاء
         </div>
       </PageHeader>
 
@@ -194,9 +194,9 @@ export default function AICopilotPage() {
               <Bot className="w-5 h-5 text-white" />
             </div>
             <div>
-              <div className="font-display font-semibold text-foreground text-sm">Waste City OS Assistant</div>
+              <div className="font-display font-semibold text-foreground text-sm">مساعد NEXVO</div>
               <div className="text-xs text-muted-foreground flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-success" /> Online · Using authorized tenant data
+                <span className="w-1.5 h-1.5 rounded-full bg-success" /> متصل · يستخدم بيانات المستأجر المصرّح بها
               </div>
             </div>
           </div>
@@ -245,7 +245,7 @@ export default function AICopilotPage() {
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask about operations, predictions, or recommendations..."
+                placeholder="اسأل عن العمليات، التنبؤات، أو التوصيات..."
                 className="flex-1 h-10 px-4 text-sm bg-muted/50 rounded-lg border border-transparent focus:border-primary/30 focus:bg-background focus:outline-none transition-colors"
               />
               <button
@@ -263,9 +263,9 @@ export default function AICopilotPage() {
         <div className="bg-card rounded-xl border border-border p-5">
           <div className="flex items-center gap-2 mb-1">
             <Lightbulb className="w-4 h-4 text-warning" />
-            <h3 className="font-display font-semibold text-foreground text-sm">Suggested Questions</h3>
+            <h3 className="font-display font-semibold text-foreground text-sm">أسئلة مقترحة</h3>
           </div>
-          <p className="text-xs text-muted-foreground mb-4">Click any question to ask the AI</p>
+          <p className="text-xs text-muted-foreground mb-4">انقر على أي سؤال لطرحه على المساعد</p>
           <div className="space-y-2 max-h-[460px] overflow-y-auto scrollbar-thin">
             {suggestions.map((s, i) => {
               const Icon = s.icon;
@@ -292,16 +292,16 @@ export default function AICopilotPage() {
 
       {/* AI capabilities */}
       <div className="bg-card rounded-xl border border-border p-5">
-        <h3 className="font-display font-semibold text-foreground mb-1">AI Capabilities</h3>
-        <p className="text-xs text-muted-foreground mb-4">Modular AI services with provider abstraction</p>
+        <h3 className="font-display font-semibold text-foreground mb-1">قدرات الذكاء</h3>
+        <p className="text-xs text-muted-foreground mb-4">خدمات ذكاء اصطناعي نمطية مع تجريد المزود</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {[
-            { icon: Sparkles, title: 'Report Classification', desc: 'Auto-categorize citizen reports by type, severity, and confidence' },
-            { icon: Zap, title: 'Overflow Prediction', desc: 'Predict which containers will overflow based on fill patterns' },
-            { icon: TrendingUp, title: 'Volume Forecasting', desc: 'Forecast waste generation by zone, season, and waste type' },
-            { icon: Truck, title: 'Route Optimization', desc: 'Optimize collection routes using fill levels, traffic, and capacity' },
-            { icon: AlertTriangle, title: 'Anomaly Detection', desc: 'Detect unusual patterns in waste generation, fuel use, or reports' },
-            { icon: Recycle, title: 'Recycling Demand', desc: 'Predict recyclable material availability for marketplace planning' },
+            { icon: Sparkles, title: 'تصنيف البلاغات', desc: 'تصنيف تلقائي لبلاغات المواطنين حسب النوع والخطورة والثقة' },
+            { icon: Zap, title: 'تنبؤ بالفيضان', desc: 'التنبؤ بالحاويات التي ستفيض بناءً على أنماط الامتلاء' },
+            { icon: TrendingUp, title: 'توقع الحجم', desc: 'توقع توليد النفايات حسب المنطقة والموسم ونوع النفايات' },
+            { icon: Truck, title: 'تحسين المسارات', desc: 'تحسين مسارات الجمع باستخدام مستويات الامتلاء والمرور والسعة' },
+            { icon: AlertTriangle, title: 'كشف الحالات الشاذة', desc: 'كشف الأنماط غير الاعتيادية في توليد النفايات أو استهلاك الوقود أو البلاغات' },
+            { icon: Recycle, title: 'طلب إعادة التدوير', desc: 'التنبؤ بتوفر المواد القابلة لإعادة التدوير لتخطيط السوق' },
           ].map((cap) => {
             const Icon = cap.icon;
             return (

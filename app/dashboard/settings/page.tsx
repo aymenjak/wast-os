@@ -16,14 +16,14 @@ interface SettingsSection {
 }
 
 const sections: SettingsSection[] = [
-  { id: 'organization', label: 'Organization', icon: Building2 },
-  { id: 'notifications', label: 'Notifications', icon: Bell },
-  { id: 'localization', label: 'Localization', icon: Globe },
-  { id: 'security', label: 'Security', icon: Shield },
-  { id: 'integrations', label: 'Integrations', icon: Cpu },
-  { id: 'waste-types', label: 'Waste Types', icon: Recycle },
-  { id: 'sla', label: 'SLA Configuration', icon: FileText },
-  { id: 'billing', label: 'Billing & Tax', icon: CreditCard },
+  { id: 'organization', label: 'المؤسسة', icon: Building2 },
+  { id: 'notifications', label: 'الإشعارات', icon: Bell },
+  { id: 'localization', label: 'التوطين', icon: Globe },
+  { id: 'security', label: 'الأمان', icon: Shield },
+  { id: 'integrations', label: 'التكاملات', icon: Cpu },
+  { id: 'waste-types', label: 'أنواع النفايات', icon: Recycle },
+  { id: 'sla', label: 'إعداد الخدمة', icon: FileText },
+  { id: 'billing', label: 'الفوترة والضريبة', icon: CreditCard },
 ];
 
 function Toggle({ enabled, onChange }: { enabled: boolean; onChange: () => void }) {
@@ -96,7 +96,7 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <PageHeader title="Settings" description="Configure your platform, organization, and system preferences" />
+      <PageHeader title="الإعدادات" description="تكوين منصتك ومؤسستك وتفضيلات النظام" />
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Sidebar nav */}
@@ -128,40 +128,40 @@ export default function SettingsPage() {
         {/* Settings content */}
         <div className="lg:col-span-3">
           {activeSection === 'organization' && (
-            <SettingsCard icon={Building2} title="Organization" description="Configure your municipality and tenant details">
+            <SettingsCard icon={Building2} title="المؤسسة" description="تكوين بلديتك وتفاصيل المستأجر">
               <div className="space-y-4 py-4">
-                <FieldInput label="Organization Name" value="Alger Centre Municipality" />
-                <FieldInput label="Country" value="Algeria" />
-                <FieldInput label="Wilaya" value="Wilaya d'Alger (16)" />
-                <FieldInput label="Municipality Code" value="DZ-16-16001" />
-                <FieldInput label="Contact Email" value="admin@mairie-alger.dz" />
-                <FieldInput label="Contact Phone" value="+213 21 12 34 56" />
+                <FieldInput label="اسم المؤسسة" value="بلدية الجزائر الوسط" />
+                <FieldInput label="الدولة" value="الجزائر" />
+                <FieldInput label="الولاية" value="ولاية الجزائر (16)" />
+                <FieldInput label="رمز البلدية" value="DZ-16-16001" />
+                <FieldInput label="البريد الإلكتروني" value="admin@mairie-alger.dz" />
+                <FieldInput label="الهاتف" value="+213 21 12 34 56" />
               </div>
               <div className="flex justify-end pt-4 border-t border-border">
-                <button className="px-4 h-9 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">Save Changes</button>
+                <button className="px-4 h-9 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">حفظ التغييرات</button>
               </div>
             </SettingsCard>
           )}
 
           {activeSection === 'notifications' && (
-            <SettingsCard icon={Bell} title="Notifications" description="Manage when and how you receive alerts">
+            <SettingsCard icon={Bell} title="الإشعارات" description="إدارة وقت وكيفية استلام التنبيهات">
               <div className="divide-y divide-border">
-                <SettingRow title="New Report Alerts" description="Get notified when a citizen submits a new report">
+                <SettingRow title="تنبيهات البلاغات الجديدة" description="الحصول على إشعار عند إرسال مواطن لبلاغ جديد">
                   <Toggle enabled={notifSettings.pushReport} onChange={() => setNotifSettings(p => ({ ...p, pushReport: !p.pushReport }))} />
                 </SettingRow>
-                <SettingRow title="SLA Escalations" description="Alerts when SLA is at risk or breached">
+                <SettingRow title="تصعيد الخدمة" description="تنبيهات عند تعرض مستوى الخدمة للخطر أو اختراقه">
                   <Toggle enabled={notifSettings.pushSla} onChange={() => setNotifSettings(p => ({ ...p, pushSla: !p.pushSla }))} />
                 </SettingRow>
-                <SettingRow title="IoT Container Alerts" description="Fill level, temperature, and sensor offline alerts">
+                <SettingRow title="تنبيهات حاويات إنترنت الأشياء" description="تنبيهات مستوى الامتلاء ودرجة الحرارة وانقطاع المستشعر">
                   <Toggle enabled={notifSettings.pushIot} onChange={() => setNotifSettings(p => ({ ...p, pushIot: !p.pushIot }))} />
                 </SettingRow>
-                <SettingRow title="Daily Email Summary" description="Receive a daily operations summary at 8:00 AM">
+                <SettingRow title="ملخص يومي بالبريد" description="استلام ملخص عمليات يومي عند الساعة 8:00 صباحاً">
                   <Toggle enabled={notifSettings.emailDaily} onChange={() => setNotifSettings(p => ({ ...p, emailDaily: !p.emailDaily }))} />
                 </SettingRow>
-                <SettingRow title="Weekly Email Report" description="Comprehensive weekly performance report every Monday">
+                <SettingRow title="تقرير أسبوعي بالبريد" description="تقرير أداء أسبوعي شامل كل اثنين">
                   <Toggle enabled={notifSettings.emailWeekly} onChange={() => setNotifSettings(p => ({ ...p, emailWeekly: !p.emailWeekly }))} />
                 </SettingRow>
-                <SettingRow title="SMS for Critical Alerts" description="Text message for critical priority reports and SLA breaches">
+                <SettingRow title="رسائل قصيرة للتنبيهات الحرجة" description="رسالة نصية للبلاغات ذات الأولوية الحرجة واختراقات الخدمة">
                   <Toggle enabled={notifSettings.smsCritical} onChange={() => setNotifSettings(p => ({ ...p, smsCritical: !p.smsCritical }))} />
                 </SettingRow>
               </div>
@@ -169,37 +169,37 @@ export default function SettingsPage() {
           )}
 
           {activeSection === 'localization' && (
-            <SettingsCard icon={Globe} title="Localization" description="Language, timezone, and regional settings">
+            <SettingsCard icon={Globe} title="التوطين" description="اللغة والمنطقة الزمنية والإعدادات الإقليمية">
               <div className="space-y-4 py-4">
-                <FieldSelect label="Default Language" value="English" options={['English', 'Français', 'العربية']} />
-                <FieldSelect label="RTL Support" value="Auto-detect" options={['Auto-detect', 'Always RTL', 'Always LTR']} />
-                <FieldSelect label="Timezone" value="Africa/Algiers (GMT+1)" options={['Africa/Algiers (GMT+1)', 'Europe/Paris (GMT+1)', 'UTC']} />
-                <FieldSelect label="Date Format" value="DD/MM/YYYY" options={['DD/MM/YYYY', 'MM/DD/YYYY', 'YYYY-MM-DD']} />
-                <FieldSelect label="Currency" value="DZD (Algerian Dinar)" options={['DZD (Algerian Dinar)', 'EUR (Euro)', 'USD (US Dollar)']} />
-                <FieldSelect label="Measurement Units" value="Metric (kg, km)" options={['Metric (kg, km)', 'Imperial (lb, mi)']} />
+                <FieldSelect label="اللغة الافتراضية" value="العربية" options={['العربية', 'Français', 'English']} />
+                <FieldSelect label="دعم RTL" value="كشف تلقائي" options={['كشف تلقائي', 'دائماً RTL', 'دائماً LTR']} />
+                <FieldSelect label="المنطقة الزمنية" value="أفريقيا/الجزائر (GMT+1)" options={['أفريقيا/الجزائر (GMT+1)', 'أوروبا/باريس (GMT+1)', 'UTC']} />
+                <FieldSelect label="تنسيق التاريخ" value="DD/MM/YYYY" options={['DD/MM/YYYY', 'MM/DD/YYYY', 'YYYY-MM-DD']} />
+                <FieldSelect label="العملة" value="دج (دينار جزائري)" options={['دج (دينار جزائري)', 'EUR (يورو)', 'USD (دولار)']} />
+                <FieldSelect label="وحدات القياس" value="متري (كغ، كم)" options={['متري (كغ، كم)', 'إمبراطوري (رطل، ميل)']} />
               </div>
               <div className="flex justify-end pt-4 border-t border-border">
-                <button className="px-4 h-9 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">Save Changes</button>
+                <button className="px-4 h-9 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">حفظ التغييرات</button>
               </div>
             </SettingsCard>
           )}
 
           {activeSection === 'security' && (
-            <SettingsCard icon={Shield} title="Security" description="Authentication, access control, and audit settings">
+            <SettingsCard icon={Shield} title="الأمان" description="المصادقة والتحكم في الوصول وإعدادات التدقيق">
               <div className="divide-y divide-border">
-                <SettingRow title="Two-Factor Authentication" description="Require 2FA for all admin and manager accounts">
+                <SettingRow title="المصادقة الثنائية" description="طلب 2FA لجميع حسابات المديرين والمشرفين">
                   <Toggle enabled={securitySettings.twoFactor} onChange={() => setSecuritySettings(p => ({ ...p, twoFactor: !p.twoFactor }))} />
                 </SettingRow>
-                <SettingRow title="Session Timeout" description="Automatically log out inactive users after 30 minutes">
+                <SettingRow title="انتهاء الجلسة" description="تسجيل خروج تلقائي للمستخدمين غير النشطين بعد 30 دقيقة">
                   <Toggle enabled={securitySettings.sessionTimeout} onChange={() => setSecuritySettings(p => ({ ...p, sessionTimeout: !p.sessionTimeout }))} />
                 </SettingRow>
-                <SettingRow title="Audit Logging" description="Log all sensitive actions with user, timestamp, and changes">
+                <SettingRow title="تسجيل التدقيق" description="تسجيل جميع الإجراءات الحساسة مع المستخدم والوقت والتغييرات">
                   <Toggle enabled={securitySettings.auditLog} onChange={() => setSecuritySettings(p => ({ ...p, auditLog: !p.auditLog }))} />
                 </SettingRow>
-                <SettingRow title="IP Restriction" description="Restrict admin access to specific IP addresses">
+                <SettingRow title="تقييد IP" description="تقييد وصول المديرين إلى عناوين IP محددة">
                   <Toggle enabled={securitySettings.ipRestriction} onChange={() => setSecuritySettings(p => ({ ...p, ipRestriction: !p.ipRestriction }))} />
                 </SettingRow>
-                <SettingRow title="Password Expiry" description="Force password reset every 90 days">
+                <SettingRow title="انتهاء كلمة المرور" description="فرض تغيير كلمة المرور كل 90 يوماً">
                   <Toggle enabled={securitySettings.passwordExpiry} onChange={() => setSecuritySettings(p => ({ ...p, passwordExpiry: !p.passwordExpiry }))} />
                 </SettingRow>
               </div>
@@ -207,23 +207,23 @@ export default function SettingsPage() {
           )}
 
           {activeSection === 'integrations' && (
-            <SettingsCard icon={Cpu} title="Integrations" description="Connect external services via provider interfaces">
+            <SettingsCard icon={Cpu} title="التكاملات" description="ربط الخدمات الخارجية عبر واجهات المزودين">
               <div className="divide-y divide-border">
-                <IntegrationRow icon={Map} title="Map Provider" provider="OpenStreetMap" connected={integrations.mapProvider} onToggle={() => setIntegrations(p => ({ ...p, mapProvider: !p.mapProvider }))} />
-                <IntegrationRow icon={Bell} title="SMS Provider" provider="Not configured (mock)" connected={integrations.smsProvider} onToggle={() => setIntegrations(p => ({ ...p, smsProvider: !p.smsProvider }))} />
-                <IntegrationRow icon={FileText} title="Email Provider" provider="SMTP Relay" connected={integrations.emailProvider} onToggle={() => setIntegrations(p => ({ ...p, emailProvider: !p.emailProvider }))} />
-                <IntegrationRow icon={Cpu} title="IoT Platform" provider="MQTT Broker" connected={integrations.iotPlatform} onToggle={() => setIntegrations(p => ({ ...p, iotPlatform: !p.iotPlatform }))} />
-                <IntegrationRow icon={Cpu} title="AI Provider" provider="Mock AI Engine" connected={integrations.aiProvider} onToggle={() => setIntegrations(p => ({ ...p, aiProvider: !p.aiProvider }))} />
-                <IntegrationRow icon={CreditCard} title="Payment Provider" provider="Not configured (mock)" connected={integrations.paymentProvider} onToggle={() => setIntegrations(p => ({ ...p, paymentProvider: !p.paymentProvider }))} />
+                <IntegrationRow icon={Map} title="مزود الخريطة" provider="OpenStreetMap" connected={integrations.mapProvider} onToggle={() => setIntegrations(p => ({ ...p, mapProvider: !p.mapProvider }))} />
+                <IntegrationRow icon={Bell} title="مزود الرسائل القصيرة" provider="غير مُعد (وهمي)" connected={integrations.smsProvider} onToggle={() => setIntegrations(p => ({ ...p, smsProvider: !p.smsProvider }))} />
+                <IntegrationRow icon={FileText} title="مزود البريد" provider="SMTP Relay" connected={integrations.emailProvider} onToggle={() => setIntegrations(p => ({ ...p, emailProvider: !p.emailProvider }))} />
+                <IntegrationRow icon={Cpu} title="منصة إنترنت الأشياء" provider="MQTT Broker" connected={integrations.iotPlatform} onToggle={() => setIntegrations(p => ({ ...p, iotPlatform: !p.iotPlatform }))} />
+                <IntegrationRow icon={Cpu} title="مزود الذكاء" provider="محرك وهمي" connected={integrations.aiProvider} onToggle={() => setIntegrations(p => ({ ...p, aiProvider: !p.aiProvider }))} />
+                <IntegrationRow icon={CreditCard} title="مزود الدفع" provider="غير مُعد (وهمي)" connected={integrations.paymentProvider} onToggle={() => setIntegrations(p => ({ ...p, paymentProvider: !p.paymentProvider }))} />
               </div>
             </SettingsCard>
           )}
 
           {activeSection === 'waste-types' && (
-            <SettingsCard icon={Recycle} title="Waste Types" description="Configure waste categories available in the system">
+            <SettingsCard icon={Recycle} title="أنواع النفايات" description="تكوين فئات النفايات المتاحة في النظام">
               <div className="py-4">
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {['General', 'Organic', 'Plastic', 'Paper', 'Cardboard', 'Glass', 'Metal', 'Electronic', 'Construction', 'Medical', 'Hazardous', 'Large Waste', 'Used Oil', 'Other'].map((type) => (
+                  {['عامة', 'عضوية', 'بلاستيك', 'ورق', 'كرتون', 'زجاج', 'معدن', 'إلكترونية', 'إنشائية', 'طبية', 'خطرة', 'نفايات كبيرة', 'زيوت مستعملة', 'أخرى'].map((type) => (
                     <div key={type} className="flex items-center gap-2 p-2.5 rounded-lg border border-border">
                       <span className="w-2 h-2 rounded-full bg-success" />
                       <span className="text-sm text-foreground flex-1">{type}</span>
@@ -232,20 +232,20 @@ export default function SettingsPage() {
                   ))}
                 </div>
                 <button className="mt-4 flex items-center gap-1.5 px-3 h-8 rounded-lg border border-dashed border-border text-sm text-muted-foreground hover:text-foreground hover:border-primary/30 transition-colors w-full justify-center">
-                  + Add Custom Category
+                  + إضافة فئة مخصصة
                 </button>
               </div>
             </SettingsCard>
           )}
 
           {activeSection === 'sla' && (
-            <SettingsCard icon={FileText} title="SLA Configuration" description="Define response time targets by priority level">
+            <SettingsCard icon={FileText} title="إعداد مستوى الخدمة" description="تحديد أوقات الاستجابة حسب مستوى الأولوية">
               <div className="space-y-3 py-4">
                 {[
-                  { priority: 'CRITICAL', response: '30 min', resolution: '4 hr', color: 'bg-destructive/15 text-destructive' },
-                  { priority: 'HIGH', response: '2 hr', resolution: '12 hr', color: 'bg-warning/15 text-warning' },
-                  { priority: 'NORMAL', response: '24 hr', resolution: '72 hr', color: 'bg-info/15 text-info' },
-                  { priority: 'LOW', response: '72 hr', resolution: '7 days', color: 'bg-muted text-muted-foreground' },
+                  { priority: 'CRITICAL', response: '30 دقيقة', resolution: '4 ساعات', color: 'bg-destructive/15 text-destructive' },
+                  { priority: 'HIGH', response: 'ساعتان', resolution: '12 ساعة', color: 'bg-warning/15 text-warning' },
+                  { priority: 'NORMAL', response: '24 ساعة', resolution: '72 ساعة', color: 'bg-info/15 text-info' },
+                  { priority: 'LOW', response: '72 ساعة', resolution: '7 أيام', color: 'bg-muted text-muted-foreground' },
                 ].map((sla) => (
                   <div key={sla.priority} className="flex items-center gap-4 p-3 rounded-lg border border-border">
                     <span className={cn('inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium font-mono', sla.color)}>
@@ -253,37 +253,37 @@ export default function SettingsPage() {
                     </span>
                     <div className="flex-1 grid grid-cols-2 gap-4 text-sm">
                       <div>
-                        <span className="text-xs text-muted-foreground">Response Time: </span>
+                        <span className="text-xs text-muted-foreground">وقت الاستجابة: </span>
                         <span className="font-medium text-foreground">{sla.response}</span>
                       </div>
                       <div>
-                        <span className="text-xs text-muted-foreground">Resolution Time: </span>
+                        <span className="text-xs text-muted-foreground">وقت الحل: </span>
                         <span className="font-medium text-foreground">{sla.resolution}</span>
                       </div>
                     </div>
-                    <button className="text-xs text-primary hover:underline">Edit</button>
+                    <button className="text-xs text-primary hover:underline">تعديل</button>
                   </div>
                 ))}
               </div>
               <div className="flex items-center gap-2 pt-4 border-t border-border text-xs text-muted-foreground">
                 <Bell className="w-3.5 h-3.5" />
-                Supervisors are notified when SLA is at risk. Automatic escalation occurs on breach.
+                يتم إشعار المشرفين عند تعرض مستوى الخدمة للخطر. يحدث التصعيد التلقائي عند الاختراق.
               </div>
             </SettingsCard>
           )}
 
           {activeSection === 'billing' && (
-            <SettingsCard icon={CreditCard} title="Billing & Tax" description="Invoice settings, tax rules, and payment terms">
+            <SettingsCard icon={CreditCard} title="الفوترة والضريبة" description="إعدادات الفواتير وقواعد الضريبة وشروط الدفع">
               <div className="space-y-4 py-4">
-                <FieldInput label="Invoice Prefix" value="INV-2024-" />
-                <FieldSelect label="Default Payment Terms" value="Net 30" options={['Net 15', 'Net 30', 'Net 45', 'Net 60']} />
-                <FieldInput label="Late Payment Penalty (%)" value="2.5" />
-                <FieldInput label="VAT Rate (%)" value="19" />
-                <FieldSelect label="Tax Calculation" value="Per-item" options={['Per-item', 'Subtotal', 'Exempt']} />
-                <FieldSelect label="Currency" value="DZD" options={['DZD', 'EUR', 'USD']} />
+                <FieldInput label="بادئة الفاتورة" value="INV-2024-" />
+                <FieldSelect label="شروط الدفع الافتراضية" value="صافي 30" options={['صافي 15', 'صافي 30', 'صافي 45', 'صافي 60']} />
+                <FieldInput label="غرامة التأخير (%)" value="2.5" />
+                <FieldInput label="نسبة الضريبة (%)" value="19" />
+                <FieldSelect label="حساب الضريبة" value="لكل عنصر" options={['لكل عنصر', 'المجموع الفرعي', 'معفى']} />
+                <FieldSelect label="العملة" value="دج" options={['دج', 'EUR', 'USD']} />
               </div>
               <div className="flex justify-end pt-4 border-t border-border">
-                <button className="px-4 h-9 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">Save Changes</button>
+                <button className="px-4 h-9 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">حفظ التغييرات</button>
               </div>
             </SettingsCard>
           )}
@@ -351,10 +351,10 @@ function IntegrationRow({ icon: Icon, title, provider, connected, onToggle }: { 
       <div className="flex items-center gap-3 shrink-0">
         {connected ? (
           <span className="flex items-center gap-1 text-xs text-success font-medium">
-            <Check className="w-3.5 h-3.5" /> Active
+            <Check className="w-3.5 h-3.5" /> نشط
           </span>
         ) : (
-          <span className="text-xs text-muted-foreground">Inactive</span>
+          <span className="text-xs text-muted-foreground">غير نشط</span>
         )}
         <Toggle enabled={connected} onChange={onToggle} />
       </div>

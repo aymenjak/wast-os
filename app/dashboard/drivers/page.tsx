@@ -7,10 +7,10 @@ import { drivers } from '@/lib/mock-data';
 import { Search, Users, Star, Truck, Clock, MapPin, Phone } from 'lucide-react';
 
 const statusConfig: Record<string, { label: string; color: string }> = {
-  available: { label: 'Available', color: 'bg-success/15 text-success' },
-  on_route: { label: 'On Route', color: 'bg-primary/15 text-primary' },
-  off_duty: { label: 'Off Duty', color: 'bg-muted text-muted-foreground' },
-  on_leave: { label: 'On Leave', color: 'bg-warning/15 text-warning' },
+  available: { label: 'متاح', color: 'bg-success/15 text-success' },
+  on_route: { label: 'في الطريق', color: 'bg-primary/15 text-primary' },
+  off_duty: { label: 'غير في الخدمة', color: 'bg-muted text-muted-foreground' },
+  on_leave: { label: 'في إجازة', color: 'bg-warning/15 text-warning' },
 };
 
 export default function DriversPage() {
@@ -29,14 +29,14 @@ export default function DriversPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <PageHeader title="Drivers" description="Manage driver assignments, schedules, and performance" />
+      <PageHeader title="السائقون" description="إدارة تعيينات السائقين وجداولهم وأدائهم" />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: 'Total Drivers', value: stats.total, icon: Users, color: 'text-foreground', bg: 'bg-card', border: 'border-border' },
-          { label: 'On Route', value: stats.onRoute, icon: Truck, color: 'text-primary', bg: 'bg-primary/5', border: 'border-primary/20' },
-          { label: 'Available', value: stats.available, icon: Users, color: 'text-success', bg: 'bg-success/5', border: 'border-success/20' },
-          { label: 'Avg Rating', value: stats.avgRating, icon: Star, color: 'text-warning', bg: 'bg-warning/5', border: 'border-warning/20' },
+          { label: 'إجمالي السائقين', value: stats.total, icon: Users, color: 'text-foreground', bg: 'bg-card', border: 'border-border' },
+          { label: 'في الطريق', value: stats.onRoute, icon: Truck, color: 'text-primary', bg: 'bg-primary/5', border: 'border-primary/20' },
+          { label: 'متاح', value: stats.available, icon: Users, color: 'text-success', bg: 'bg-success/5', border: 'border-success/20' },
+          { label: 'متوسط التقييم', value: stats.avgRating, icon: Star, color: 'text-warning', bg: 'bg-warning/5', border: 'border-warning/20' },
         ].map(s => {
           const Icon = s.icon;
           return (
@@ -52,8 +52,8 @@ export default function DriversPage() {
       </div>
 
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by name or vehicle..." className="w-full h-9 pl-9 pr-4 text-sm bg-card rounded-lg border border-border focus:outline-none focus:border-primary/40 transition-colors" />
+        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="ابحث بالاسم أو المركبة..." className="w-full h-9 pr-9 pl-4 text-sm bg-card rounded-lg border border-border focus:outline-none focus:border-primary/40 transition-colors" />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -77,21 +77,21 @@ export default function DriversPage() {
               <div className="space-y-2 text-xs text-muted-foreground">
                 <div className="flex items-center gap-2"><Phone className="w-3.5 h-3.5" />{d.phone}</div>
                 <div className="flex items-center gap-2"><MapPin className="w-3.5 h-3.5" />{d.zone}</div>
-                <div className="flex items-center gap-2"><Clock className="w-3.5 h-3.5" />{d.hoursThisWeek}h this week</div>
+                <div className="flex items-center gap-2"><Clock className="w-3.5 h-3.5" />{d.hoursThisWeek}س هذا الأسبوع</div>
               </div>
 
               <div className="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-border/50 text-center">
                 <div>
                   <div className="flex items-center justify-center gap-1 text-sm font-semibold text-warning"><Star className="w-3.5 h-3.5 fill-warning" />{d.rating}</div>
-                  <div className="text-[10px] text-muted-foreground">Rating</div>
+                  <div className="text-[10px] text-muted-foreground">التقييم</div>
                 </div>
                 <div>
                   <div className="text-sm font-semibold text-foreground">{d.completedRoutes}</div>
-                  <div className="text-[10px] text-muted-foreground">Routes</div>
+                  <div className="text-[10px] text-muted-foreground">المسارات</div>
                 </div>
                 <div>
                   <div className="text-sm font-semibold text-foreground font-mono">{d.license}</div>
-                  <div className="text-[10px] text-muted-foreground">License</div>
+                  <div className="text-[10px] text-muted-foreground">الرخصة</div>
                 </div>
               </div>
             </div>

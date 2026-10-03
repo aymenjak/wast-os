@@ -7,9 +7,9 @@ import { weighbridgeTransactions, wasteTypeLabels, formatTimeAgo } from '@/lib/m
 import { Search, Scale, Plus, Truck, Weight, ArrowRight, CheckCircle2, Clock } from 'lucide-react';
 
 const statusConfig: Record<string, { label: string; color: string }> = {
-  entered: { label: 'Entered', color: 'bg-muted text-muted-foreground' },
-  weighed: { label: 'Weighed', color: 'bg-info/15 text-info' },
-  completed: { label: 'Completed', color: 'bg-success/15 text-success' },
+  entered: { label: 'دخل', color: 'bg-muted text-muted-foreground' },
+  weighed: { label: 'تم الوزن', color: 'bg-info/15 text-info' },
+  completed: { label: 'مكتمل', color: 'bg-success/15 text-success' },
 };
 
 export default function WeighbridgePage() {
@@ -32,18 +32,18 @@ export default function WeighbridgePage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <PageHeader title="Weighbridge" description="Record and track vehicle weighbridge transactions">
+      <PageHeader title="الميزان" description="تسجيل وتتبع عمليات وزن المركبات">
         <button className="flex items-center gap-1.5 px-3 h-9 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">
-          <Plus className="w-4 h-4" /> New Weighing
+          <Plus className="w-4 h-4" /> وزن جديد
         </button>
       </PageHeader>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: 'Transactions Today', value: stats.total, icon: Scale, color: 'text-foreground', bg: 'bg-card', border: 'border-border' },
-          { label: 'Total Net Weight', value: `${(stats.totalNet / 1000).toFixed(1)}t`, icon: Weight, color: 'text-info', bg: 'bg-info/5', border: 'border-info/20' },
-          { label: 'Completed', value: stats.completed, icon: CheckCircle2, color: 'text-success', bg: 'bg-success/5', border: 'border-success/20' },
-          { label: 'Pending', value: stats.pending, icon: Clock, color: 'text-warning', bg: 'bg-warning/5', border: 'border-warning/20' },
+          { label: 'عمليات اليوم', value: stats.total, icon: Scale, color: 'text-foreground', bg: 'bg-card', border: 'border-border' },
+          { label: 'إجمالي الوزن الصافي', value: `${(stats.totalNet / 1000).toFixed(1)}طن`, icon: Weight, color: 'text-info', bg: 'bg-info/5', border: 'border-info/20' },
+          { label: 'مكتمل', value: stats.completed, icon: CheckCircle2, color: 'text-success', bg: 'bg-success/5', border: 'border-success/20' },
+          { label: 'قيد الانتظار', value: stats.pending, icon: Clock, color: 'text-warning', bg: 'bg-warning/5', border: 'border-warning/20' },
         ].map(s => {
           const Icon = s.icon;
           return (
@@ -59,8 +59,8 @@ export default function WeighbridgePage() {
       </div>
 
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by ticket ID, vehicle, or driver..." className="w-full h-9 pl-9 pr-4 text-sm bg-card rounded-lg border border-border focus:outline-none focus:border-primary/40 transition-colors" />
+        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="ابحث برقم التذكرة، المركبة، أو السائق..." className="w-full h-9 pr-9 pl-4 text-sm bg-card rounded-lg border border-border focus:outline-none focus:border-primary/40 transition-colors" />
       </div>
 
       <div className="bg-card rounded-xl border border-border overflow-hidden">
@@ -68,16 +68,16 @@ export default function WeighbridgePage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-muted/30">
-                <th className="text-left font-medium text-muted-foreground text-xs px-5 py-3">Ticket ID</th>
-                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3">Vehicle</th>
-                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3 hidden md:table-cell">Driver</th>
-                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3">Gross</th>
-                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3">Tare</th>
-                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3">Net</th>
-                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3 hidden lg:table-cell">Waste Type</th>
-                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3 hidden xl:table-cell">Destination</th>
-                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3">Status</th>
-                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3 hidden sm:table-cell">Time</th>
+                <th className="text-left font-medium text-muted-foreground text-xs px-5 py-3">رقم التذكرة</th>
+                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3">المركبة</th>
+                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3 hidden md:table-cell">السائق</th>
+                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3">الإجمالي</th>
+                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3">الطرا</th>
+                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3">الصافي</th>
+                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3 hidden lg:table-cell">نوع النفايات</th>
+                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3 hidden xl:table-cell">الوجهة</th>
+                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3">الحالة</th>
+                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3 hidden sm:table-cell">الوقت</th>
               </tr>
             </thead>
             <tbody>

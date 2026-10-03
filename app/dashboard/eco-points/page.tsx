@@ -6,11 +6,11 @@ import { ecoProfiles, ecoLevels } from '@/lib/mock-data';
 import { Trophy, Star, Recycle, ClipboardList, CheckCircle2, Award, TrendingUp } from 'lucide-react';
 
 const levelColors: Record<string, string> = {
-  'Eco Starter': 'text-muted-foreground bg-muted',
-  'Eco Citizen': 'text-info bg-info/10',
-  'Green Citizen': 'text-success bg-success/10',
-  'Eco Champion': 'text-primary bg-primary/10',
-  'City Guardian': 'text-accent bg-accent/10',
+  'مبتدئ بيئي': 'text-muted-foreground bg-muted',
+  'مواطن بيئي': 'text-info bg-info/10',
+  'مواطن أخضر': 'text-success bg-success/10',
+  'بطل بيئي': 'text-primary bg-primary/10',
+  'حامي المدينة': 'text-accent bg-accent/10',
 };
 
 export default function EcoPointsPage() {
@@ -22,14 +22,14 @@ export default function EcoPointsPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <PageHeader title="Eco Points" description="Citizen gamification — reward reporting, recycling, and cleanups" />
+      <PageHeader title="النقاط البيئية" description="تحفيز المواطنين — مكافأة البلاغات وإعادة التدوير والتنظيفات" />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: 'Total Points Awarded', value: totalPoints.toLocaleString(), icon: Trophy, color: 'text-foreground', bg: 'bg-card', border: 'border-border' },
-          { label: 'Reports Submitted', value: totalReports, icon: ClipboardList, color: 'text-info', bg: 'bg-info/5', border: 'border-info/20' },
-          { label: 'Verified Reports', value: totalVerified, icon: CheckCircle2, color: 'text-success', bg: 'bg-success/5', border: 'border-success/20' },
-          { label: 'Cleanups Joined', value: totalCleanups, icon: Recycle, color: 'text-primary', bg: 'bg-primary/5', border: 'border-primary/20' },
+          { label: 'إجمالي النقاط الممنوحة', value: totalPoints.toLocaleString(), icon: Trophy, color: 'text-foreground', bg: 'bg-card', border: 'border-border' },
+          { label: 'البلاغات المرسلة', value: totalReports, icon: ClipboardList, color: 'text-info', bg: 'bg-info/5', border: 'border-info/20' },
+          { label: 'بلاغات موثّقة', value: totalVerified, icon: CheckCircle2, color: 'text-success', bg: 'bg-success/5', border: 'border-success/20' },
+          { label: 'تنظيفات شارك فيها', value: totalCleanups, icon: Recycle, color: 'text-primary', bg: 'bg-primary/5', border: 'border-primary/20' },
         ].map(s => {
           const Icon = s.icon;
           return (
@@ -49,7 +49,7 @@ export default function EcoPointsPage() {
         <div className="lg:col-span-2 bg-card rounded-xl border border-border p-5">
           <div className="flex items-center gap-2 mb-4">
             <Trophy className="w-5 h-5 text-warning" />
-            <h3 className="font-display font-semibold text-foreground">Leaderboard</h3>
+            <h3 className="font-display font-semibold text-foreground">لوحة المتصدّرين</h3>
           </div>
           <div className="space-y-2">
             {sorted.map((p, i) => (
@@ -72,7 +72,7 @@ export default function EcoPointsPage() {
                 </div>
                 <div className="text-right shrink-0">
                   <div className="font-display font-bold text-foreground">{p.ecoPoints.toLocaleString()}</div>
-                  <div className="text-[10px] text-muted-foreground">eco points</div>
+                  <div className="text-[10px] text-muted-foreground">نقطة بيئية</div>
                 </div>
               </div>
             ))}
@@ -83,7 +83,7 @@ export default function EcoPointsPage() {
         <div className="bg-card rounded-xl border border-border p-5">
           <div className="flex items-center gap-2 mb-4">
             <Award className="w-5 h-5 text-accent" />
-            <h3 className="font-display font-semibold text-foreground">Level System</h3>
+            <h3 className="font-display font-semibold text-foreground">نظام المستويات</h3>
           </div>
           <div className="space-y-3">
             {ecoLevels.map(level => {
@@ -95,7 +95,7 @@ export default function EcoPointsPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className={cn('text-sm font-medium', level.color)}>{level.name}</div>
-                    <div className="text-[10px] text-muted-foreground">{level.minPoints.toLocaleString()}+ points</div>
+                    <div className="text-[10px] text-muted-foreground">{level.minPoints.toLocaleString()}+ نقطة</div>
                   </div>
                   <span className="text-xs font-medium text-muted-foreground">{count}</span>
                 </div>
@@ -103,12 +103,12 @@ export default function EcoPointsPage() {
             })}
           </div>
           <div className="mt-4 pt-4 border-t border-border">
-            <div className="text-xs text-muted-foreground mb-2">Points earned per action</div>
+            <div className="text-xs text-muted-foreground mb-2">النقاط المكتسبة لكل فعل</div>
             <div className="space-y-1.5 text-xs">
-              <div className="flex justify-between"><span className="text-muted-foreground">Verified report</span><span className="font-medium text-foreground">+50</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Recycling action</span><span className="font-medium text-foreground">+30</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Cleanup participation</span><span className="font-medium text-foreground">+100</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Daily app check-in</span><span className="font-medium text-foreground">+5</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">بلاغ موثّق</span><span className="font-medium text-foreground">+50</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">فعل إعادة تدوير</span><span className="font-medium text-foreground">+30</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">مشاركة في تنظيف</span><span className="font-medium text-foreground">+100</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">تسجيل دخول يومي</span><span className="font-medium text-foreground">+5</span></div>
             </div>
           </div>
         </div>
@@ -118,17 +118,17 @@ export default function EcoPointsPage() {
       <div className="bg-card rounded-xl border border-border p-5">
         <div className="flex items-center gap-2 mb-4">
           <TrendingUp className="w-5 h-5 text-primary" />
-          <h3 className="font-display font-semibold text-foreground">Citizen Activity Breakdown</h3>
+          <h3 className="font-display font-semibold text-foreground">تفصيل نشاط المواطنين</h3>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {sorted.map(p => (
             <div key={p.id} className="p-4 rounded-lg border border-border">
               <div className="text-sm font-medium text-foreground mb-3">{p.citizen}</div>
               <div className="grid grid-cols-2 gap-2 text-xs">
-                <div><div className="text-muted-foreground">Reports</div><div className="font-semibold text-foreground">{p.totalReports}</div></div>
-                <div><div className="text-muted-foreground">Verified</div><div className="font-semibold text-success">{p.verifiedReports}</div></div>
-                <div><div className="text-muted-foreground">Recycling</div><div className="font-semibold text-info">{p.recyclingActions}</div></div>
-                <div><div className="text-muted-foreground">Cleanups</div><div className="font-semibold text-primary">{p.cleanups}</div></div>
+                <div><div className="text-muted-foreground">البلاغات</div><div className="font-semibold text-foreground">{p.totalReports}</div></div>
+                <div><div className="text-muted-foreground">موثّقة</div><div className="font-semibold text-success">{p.verifiedReports}</div></div>
+                <div><div className="text-muted-foreground">إعادة التدوير</div><div className="font-semibold text-info">{p.recyclingActions}</div></div>
+                <div><div className="text-muted-foreground">التنظيفات</div><div className="font-semibold text-primary">{p.cleanups}</div></div>
               </div>
             </div>
           ))}

@@ -74,10 +74,10 @@ export default function WorkOrderDetailPage() {
       type: 'report',
       label: wo.orderId,
       details: [
-        { label: 'Type', value: wo.type.replace(/_/g, ' ') },
-        { label: 'Location', value: wo.location },
-        { label: 'Priority', value: wo.priority },
-        { label: 'Status', value: displayStatus.replace(/_/g, ' ') },
+        { label: 'النوع', value: wo.type.replace(/_/g, ' ') },
+        { label: 'الموقع', value: wo.location },
+        { label: 'الأولوية', value: wo.priority },
+        { label: 'الحالة', value: displayStatus.replace(/_/g, ' ') },
       ],
     });
 
@@ -90,9 +90,9 @@ export default function WorkOrderDetailPage() {
         type: 'truck',
         label: v.plate,
         details: [
-          { label: 'Driver', value: v.driver },
-          { label: 'Status', value: v.status.replace(/_/g, ' ') },
-          { label: 'Zone', value: v.zone },
+          { label: 'السائق', value: v.driver },
+          { label: 'الحالة', value: v.status.replace(/_/g, ' ') },
+          { label: 'المنطقة', value: v.zone },
         ],
       });
     });
@@ -104,10 +104,10 @@ export default function WorkOrderDetailPage() {
     return (
       <div className="flex flex-col items-center justify-center py-20 animate-fade-in">
         <FileText className="w-12 h-12 text-muted-foreground mb-4" />
-        <h2 className="font-display text-lg font-semibold mb-2">Work Order Not Found</h2>
-        <p className="text-sm text-muted-foreground mb-4">This work order may have been deleted.</p>
+        <h2 className="font-display text-lg font-semibold mb-2">أمر العمل غير موجود</h2>
+        <p className="text-sm text-muted-foreground mb-4">قد يكون هذا الأمر قد حُذف.</p>
         <Link href="/dashboard/work-orders" className="flex items-center gap-2 px-4 h-9 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">
-          <ArrowLeft className="w-4 h-4" /> Back to Work Orders
+          <ArrowLeft className="w-4 h-4" /> العودة لأوامر العمل
         </Link>
       </div>
     );
@@ -152,10 +152,10 @@ export default function WorkOrderDetailPage() {
   };
 
   const timeline = [
-    { label: 'Created', done: true, time: wo.createdAt },
-    { label: 'Assigned', done: ['ASSIGNED', 'IN_PROGRESS', 'COMPLETED'].includes(displayStatus), time: '' },
-    { label: 'In Progress', done: ['IN_PROGRESS', 'COMPLETED'].includes(displayStatus), time: '' },
-    { label: 'Completed', done: displayStatus === 'COMPLETED', time: displayStatus === 'COMPLETED' ? new Date().toISOString() : '' },
+    { label: 'تم الإنشاء', done: true, time: wo.createdAt },
+    { label: 'تم الإسناد', done: ['ASSIGNED', 'IN_PROGRESS', 'COMPLETED'].includes(displayStatus), time: '' },
+    { label: 'قيد التنفيذ', done: ['IN_PROGRESS', 'COMPLETED'].includes(displayStatus), time: '' },
+    { label: 'مكتمل', done: displayStatus === 'COMPLETED', time: displayStatus === 'COMPLETED' ? new Date().toISOString() : '' },
   ];
 
   const availableDrivers = drivers.slice(0, 6);
@@ -173,10 +173,10 @@ export default function WorkOrderDetailPage() {
           onClick={() => router.push('/dashboard/work-orders')}
           className="flex items-center gap-1.5 px-3 h-9 rounded-lg bg-card border border-border text-sm font-medium hover:bg-muted transition-colors"
         >
-          <ArrowLeft className="w-4 h-4" /> Back
+          <ArrowLeft className="w-4 h-4" /> رجوع
         </button>
         <button className="flex items-center gap-1.5 px-3 h-9 rounded-lg bg-card border border-border text-sm font-medium hover:bg-muted transition-colors">
-          <Download className="w-4 h-4" /> Export
+          <Download className="w-4 h-4" /> تصدير
         </button>
       </PageHeader>
 
@@ -186,10 +186,10 @@ export default function WorkOrderDetailPage() {
           {/* Status cards */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { label: 'Status', value: displayStatus.replace(/_/g, ' '), icon: Clock },
-              { label: 'Priority', value: wo.priority, icon: AlertTriangle },
-              { label: 'SLA', value: wo.slaStatus.replace(/_/g, ' '), icon: Activity },
-              { label: 'Progress', value: `${displayProgress}%`, icon: CheckCircle2 },
+              { label: 'الحالة', value: displayStatus.replace(/_/g, ' '), icon: Clock },
+              { label: 'الأولوية', value: wo.priority, icon: AlertTriangle },
+              { label: 'الخدمة', value: wo.slaStatus.replace(/_/g, ' '), icon: Activity },
+              { label: 'التقدم', value: `${displayProgress}%`, icon: CheckCircle2 },
             ].map((s) => {
               const Icon = s.icon;
               return (
@@ -206,17 +206,17 @@ export default function WorkOrderDetailPage() {
 
           {/* Details card */}
           <div className="bg-card rounded-xl border border-border p-5">
-            <h3 className="font-display font-semibold text-foreground mb-4">Work Order Details</h3>
+            <h3 className="font-display font-semibold text-foreground mb-4">تفاصيل أمر العمل</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-              <DetailItem icon={MapPin} label="Location" value={wo.location} />
-              <DetailItem icon={MapPin} label="Zone" value={wo.zone} />
-              <DetailItem icon={Calendar} label="Created" value={new Date(wo.createdAt).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })} />
-              <DetailItem icon={Clock} label="Due" value={new Date(wo.dueTime).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })} />
-              <DetailItem icon={User} label="Assigned Team" value={displayTeam || 'Unassigned'} />
-              <DetailItem icon={Truck} label="Assigned Vehicle" value={displayVehicle || 'None'} />
+              <DetailItem icon={MapPin} label="الموقع" value={wo.location} />
+              <DetailItem icon={MapPin} label="المنطقة" value={wo.zone} />
+              <DetailItem icon={Calendar} label="الإنشاء" value={new Date(wo.createdAt).toLocaleString('ar-DZ', { dateStyle: 'medium', timeStyle: 'short' })} />
+              <DetailItem icon={Clock} label="الاستحقاق" value={new Date(wo.dueTime).toLocaleString('ar-DZ', { dateStyle: 'medium', timeStyle: 'short' })} />
+              <DetailItem icon={User} label="الفريق المُسند" value={displayTeam || 'غير مُسند'} />
+              <DetailItem icon={Truck} label="المركبة المُسندة" value={displayVehicle || 'لا يوجد'} />
             </div>
             <div>
-              <div className="text-xs font-medium text-muted-foreground mb-1.5">Description</div>
+              <div className="text-xs font-medium text-muted-foreground mb-1.5">الوصف</div>
               <p className="text-sm text-foreground leading-relaxed">{wo.description}</p>
             </div>
           </div>
@@ -224,7 +224,7 @@ export default function WorkOrderDetailPage() {
           {/* Progress control */}
           <div className="bg-card rounded-xl border border-border p-5">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-display font-semibold text-foreground">Progress & Status</h3>
+              <h3 className="font-display font-semibold text-foreground">التقدم والحالة</h3>
               <div className="flex gap-2">
                 {displayStatus !== 'COMPLETED' && displayStatus !== 'CANCELLED' && (
                   <button
@@ -232,7 +232,7 @@ export default function WorkOrderDetailPage() {
                     className="flex items-center gap-1.5 px-3 h-8 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors"
                   >
                     <CheckCircle2 className="w-3.5 h-3.5" />
-                    {displayStatus === 'OPEN' ? 'Start Work' : displayStatus === 'ASSIGNED' ? 'Begin Progress' : 'Mark Complete'}
+                    {displayStatus === 'OPEN' ? 'بدء العمل' : displayStatus === 'ASSIGNED' ? 'بدء التنفيذ' : 'تعيين كمكتمل'}
                   </button>
                 )}
                 {displayStatus === 'OPEN' && (
@@ -240,7 +240,7 @@ export default function WorkOrderDetailPage() {
                     onClick={() => setShowAssignModal(true)}
                     className="flex items-center gap-1.5 px-3 h-8 rounded-lg bg-warning/10 text-warning border border-warning/20 text-xs font-medium hover:bg-warning/20 transition-colors"
                   >
-                    <User className="w-3.5 h-3.5" /> Assign Team
+                    <User className="w-3.5 h-3.5" /> تعيين فريق
                   </button>
                 )}
                 {displayStatus !== 'COMPLETED' && displayStatus !== 'CANCELLED' && (
@@ -248,7 +248,7 @@ export default function WorkOrderDetailPage() {
                     onClick={() => { setCurrentStatus('CANCELLED'); logAction('Work order cancelled'); }}
                     className="flex items-center gap-1.5 px-3 h-8 rounded-lg border border-destructive/20 text-destructive text-xs font-medium hover:bg-destructive/10 transition-colors"
                   >
-                    Cancel
+                    إلغاء
                   </button>
                 )}
               </div>
@@ -256,7 +256,7 @@ export default function WorkOrderDetailPage() {
 
             <div className="mb-4">
               <div className="flex items-center justify-between text-sm mb-2">
-                <span className="text-muted-foreground">Progress</span>
+                <span className="text-muted-foreground">التقدم</span>
                 <span className="font-medium">{displayProgress}%</span>
               </div>
               <input
@@ -304,10 +304,10 @@ export default function WorkOrderDetailPage() {
 
           {/* Activity log */}
           <div className="bg-card rounded-xl border border-border p-5">
-            <h3 className="font-display font-semibold text-foreground mb-4">Activity Log</h3>
+            <h3 className="font-display font-semibold text-foreground mb-4">سجل النشاط</h3>
             <div className="space-y-3">
               {activityLog.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No activity yet. Changes you make will appear here.</p>
+                <p className="text-sm text-muted-foreground">لا يوجد نشاط بعد. ستظهر التغييرات التي تقوم بها هنا.</p>
               ) : (
                 activityLog.map((entry, i) => (
                   <div key={i} className="flex items-start gap-3">
@@ -329,7 +329,7 @@ export default function WorkOrderDetailPage() {
         <div className="space-y-6">
           {/* Map */}
           <div className="bg-card rounded-xl border border-border p-4">
-            <h3 className="font-display font-semibold text-foreground mb-3">Location Map</h3>
+            <h3 className="font-display font-semibold text-foreground mb-3">خريطة الموقع</h3>
             <CityMap
               entities={mapEntities}
               center={[woLat, woLng]}
@@ -341,7 +341,7 @@ export default function WorkOrderDetailPage() {
           {/* Related citizen report */}
           {relatedReport && (
             <div className="bg-card rounded-xl border border-border p-5">
-              <h3 className="font-display font-semibold text-foreground mb-3">Related Citizen Report</h3>
+              <h3 className="font-display font-semibold text-foreground mb-3">بلاغ المواطن المرتبط</h3>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="font-mono text-xs text-muted-foreground">{relatedReport.reportId}</span>
@@ -349,14 +349,14 @@ export default function WorkOrderDetailPage() {
                 </div>
                 <p className="text-sm text-foreground leading-relaxed">{relatedReport.description}</p>
                 <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div><span className="text-muted-foreground">Citizen:</span> <span className="font-medium">{relatedReport.citizenName}</span></div>
-                  <div><span className="text-muted-foreground">Priority:</span> <span className="font-medium">{relatedReport.priority}</span></div>
+                  <div><span className="text-muted-foreground">المواطن:</span> <span className="font-medium">{relatedReport.citizenName}</span></div>
+                  <div><span className="text-muted-foreground">الأولوية:</span> <span className="font-medium">{relatedReport.priority}</span></div>
                 </div>
                 {relatedReport.aiConfidence && (
                   <div className="rounded-lg bg-accent/5 border border-accent/20 p-3">
                     <div className="flex items-center gap-2 mb-2">
                       <Brain className="w-3.5 h-3.5 text-accent" />
-                      <span className="text-xs font-medium text-accent">AI Confidence: {Math.round(relatedReport.aiConfidence * 100)}%</span>
+                      <span className="text-xs font-medium text-accent">ثقة الذكاء: {Math.round(relatedReport.aiConfidence * 100)}%</span>
                     </div>
                     <div className="h-1.5 rounded-full bg-muted overflow-hidden">
                       <div className="h-full bg-accent rounded-full" style={{ width: `${relatedReport.aiConfidence * 100}%` }} />
@@ -367,7 +367,7 @@ export default function WorkOrderDetailPage() {
                   href="/dashboard/reports"
                   className="block text-center text-xs text-primary hover:underline font-medium pt-1"
                 >
-                  View all reports →
+                  عرض كل البلاغات ←
                 </Link>
               </div>
             </div>
@@ -375,42 +375,42 @@ export default function WorkOrderDetailPage() {
 
           {/* Notes */}
           <div className="bg-card rounded-xl border border-border p-5">
-            <h3 className="font-display font-semibold text-foreground mb-3">Internal Notes</h3>
+            <h3 className="font-display font-semibold text-foreground mb-3">ملاحظات داخلية</h3>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Add internal notes for the team..."
+              placeholder="أضف ملاحظات داخلية للفريق..."
               className="w-full h-24 p-3 text-sm bg-background rounded-lg border border-border focus:outline-none focus:border-primary/40 transition-colors resize-none"
             />
             <button
               onClick={() => { if (notes.trim()) { logAction(`Note added: ${notes.trim().slice(0, 50)}...`); setNotes(''); } }}
               className="w-full mt-2 h-8 rounded-lg bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-colors"
             >
-              Save Note
+              حفظ الملاحظة
             </button>
           </div>
 
           {/* Quick actions */}
           <div className="bg-card rounded-xl border border-border p-5">
-            <h3 className="font-display font-semibold text-foreground mb-3">Quick Actions</h3>
+            <h3 className="font-display font-semibold text-foreground mb-3">إجراءات سريعة</h3>
             <div className="space-y-2">
               <button
                 onClick={() => setShowAssignModal(true)}
                 className="w-full flex items-center gap-2 px-3 h-9 rounded-lg border border-border text-sm font-medium hover:bg-muted transition-colors"
               >
-                <User className="w-4 h-4 text-muted-foreground" /> {displayTeam ? 'Reassign Team' : 'Assign Team'}
+                <User className="w-4 h-4 text-muted-foreground" /> {displayTeam ? 'إعادة تعيين الفريق' : 'تعيين فريق'}
               </button>
               <Link
                 href="/dashboard/dispatch"
                 className="w-full flex items-center gap-2 px-3 h-9 rounded-lg border border-border text-sm font-medium hover:bg-muted transition-colors"
               >
-                <Navigation className="w-4 h-4 text-muted-foreground" /> View on Dispatch Map
+                <Navigation className="w-4 h-4 text-muted-foreground" /> عرض على خريطة الإرسال
               </Link>
               <Link
                 href="/dashboard/fleet"
                 className="w-full flex items-center gap-2 px-3 h-9 rounded-lg border border-border text-sm font-medium hover:bg-muted transition-colors"
               >
-                <Truck className="w-4 h-4 text-muted-foreground" /> Check Fleet Status
+                <Truck className="w-4 h-4 text-muted-foreground" /> فحص حالة الأسطول
               </Link>
             </div>
           </div>
@@ -461,12 +461,12 @@ function AssignModal({
       <div className="fixed inset-0 bg-black/40 z-50 animate-fade-in" onClick={onClose} />
       <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-card rounded-xl border border-border shadow-xl z-50 animate-slide-up">
         <div className="flex items-center justify-between p-5 border-b border-border">
-          <h2 className="font-display text-lg font-semibold">Assign Team & Vehicle</h2>
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground text-sm">Close</button>
+          <h2 className="font-display text-lg font-semibold">تعيين الفريق والمركبة</h2>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground text-sm">إغلاق</button>
         </div>
         <div className="p-5 space-y-4">
           <div>
-            <label className="block text-xs font-medium text-muted-foreground mb-1.5">Driver / Team</label>
+            <label className="block text-xs font-medium text-muted-foreground mb-1.5">السائق / الفريق</label>
             <select
               value={selectedDriver}
               onChange={(e) => setSelectedDriver(e.target.value)}
@@ -476,7 +476,7 @@ function AssignModal({
             </select>
           </div>
           <div>
-            <label className="block text-xs font-medium text-muted-foreground mb-1.5">Vehicle</label>
+            <label className="block text-xs font-medium text-muted-foreground mb-1.5">المركبة</label>
             <select
               value={selectedVehicle}
               onChange={(e) => setSelectedVehicle(e.target.value)}
@@ -489,7 +489,7 @@ function AssignModal({
             onClick={() => onAssign(selectedDriver, selectedVehicle)}
             className="w-full h-10 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
           >
-            Confirm Assignment
+            تأكيد التعيين
           </button>
         </div>
       </div>

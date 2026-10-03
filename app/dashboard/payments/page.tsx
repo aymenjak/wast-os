@@ -28,18 +28,18 @@ export default function PaymentsPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <PageHeader title="Payments" description="Track received payments from B2B customers">
+      <PageHeader title="المدفوعات" description="تتبع المدفوعات المستلمة من عملاء الأعمال">
         <button className="flex items-center gap-1.5 px-3 h-9 rounded-lg bg-card border border-border text-sm font-medium hover:bg-muted transition-colors">
-          <Download className="w-4 h-4" /> Export
+          <Download className="w-4 h-4" /> تصدير
         </button>
       </PageHeader>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: 'Total Payments', value: stats.total, icon: CreditCard, color: 'text-foreground', bg: 'bg-card', border: 'border-border' },
-          { label: 'Completed', value: stats.completed, icon: CheckCircle2, color: 'text-success', bg: 'bg-success/5', border: 'border-success/20' },
-          { label: 'Pending', value: stats.pending, icon: Clock, color: 'text-warning', bg: 'bg-warning/5', border: 'border-warning/20' },
-          { label: 'Collected', value: `${(stats.totalCollected / 1000).toFixed(0)}k DZD`, icon: CreditCard, color: 'text-info', bg: 'bg-info/5', border: 'border-info/20' },
+          { label: 'إجمالي المدفوعات', value: stats.total, icon: CreditCard, color: 'text-foreground', bg: 'bg-card', border: 'border-border' },
+          { label: 'مكتملة', value: stats.completed, icon: CheckCircle2, color: 'text-success', bg: 'bg-success/5', border: 'border-success/20' },
+          { label: 'قيد الانتظار', value: stats.pending, icon: Clock, color: 'text-warning', bg: 'bg-warning/5', border: 'border-warning/20' },
+          { label: 'المحصّل', value: `${(stats.totalCollected / 1000).toFixed(0)}ك دج`, icon: CreditCard, color: 'text-info', bg: 'bg-info/5', border: 'border-info/20' },
         ].map(s => {
           const Icon = s.icon;
           return (
@@ -55,7 +55,7 @@ export default function PaymentsPage() {
       </div>
 
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <input
           type="text"
           value={search}
@@ -70,13 +70,13 @@ export default function PaymentsPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-muted/30">
-                <th className="text-left font-medium text-muted-foreground text-xs px-5 py-3">Payment ID</th>
-                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3">Invoice</th>
-                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3">Customer</th>
-                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3">Amount</th>
-                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3 hidden sm:table-cell">Method</th>
-                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3 hidden md:table-cell">Date</th>
-                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3">Status</th>
+                <th className="text-left font-medium text-muted-foreground text-xs px-5 py-3">رقم الدفعة</th>
+                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3">الفاتورة</th>
+                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3">العميل</th>
+                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3">المبلغ</th>
+                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3 hidden sm:table-cell">الطريقة</th>
+                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3 hidden md:table-cell">التاريخ</th>
+                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3">الحالة</th>
               </tr>
             </thead>
             <tbody>
@@ -88,10 +88,10 @@ export default function PaymentsPage() {
                     <td className="px-5 py-3 font-mono text-xs text-foreground whitespace-nowrap">{p.paymentId}</td>
                     <td className="px-3 py-3 font-mono text-xs text-muted-foreground whitespace-nowrap">{p.invoiceRef}</td>
                     <td className="px-3 py-3 font-medium text-foreground whitespace-nowrap">{p.customer}</td>
-                    <td className="px-3 py-3 font-semibold text-foreground whitespace-nowrap">{p.amount.toLocaleString()} DZD</td>
+                    <td className="px-3 py-3 font-semibold text-foreground whitespace-nowrap">{p.amount.toLocaleString()} دج</td>
                     <td className="px-3 py-3 hidden sm:table-cell text-muted-foreground">{p.method}</td>
                     <td className="px-3 py-3 hidden md:table-cell text-xs text-muted-foreground whitespace-nowrap">{p.date}</td>
-                    <td className="px-3 py-3"><span className={cn('flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium w-fit', cfg.color)}><StatusIcon className="w-3 h-3" /> {p.status}</span></td>
+                    <td className="px-3 py-3"><span className={cn('flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium w-fit', cfg.color)}><StatusIcon className="w-3 h-3" /> {p.status === 'completed' ? 'مكتملة' : p.status === 'pending' ? 'قيد الانتظار' : 'فاشلة'}</span></td>
                   </tr>
                 );
               })}

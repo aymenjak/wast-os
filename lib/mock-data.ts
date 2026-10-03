@@ -26,6 +26,8 @@ import type {
   AuditLogEntry,
   EcoProfile,
   InvoiceStatus,
+  Subscription,
+  PlanFeature,
 } from './types';
 
 export const reportTypeLabels: Record<ReportType, string> = {
@@ -588,4 +590,39 @@ export const ecoLevels = [
   { name: 'Green Citizen', minPoints: 1000, maxPoints: 2000, color: 'text-success' },
   { name: 'Eco Champion', minPoints: 2000, maxPoints: 3000, color: 'text-primary' },
   { name: 'City Guardian', minPoints: 3000, maxPoints: 999999, color: 'text-accent' },
+];
+
+// ==================== SUBSCRIPTIONS ====================
+
+export const subscriptions: Subscription[] = [
+  { id: 'sub1', orgName: 'بلدية الجزائر الوسط', orgType: 'municipality', plan: 'enterprise', status: 'active', startDate: '2024-01-15', endDate: '2025-01-15', monthlyFee: 250000, includedUsers: 500, usedUsers: 236, includedZones: 20, usedZones: 5, apiCallsLimit: 1000000, apiCallsUsed: 412000, storageLimitGb: 500, storageUsedGb: 187, autoRenew: true, paymentMethod: 'تحويل بنكي', contactName: 'أميرة حداد', contactEmail: 'a.haddad@mairie-alger.dz', contactPhone: '+213 555 23 45 67' },
+  { id: 'sub2', orgName: 'بلدية بئر مراد رايس', orgType: 'municipality', plan: 'pro', status: 'active', startDate: '2024-03-01', endDate: '2025-03-01', monthlyFee: 120000, includedUsers: 100, usedUsers: 67, includedZones: 10, usedZones: 3, apiCallsLimit: 200000, apiCallsUsed: 89000, storageLimitGb: 100, storageUsedGb: 43, autoRenew: true, paymentMethod: 'تحويل بنكي', contactName: 'كريم منصوري', contactEmail: 'k.mansouri@bmr.dz', contactPhone: '+213 555 34 56 78' },
+  { id: 'sub3', orgName: 'فندق الأوراسي', orgType: 'business', plan: 'pro', status: 'active', startDate: '2024-02-10', endDate: '2025-02-10', monthlyFee: 120000, includedUsers: 50, usedUsers: 18, includedZones: 5, usedZones: 1, apiCallsLimit: 200000, apiCallsUsed: 34000, storageLimitGb: 100, storageUsedGb: 12, autoRenew: true, paymentMethod: 'بطاقة بنكية', contactName: 'عمر السعدي', contactEmail: 'o.saadi@elaurassi.dz', contactPhone: '+213 555 78 90 12' },
+  { id: 'sub4', orgName: 'كارفور الجزائر', orgType: 'business', plan: 'pro', status: 'active', startDate: '2024-04-01', endDate: '2025-04-01', monthlyFee: 120000, includedUsers: 50, usedUsers: 32, includedZones: 5, usedZones: 2, apiCallsLimit: 200000, apiCallsUsed: 56000, storageLimitGb: 100, storageUsedGb: 28, autoRenew: true, paymentMethod: 'تحويل بنكي', contactName: 'نبيل بوزيد', contactEmail: 'n.bouzid@carrefour.dz', contactPhone: '+213 555 12 34 50' },
+  { id: 'sub5', orgName: 'إيكو كوليكت SARL', orgType: 'business', plan: 'enterprise', status: 'active', startDate: '2024-01-01', endDate: '2025-01-01', monthlyFee: 250000, includedUsers: 200, usedUsers: 145, includedZones: 15, usedZones: 5, apiCallsLimit: 1000000, apiCallsUsed: 678000, storageLimitGb: 500, storageUsedGb: 234, autoRenew: true, paymentMethod: 'تحويل بنكي', contactName: 'رشيد الشريف', contactEmail: 'r.cherif@ecocollect.dz', contactPhone: '+213 555 56 78 90' },
+  { id: 'sub6', orgName: 'إعادة تدوير الجزائر', orgType: 'recycler', plan: 'pro', status: 'active', startDate: '2024-05-01', endDate: '2025-05-01', monthlyFee: 120000, includedUsers: 50, usedUsers: 24, includedZones: 10, usedZones: 2, apiCallsLimit: 200000, apiCallsUsed: 71000, storageLimitGb: 100, storageUsedGb: 38, autoRenew: true, paymentMethod: 'تحويل بنكي', contactName: 'ليلى خليفي', contactEmail: 'l.khelifi@recycle-alger.dz', contactPhone: '+213 555 89 01 23' },
+  { id: 'sub7', orgName: 'بلدية حسين داي', orgType: 'municipality', plan: 'basic', status: 'trial', startDate: '2024-08-15', endDate: '2024-09-15', monthlyFee: 45000, includedUsers: 25, usedUsers: 12, includedZones: 3, usedZones: 2, apiCallsLimit: 50000, apiCallsUsed: 18000, storageLimitGb: 20, storageUsedGb: 7, autoRenew: false, paymentMethod: 'تجريبي', contactName: 'سفيان مرابط', contactEmail: 's.merabet@hussein-dey.dz', contactPhone: '+213 555 90 12 34' },
+  { id: 'sub8', orgName: 'بلدية باب الوادي', orgType: 'municipality', plan: 'basic', status: 'active', startDate: '2024-06-01', endDate: '2025-06-01', monthlyFee: 45000, includedUsers: 25, usedUsers: 19, includedZones: 3, usedZones: 3, apiCallsLimit: 50000, apiCallsUsed: 42000, storageLimitGb: 20, storageUsedGb: 15, autoRenew: true, paymentMethod: 'تحويل بنكي', contactName: 'وسيلة تومي', contactEmail: 'w.toumi@bab-el-oued.dz', contactPhone: '+213 555 01 23 45' },
+  { id: 'sub9', orgName: 'مجموعة صيدال', orgType: 'business', plan: 'basic', status: 'expired', startDate: '2023-12-01', endDate: '2024-06-01', monthlyFee: 45000, includedUsers: 25, usedUsers: 0, includedZones: 3, usedZones: 0, apiCallsLimit: 50000, apiCallsUsed: 0, storageLimitGb: 20, storageUsedGb: 0, autoRenew: false, paymentMethod: 'تحويل بنكي', contactName: 'إيمان ولد علي', contactEmail: 'i.ouldali@saidal.dz', contactPhone: '+213 555 23 45 60' },
+  { id: 'sub10', orgName: 'بلدية الحراش', orgType: 'municipality', plan: 'pro', status: 'suspended', startDate: '2024-02-01', endDate: '2025-02-01', monthlyFee: 120000, includedUsers: 100, usedUsers: 0, includedZones: 10, usedZones: 0, apiCallsLimit: 200000, apiCallsUsed: 0, storageLimitGb: 100, storageUsedGb: 0, autoRenew: false, paymentMethod: 'تحويل بنكي', contactName: 'نبيل بوزيد', contactEmail: 'n.bouzid@el-harrach.dz', contactPhone: '+213 555 12 34 50' },
+  { id: 'sub11', orgName: 'سنتريبو الجزائر', orgType: 'recycler', plan: 'basic', status: 'pending', startDate: '2024-09-01', endDate: '2025-09-01', monthlyFee: 45000, includedUsers: 25, usedUsers: 0, includedZones: 3, usedZones: 0, apiCallsLimit: 50000, apiCallsUsed: 0, storageLimitGb: 20, storageUsedGb: 0, autoRenew: true, paymentMethod: 'بانتظار التفعيل', contactName: 'توفيق العربي', contactEmail: 't.larbi@centripo.dz', contactPhone: '+213 555 45 67 89' },
+];
+
+export const planFeatures: PlanFeature[] = [
+  { label: 'المستخدمون', basic: '25', pro: '100', enterprise: '500+' },
+  { label: 'المناطق المشمولة', basic: '3', pro: '10', enterprise: '20+' },
+  { label: 'بلاغات المواطنين', basic: true, pro: true, enterprise: true },
+  { label: 'أوامر العمل', basic: true, pro: true, enterprise: true },
+  { label: 'إدارة الأسطول', basic: true, pro: true, enterprise: true },
+  { label: 'خريطة الإرسال المباشرة', basic: false, pro: true, enterprise: true },
+  { label: 'حاويات إنترنت الأشياء', basic: false, pro: true, enterprise: true },
+  { label: 'مساعد الذكاء الاصطناعي', basic: false, pro: true, enterprise: true },
+  { label: 'الإحصائيات وESG', basic: 'أساسية', pro: 'متقدمة', enterprise: 'كاملة' },
+  { label: 'سوق إعادة التدوير', basic: false, pro: true, enterprise: true },
+  { label: 'نقاط المواطن البيئية', basic: false, pro: true, enterprise: true },
+  { label: 'صلاحيات متعددة المستأجرين', basic: false, pro: false, enterprise: true },
+  { label: 'سجلات التدقيق', basic: '30 يوماً', pro: '90 يوماً', enterprise: 'غير محدود' },
+  { label: 'واجهة برمجة التطبيقات', basic: '50k/شهر', pro: '200k/شهر', enterprise: '1M/شهر' },
+  { label: 'مساحة التخزين', basic: '20 جيجا', pro: '100 جيجا', enterprise: '500 جيجا+' },
+  { label: 'الدعم الفني', basic: 'بريد إلكتروني', pro: 'أولوية + هاتف', enterprise: 'مدير حساب مخصص' },
 ];

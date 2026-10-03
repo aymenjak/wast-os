@@ -91,6 +91,7 @@ const navSections: NavSection[] = [
   {
     label: 'الإدارة',
     items: [
+      { label: 'الاشتراكات', href: '/dashboard/subscriptions', icon: CreditCard },
       { label: 'المستخدمون والصلاحيات', href: '/dashboard/users', icon: ShieldCheck },
       { label: 'سجل التدقيق', href: '/dashboard/audit', icon: ScrollText },
       { label: 'الإعدادات', href: '/dashboard/settings', icon: Settings },
@@ -108,7 +109,7 @@ export function Sidebar() {
           <Recycle className="w-5 h-5 text-white" />
         </div>
         <div>
-          <div className="font-display font-semibold text-white text-sm tracking-tight">وست سيتي أو إس</div>
+          <div className="font-display font-semibold text-white text-sm tracking-tight">NEXVO</div>
           <div className="text-[10px] text-white/40 tracking-wider">منصة إدارة النفايات الذكية</div>
         </div>
       </Link>

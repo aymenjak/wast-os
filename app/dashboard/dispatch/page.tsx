@@ -31,14 +31,14 @@ export default function DispatchPage() {
           type: 'truck',
           label: v.plate,
           details: [
-            { label: 'Driver', value: v.driver },
-            { label: 'Type', value: v.type },
-            { label: 'Zone', value: v.zone },
-            { label: 'Status', value: v.status.replace(/_/g, ' ') },
-            { label: 'Speed', value: `${v.speed} km/h` },
-            { label: 'Fuel', value: `${v.fuel}%` },
-            { label: 'Next Stop', value: v.nextStop },
-            { label: 'ETA', value: v.eta },
+            { label: 'السائق', value: v.driver },
+            { label: 'النوع', value: v.type },
+            { label: 'المنطقة', value: v.zone },
+            { label: 'الحالة', value: v.status.replace(/_/g, ' ') },
+            { label: 'السرعة', value: `${v.speed} كم/س` },
+            { label: 'الوقود', value: `${v.fuel}%` },
+            { label: 'المحطة التالية', value: v.nextStop },
+            { label: 'الوصول المتوقع', value: v.eta },
           ],
         });
       });
@@ -52,13 +52,13 @@ export default function DispatchPage() {
           type: 'container',
           label: c.containerId,
           details: [
-            { label: 'Type', value: c.type },
-            { label: 'Waste', value: c.wasteType },
-            { label: 'Location', value: c.location },
+            { label: 'النوع', value: c.type },
+            { label: 'النفايات', value: c.wasteType },
+            { label: 'الموقع', value: c.location },
             { label: 'Zone', value: c.zone },
-            { label: 'Fill', value: `${c.fillLevel}%` },
-            { label: 'Status', value: c.status },
-            { label: 'Sensor', value: c.hasSensor ? 'Active' : 'None' },
+            { label: 'الامتلاء', value: `${c.fillLevel}%` },
+            { label: 'الحالة', value: c.status },
+            { label: 'المستشعر', value: c.hasSensor ? 'نشط' : 'لا يوجد' },
           ],
         });
       });
@@ -72,13 +72,13 @@ export default function DispatchPage() {
           type: 'report',
           label: r.reportId,
           details: [
-            { label: 'Type', value: r.type.replace(/_/g, ' ') },
-            { label: 'Citizen', value: r.citizenName },
-            { label: 'Location', value: r.location },
+            { label: 'النوع', value: r.type.replace(/_/g, ' ') },
+            { label: 'المواطن', value: r.citizenName },
+            { label: 'الموقع', value: r.location },
             { label: 'Zone', value: r.zone },
-            { label: 'Priority', value: r.priority },
-            { label: 'Status', value: r.status.replace(/_/g, ' ') },
-            ...(r.assignedTeam ? [{ label: 'Team', value: r.assignedTeam }] : []),
+            { label: 'الأولوية', value: r.priority },
+            { label: 'الحالة', value: r.status.replace(/_/g, ' ') },
+            ...(r.assignedTeam ? [{ label: 'الفريق', value: r.assignedTeam }] : []),
           ],
         });
       });
@@ -93,28 +93,28 @@ export default function DispatchPage() {
   };
 
   const layerConfig: { key: LayerType; label: string; icon: typeof Truck; color: string; count: number }[] = [
-    { key: 'trucks', label: 'Trucks', icon: Truck, color: 'bg-primary', count: counts.trucks },
-    { key: 'containers', label: 'Containers', icon: Trash2, color: 'bg-info', count: counts.containers },
-    { key: 'reports', label: 'Reports', icon: AlertTriangle, color: 'bg-destructive', count: counts.reports },
+    { key: 'trucks', label: 'الشاحنات', icon: Truck, color: 'bg-primary', count: counts.trucks },
+    { key: 'containers', label: 'الحاويات', icon: Trash2, color: 'bg-info', count: counts.containers },
+    { key: 'reports', label: 'البلاغات', icon: AlertTriangle, color: 'bg-destructive', count: counts.reports },
   ];
 
   const selectedEntity = entities.find(e => e.id === selectedId);
 
   return (
     <div className="space-y-4 animate-fade-in">
-      <PageHeader title="Live Dispatch Map" description="Real-time fleet, container, and report locations across the city">
+      <PageHeader title="خريطة الإرسال المباشرة" description="مواقع لحظية للأسطول والحاويات والبلاغات عبر المدينة">
         <div className="flex items-center gap-2 px-3 h-9 rounded-lg bg-success/10 text-success text-sm font-medium">
           <span className="relative w-2 h-2 rounded-full bg-success">
             <span className="absolute inset-0 rounded-full bg-success animate-ping opacity-75" />
           </span>
-          Live Tracking
+          تتبع مباشر
         </div>
       </PageHeader>
 
       {/* Layer toggles */}
       <div className="flex flex-wrap items-center gap-2">
         <span className="flex items-center gap-1 text-xs font-medium text-muted-foreground mr-2">
-          <Layers className="w-4 h-4" /> Layers:
+          <Layers className="w-4 h-4" /> الطبقات:
         </span>
         {layerConfig.map((layer) => {
           const Icon = layer.icon;
@@ -159,19 +159,19 @@ export default function DispatchPage() {
         <div className="space-y-3">
           {/* Legend */}
           <div className="bg-card rounded-xl border border-border p-4">
-            <div className="text-xs font-medium text-muted-foreground mb-2">Legend</div>
+            <div className="text-xs font-medium text-muted-foreground mb-2">وسيلة الإيضاح</div>
             <div className="space-y-1.5">
               <div className="flex items-center gap-2 text-xs">
-                <span className="w-3 h-3 rounded-full bg-primary" /> Truck (on route)
+                <span className="w-3 h-3 rounded-full bg-primary" /> شاحنة (في الطريق)
               </div>
               <div className="flex items-center gap-2 text-xs">
-                <span className="w-3 h-3 rounded-full bg-info" /> Container
+                <span className="w-3 h-3 rounded-full bg-info" /> حاوية
               </div>
               <div className="flex items-center gap-2 text-xs">
-                <span className="w-3 h-3 rounded-full bg-destructive" /> Active report
+                <span className="w-3 h-3 rounded-full bg-destructive" /> بلاغ نشط
               </div>
               <div className="flex items-center gap-2 text-xs">
-                <span className="w-3 h-3 rounded-full bg-success" /> Transfer station
+                <span className="w-3 h-3 rounded-full bg-success" /> محطة تحويل
               </div>
             </div>
           </div>
@@ -181,7 +181,7 @@ export default function DispatchPage() {
             <div className="bg-card rounded-xl border border-border p-4 animate-slide-up">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-sm font-medium capitalize">{selectedEntity.type}</span>
-                <button onClick={() => setSelectedId(null)} className="text-muted-foreground hover:text-foreground text-xs">Close</button>
+                <button onClick={() => setSelectedId(null)} className="text-muted-foreground hover:text-foreground text-xs">إغلاق</button>
               </div>
               <div className="font-mono text-xs text-muted-foreground mb-3">{selectedEntity.label}</div>
               <div className="space-y-2 text-xs">
@@ -196,17 +196,17 @@ export default function DispatchPage() {
           ) : (
             <div className="bg-card rounded-xl border border-border p-4 text-center">
               <Navigation className="w-8 h-8 text-muted-foreground mx-auto mb-2 opacity-40" />
-              <p className="text-xs text-muted-foreground">Click a marker on the map to see details</p>
+              <p className="text-xs text-muted-foreground">انقر على علامة على الخريطة لعرض التفاصيل</p>
             </div>
           )}
 
           {/* Quick links */}
           <div className="bg-card rounded-xl border border-border p-4">
-            <div className="text-xs font-medium text-muted-foreground mb-2">Quick Links</div>
+            <div className="text-xs font-medium text-muted-foreground mb-2">روابط سريعة</div>
             <div className="space-y-1.5">
-              <a href="/dashboard/fleet" className="block text-xs text-primary hover:underline">Fleet Management →</a>
-              <a href="/dashboard/containers" className="block text-xs text-primary hover:underline">Container Status →</a>
-              <a href="/dashboard/reports" className="block text-xs text-primary hover:underline">Citizen Reports →</a>
+              <a href="/dashboard/fleet" className="block text-xs text-primary hover:underline">إدارة الأسطول ←</a>
+              <a href="/dashboard/containers" className="block text-xs text-primary hover:underline">حالة الحاويات ←</a>
+              <a href="/dashboard/reports" className="block text-xs text-primary hover:underline">بلاغات المواطنين ←</a>
             </div>
           </div>
         </div>

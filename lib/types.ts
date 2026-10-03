@@ -399,3 +399,37 @@ export interface MaintenanceRecord {
   cost: number;
   mileage: number;
 }
+
+export type SubscriptionPlan = 'basic' | 'pro' | 'enterprise';
+export type SubscriptionStatus = 'active' | 'trial' | 'expired' | 'suspended' | 'pending';
+
+export interface Subscription {
+  id: string;
+  orgName: string;
+  orgType: 'municipality' | 'business' | 'recycler';
+  plan: SubscriptionPlan;
+  status: SubscriptionStatus;
+  startDate: string;
+  endDate: string;
+  monthlyFee: number;
+  includedUsers: number;
+  usedUsers: number;
+  includedZones: number;
+  usedZones: number;
+  apiCallsLimit: number;
+  apiCallsUsed: number;
+  storageLimitGb: number;
+  storageUsedGb: number;
+  autoRenew: boolean;
+  paymentMethod: string;
+  contactName: string;
+  contactEmail: string;
+  contactPhone: string;
+}
+
+export interface PlanFeature {
+  label: string;
+  basic: boolean | string;
+  pro: boolean | string;
+  enterprise: boolean | string;
+}

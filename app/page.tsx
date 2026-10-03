@@ -19,7 +19,7 @@ export default function LandingPage() {
               <Recycle className="w-5 h-5 text-white" />
             </div>
             <div>
-              <div className="font-display font-semibold text-foreground text-sm tracking-tight">وست سيتي أو إس</div>
+              <div className="font-display font-semibold text-foreground text-sm tracking-tight">NEXVO</div>
               <div className="text-[10px] text-muted-foreground tracking-wider hidden sm:block">منصة إدارة النفايات الذكية</div>
             </div>
           </div>
@@ -242,7 +242,7 @@ export default function LandingPage() {
             <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary">
               <Recycle className="w-4.5 h-4.5 text-white" />
             </div>
-            <span className="font-display font-semibold text-sm text-foreground">وست سيتي أو إس</span>
+            <span className="font-display font-semibold text-sm text-foreground">NEXVO</span>
           </div>
           <div className="flex items-center gap-4 text-xs text-muted-foreground">
             <span className="flex items-center gap-1"><Globe className="w-3.5 h-3.5" /> عربي / فرنسي / إنجليزي</span>

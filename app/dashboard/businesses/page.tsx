@@ -21,10 +21,10 @@ function downloadCSV(headers: string[], rows: (string | number)[][], filename: s
 }
 
 const contractStatusConfig: Record<string, { label: string; color: string; icon: typeof CheckCircle2 }> = {
-  active: { label: 'Active', color: 'text-success bg-success/10', icon: CheckCircle2 },
-  pending: { label: 'Pending', color: 'text-warning bg-warning/10', icon: Clock },
-  expired: { label: 'Expired', color: 'text-destructive bg-destructive/10', icon: XCircle },
-  none: { label: 'No Contract', color: 'text-muted-foreground bg-muted', icon: AlertCircle },
+  active: { label: 'نشط', color: 'text-success bg-success/10', icon: CheckCircle2 },
+  pending: { label: 'قيد الانتظار', color: 'text-warning bg-warning/10', icon: Clock },
+  expired: { label: 'منتهي', color: 'text-destructive bg-destructive/10', icon: XCircle },
+  none: { label: 'لا عقد', color: 'text-muted-foreground bg-muted', icon: AlertCircle },
 };
 
 export default function BusinessesPage() {
@@ -35,8 +35,8 @@ export default function BusinessesPage() {
 
   const handleExport = () => {
     downloadCSV(
-      ['Name', 'Category', 'Zone', 'Contract Status', 'Monthly Volume', 'Recycling Rate', 'Outstanding Balance'],
-      filtered.map(b => [b.name, b.category, b.zone, b.contractStatus, `${b.monthlyVolume}t`, `${b.recyclingRate}%`, b.outstandingBalance]),
+      ['الاسم', 'الفئة', 'المنطقة', 'حالة العقد', 'الحجم الشهري', 'نسبة إعادة التدوير', 'الرصيد المستحق'],
+      filtered.map(b => [b.name, b.category, b.zone, b.contractStatus, `${b.monthlyVolume}طن`, `${b.recyclingRate}%`, b.outstandingBalance]),
       `businesses-${Date.now()}.csv`,
     );
   };
@@ -58,21 +58,21 @@ export default function BusinessesPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <PageHeader title="Businesses" description="Manage B2B customers, contracts, and collection services">
+      <PageHeader title="الشركات" description="إدارة عملاء الأعمال والعقود وخدمات الجمع">
         <button onClick={handleExport} className="flex items-center gap-1.5 px-3 h-9 rounded-lg bg-card border border-border text-sm font-medium hover:bg-muted transition-colors">
-          <Download className="w-4 h-4" /> Export
+          <Download className="w-4 h-4" /> تصدير
         </button>
         <button onClick={() => setShowAdd(true)} className="flex items-center gap-1.5 px-3 h-9 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">
-          <Plus className="w-4 h-4" /> Add Business
+          <Plus className="w-4 h-4" /> إضافة شركة
         </button>
       </PageHeader>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: 'Total Businesses', value: stats.total, icon: Building2, color: 'text-foreground', bg: 'bg-card', border: 'border-border' },
-          { label: 'Active Contracts', value: stats.activeContracts, icon: CheckCircle2, color: 'text-success', bg: 'bg-success/5', border: 'border-success/20' },
-          { label: 'Outstanding', value: `${(stats.outstanding / 1000).toFixed(0)}k DZD`, icon: AlertCircle, color: 'text-warning', bg: 'bg-warning/5', border: 'border-warning/20' },
-          { label: 'Monthly Volume', value: `${stats.totalVolume}t`, icon: Recycle, color: 'text-info', bg: 'bg-info/5', border: 'border-info/20' },
+          { label: 'إجمالي الشركات', value: stats.total, icon: Building2, color: 'text-foreground', bg: 'bg-card', border: 'border-border' },
+          { label: 'عقود نشطة', value: stats.activeContracts, icon: CheckCircle2, color: 'text-success', bg: 'bg-success/5', border: 'border-success/20' },
+          { label: 'المستحقات', value: `${(stats.outstanding / 1000).toFixed(0)}ك دج`, icon: AlertCircle, color: 'text-warning', bg: 'bg-warning/5', border: 'border-warning/20' },
+          { label: 'الحجم الشهري', value: `${stats.totalVolume}طن`, icon: Recycle, color: 'text-info', bg: 'bg-info/5', border: 'border-info/20' },
         ].map(s => {
           const Icon = s.icon;
           return (
@@ -88,7 +88,7 @@ export default function BusinessesPage() {
       </div>
 
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <input
           type="text"
           value={search}
@@ -134,23 +134,23 @@ export default function BusinessesPage() {
               <div className="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-border/50">
                 <div>
                   <div className="text-sm font-semibold text-foreground">{b.monthlyVolume}t</div>
-                  <div className="text-[10px] text-muted-foreground">Monthly</div>
+                  <div className="text-[10px] text-muted-foreground">شهري</div>
                 </div>
                 <div>
                   <div className="text-sm font-semibold text-foreground">{b.recyclingRate}%</div>
-                  <div className="text-[10px] text-muted-foreground">Recycling</div>
+                  <div className="text-[10px] text-muted-foreground">إعادة التدوير</div>
                 </div>
                 <div>
                   <div className={cn('text-sm font-semibold', b.outstandingBalance > 0 ? 'text-destructive' : 'text-success')}>
-                    {b.outstandingBalance > 0 ? `${(b.outstandingBalance / 1000).toFixed(0)}k` : 'Paid'}
+                    {b.outstandingBalance > 0 ? `${(b.outstandingBalance / 1000).toFixed(0)}ك` : 'مدفوع'}
                   </div>
-                  <div className="text-[10px] text-muted-foreground">Balance</div>
+                  <div className="text-[10px] text-muted-foreground">الرصيد</div>
                 </div>
               </div>
 
               <div className="flex gap-2 mt-3">
-                <button onClick={() => setSelectedBusiness(b)} className="flex-1 h-8 rounded-lg border border-border text-xs font-medium hover:bg-muted transition-colors">View Details</button>
-                <button onClick={() => { setSelectedBusiness(b); setShowRequest(true); }} className="flex-1 h-8 rounded-lg bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-colors">New Request</button>
+                <button onClick={() => setSelectedBusiness(b)} className="flex-1 h-8 rounded-lg border border-border text-xs font-medium hover:bg-muted transition-colors">عرض التفاصيل</button>
+                <button onClick={() => { setSelectedBusiness(b); setShowRequest(true); }} className="flex-1 h-8 rounded-lg bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-colors">طلب جديد</button>
               </div>
             </div>
           );
@@ -174,39 +174,39 @@ function AddBusinessModal({ onClose }: { onClose: () => void }) {
       <div className="fixed inset-0 bg-black/40 z-50 animate-fade-in" onClick={onClose} />
       <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-card rounded-xl border border-border shadow-xl z-50 animate-slide-up max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-5 border-b border-border sticky top-0 bg-card">
-          <h2 className="font-display text-lg font-semibold">Add Business</h2>
+          <h2 className="font-display text-lg font-semibold">إضافة شركة</h2>
           <button onClick={onClose} className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-muted transition-colors"><X className="w-4 h-4" /></button>
         </div>
         <form onSubmit={(e) => { e.preventDefault(); onClose(); }} className="p-5 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Business Name</label>
-              <input type="text" required placeholder="Company name" className="w-full h-10 px-3 text-sm bg-background rounded-lg border border-border focus:outline-none focus:border-primary/40 transition-colors" />
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">اسم الشركة</label>
+              <input type="text" required placeholder="اسم الشركة" className="w-full h-10 px-3 text-sm bg-background rounded-lg border border-border focus:outline-none focus:border-primary/40 transition-colors" />
             </div>
             <div>
-              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Category</label>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">الفئة</label>
               <select className="w-full h-10 px-3 text-sm bg-background rounded-lg border border-border focus:outline-none focus:border-primary/40 transition-colors">
-                <option>Restaurant</option><option>Retail</option><option>Industrial</option><option>Office</option><option>Hospital</option><option>Hospitality</option>
+                <option>مطعم</option><option>تجزئة</option><option>صناعي</option><option>مكتب</option><option>مستشفى</option><option>ضيافة</option>
               </select>
             </div>
           </div>
           <div>
-            <label className="block text-xs font-medium text-muted-foreground mb-1.5">Address</label>
-            <input type="text" required placeholder="Street address" className="w-full h-10 px-3 text-sm bg-background rounded-lg border border-border focus:outline-none focus:border-primary/40 transition-colors" />
+            <label className="block text-xs font-medium text-muted-foreground mb-1.5">العنوان</label>
+            <input type="text" required placeholder="عنوان الشارع" className="w-full h-10 px-3 text-sm bg-background rounded-lg border border-border focus:outline-none focus:border-primary/40 transition-colors" />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Contact Email</label>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">البريد الإلكتروني</label>
               <input type="email" required placeholder="contact@business.dz" className="w-full h-10 px-3 text-sm bg-background rounded-lg border border-border focus:outline-none focus:border-primary/40 transition-colors" />
             </div>
             <div>
-              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Contact Phone</label>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">الهاتف</label>
               <input type="tel" required placeholder="+213 ..." className="w-full h-10 px-3 text-sm bg-background rounded-lg border border-border focus:outline-none focus:border-primary/40 transition-colors" />
             </div>
           </div>
           <div className="flex gap-2 pt-2">
-            <button type="button" onClick={onClose} className="flex-1 h-10 rounded-lg border border-border text-sm font-medium hover:bg-muted transition-colors">Cancel</button>
-            <button type="submit" className="flex-1 h-10 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">Add Business</button>
+            <button type="button" onClick={onClose} className="flex-1 h-10 rounded-lg border border-border text-sm font-medium hover:bg-muted transition-colors">إلغاء</button>
+            <button type="submit" className="flex-1 h-10 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">إضافة الشركة</button>
           </div>
         </form>
       </div>
@@ -225,21 +225,21 @@ function BusinessDetailsModal({ business, onClose, onRequest }: { business: type
         </div>
         <div className="p-5 space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            <div><div className="text-xs text-muted-foreground mb-0.5">Category</div><div className="text-sm font-medium">{business.category}</div></div>
-            <div><div className="text-xs text-muted-foreground mb-0.5">Zone</div><div className="text-sm font-medium">{business.zone}</div></div>
-            <div><div className="text-xs text-muted-foreground mb-0.5">Contact</div><div className="text-sm font-medium">{business.contactName}</div></div>
-            <div><div className="text-xs text-muted-foreground mb-0.5">Phone</div><div className="text-sm font-medium">{business.contactPhone}</div></div>
-            <div><div className="text-xs text-muted-foreground mb-0.5">Email</div><div className="text-sm font-medium">{business.contactEmail}</div></div>
-            <div><div className="text-xs text-muted-foreground mb-0.5">Locations</div><div className="text-sm font-medium">{business.locations}</div></div>
+            <div><div className="text-xs text-muted-foreground mb-0.5">الفئة</div><div className="text-sm font-medium">{business.category}</div></div>
+            <div><div className="text-xs text-muted-foreground mb-0.5">المنطقة</div><div className="text-sm font-medium">{business.zone}</div></div>
+            <div><div className="text-xs text-muted-foreground mb-0.5">جهة الاتصال</div><div className="text-sm font-medium">{business.contactName}</div></div>
+            <div><div className="text-xs text-muted-foreground mb-0.5">الهاتف</div><div className="text-sm font-medium">{business.contactPhone}</div></div>
+            <div><div className="text-xs text-muted-foreground mb-0.5">البريد</div><div className="text-sm font-medium">{business.contactEmail}</div></div>
+            <div><div className="text-xs text-muted-foreground mb-0.5">المواقع</div><div className="text-sm font-medium">{business.locations}</div></div>
           </div>
           <div className="grid grid-cols-3 gap-2 pt-3 border-t border-border">
-            <div className="text-center"><div className="text-lg font-semibold">{business.monthlyVolume}t</div><div className="text-[10px] text-muted-foreground">Monthly Volume</div></div>
-            <div className="text-center"><div className="text-lg font-semibold">{business.recyclingRate}%</div><div className="text-[10px] text-muted-foreground">Recycling Rate</div></div>
-            <div className="text-center"><div className="text-lg font-semibold">{business.containers}</div><div className="text-[10px] text-muted-foreground">Containers</div></div>
+            <div className="text-center"><div className="text-lg font-semibold">{business.monthlyVolume}t</div><div className="text-[10px] text-muted-foreground">الحجم الشهري</div></div>
+            <div className="text-center"><div className="text-lg font-semibold">{business.recyclingRate}%</div><div className="text-[10px] text-muted-foreground">نسبة إعادة التدوير</div></div>
+            <div className="text-center"><div className="text-lg font-semibold">{business.containers}</div><div className="text-[10px] text-muted-foreground">الحاويات</div></div>
           </div>
           <div className="flex gap-2 pt-2">
-            <button onClick={onClose} className="flex-1 h-10 rounded-lg border border-border text-sm font-medium hover:bg-muted transition-colors">Close</button>
-            <button onClick={onRequest} className="flex-1 h-10 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">New Collection Request</button>
+            <button onClick={onClose} className="flex-1 h-10 rounded-lg border border-border text-sm font-medium hover:bg-muted transition-colors">إغلاق</button>
+            <button onClick={onRequest} className="flex-1 h-10 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">طلب جمع جديد</button>
           </div>
         </div>
       </div>
@@ -253,33 +253,33 @@ function RequestModal({ business, onClose }: { business: typeof businesses[0]; o
       <div className="fixed inset-0 bg-black/40 z-50 animate-fade-in" onClick={onClose} />
       <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-card rounded-xl border border-border shadow-xl z-50 animate-slide-up max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-5 border-b border-border sticky top-0 bg-card">
-          <h2 className="font-display text-lg font-semibold">New Request — {business.name}</h2>
+          <h2 className="font-display text-lg font-semibold">طلب جديد — {business.name}</h2>
           <button onClick={onClose} className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-muted transition-colors"><X className="w-4 h-4" /></button>
         </div>
         <form onSubmit={(e) => { e.preventDefault(); onClose(); }} className="p-5 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Waste Type</label>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">نوع النفايات</label>
               <select className="w-full h-10 px-3 text-sm bg-background rounded-lg border border-border focus:outline-none focus:border-primary/40 transition-colors">
-                <option>General</option><option>Organic</option><option>Plastic</option><option>Paper</option><option>Glass</option><option>Metal</option>
+                <option>عامة</option><option>عضوية</option><option>بلاستيك</option><option>ورق</option><option>زجاج</option><option>معدن</option>
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Quantity (kg)</label>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">الكمية (كغ)</label>
               <input type="number" required placeholder="500" className="w-full h-10 px-3 text-sm bg-background rounded-lg border border-border focus:outline-none focus:border-primary/40 transition-colors" />
             </div>
           </div>
           <div>
-            <label className="block text-xs font-medium text-muted-foreground mb-1.5">Preferred Date</label>
+            <label className="block text-xs font-medium text-muted-foreground mb-1.5">التاريخ المفضل</label>
             <input type="date" required className="w-full h-10 px-3 text-sm bg-background rounded-lg border border-border focus:outline-none focus:border-primary/40 transition-colors" />
           </div>
           <div>
-            <label className="block text-xs font-medium text-muted-foreground mb-1.5">Notes</label>
-            <textarea placeholder="Additional details..." className="w-full h-24 p-3 text-sm bg-background rounded-lg border border-border focus:outline-none focus:border-primary/40 transition-colors resize-none" />
+            <label className="block text-xs font-medium text-muted-foreground mb-1.5">ملاحظات</label>
+            <textarea placeholder="تفاصيل إضافية..." className="w-full h-24 p-3 text-sm bg-background rounded-lg border border-border focus:outline-none focus:border-primary/40 transition-colors resize-none" />
           </div>
           <div className="flex gap-2 pt-2">
-            <button type="button" onClick={onClose} className="flex-1 h-10 rounded-lg border border-border text-sm font-medium hover:bg-muted transition-colors">Cancel</button>
-            <button type="submit" className="flex-1 h-10 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">Submit Request</button>
+            <button type="button" onClick={onClose} className="flex-1 h-10 rounded-lg border border-border text-sm font-medium hover:bg-muted transition-colors">إلغاء</button>
+            <button type="submit" className="flex-1 h-10 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">إرسال الطلب</button>
           </div>
         </form>
       </div>
