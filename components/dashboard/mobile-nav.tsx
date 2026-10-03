@@ -6,11 +6,11 @@ import { LayoutDashboard, ClipboardList, Map, Trash2, BarChart3 } from 'lucide-r
 import { cn } from '@/lib/utils';
 
 const items = [
-  { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { label: 'Reports', href: '/dashboard/reports', icon: ClipboardList },
-  { label: 'Map', href: '/dashboard/dispatch', icon: Map },
-  { label: 'Containers', href: '/dashboard/containers', icon: Trash2 },
-  { label: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
+  { label: 'الرئيسية', href: '/dashboard', icon: LayoutDashboard },
+  { label: 'البلاغات', href: '/dashboard/reports', icon: ClipboardList },
+  { label: 'الخريطة', href: '/dashboard/dispatch', icon: Map },
+  { label: 'الحاويات', href: '/dashboard/containers', icon: Trash2 },
+  { label: 'الإحصائيات', href: '/dashboard/analytics', icon: BarChart3 },
 ];
 
 export function MobileNav() {

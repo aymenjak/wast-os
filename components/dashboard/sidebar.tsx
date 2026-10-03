@@ -26,74 +26,74 @@ interface NavSection {
 
 const navSections: NavSection[] = [
   {
-    label: 'Main',
+    label: 'الرئيسية',
     items: [
-      { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-      { label: 'Live Map', href: '/dashboard/dispatch', icon: Map },
+      { label: 'لوحة التحكم', href: '/dashboard', icon: LayoutDashboard },
+      { label: 'الخريطة المباشرة', href: '/dashboard/dispatch', icon: Map },
     ],
   },
   {
-    label: 'Operations',
+    label: 'العمليات',
     items: [
-      { label: 'Citizen Reports', href: '/dashboard/reports', icon: ClipboardList, badge: '234' },
-      { label: 'Work Orders', href: '/dashboard/work-orders', icon: Bell, badge: '40' },
-      { label: 'Routes', href: '/dashboard/routes', icon: Navigation },
-      { label: 'Containers', href: '/dashboard/containers', icon: Trash2 },
+      { label: 'بلاغات المواطنين', href: '/dashboard/reports', icon: ClipboardList, badge: '234' },
+      { label: 'أوامر العمل', href: '/dashboard/work-orders', icon: Bell, badge: '40' },
+      { label: 'المسارات', href: '/dashboard/routes', icon: Navigation },
+      { label: 'الحاويات', href: '/dashboard/containers', icon: Trash2 },
     ],
   },
   {
-    label: 'Waste Flow',
+    label: 'تدفق النفايات',
     items: [
-      { label: 'Collections', href: '/dashboard/collections', icon: Recycle },
-      { label: 'Weighbridge', href: '/dashboard/weighbridge', icon: Scale },
-      { label: 'Transfer Stations', href: '/dashboard/transfer-stations', icon: ArrowRightLeft },
+      { label: 'الجمع', href: '/dashboard/collections', icon: Recycle },
+      { label: 'الميزان', href: '/dashboard/weighbridge', icon: Scale },
+      { label: 'محطات التحويل', href: '/dashboard/transfer-stations', icon: ArrowRightLeft },
     ],
   },
   {
-    label: 'Recycling',
+    label: 'إعادة التدوير',
     items: [
-      { label: 'Recycling Centers', href: '/dashboard/recycling', icon: Recycle },
-      { label: 'Materials & Inventory', href: '/dashboard/materials', icon: Package },
-      { label: 'Marketplace', href: '/dashboard/marketplace', icon: Store },
+      { label: 'مراكز إعادة التدوير', href: '/dashboard/recycling', icon: Recycle },
+      { label: 'المواد والمخزون', href: '/dashboard/materials', icon: Package },
+      { label: 'السوق', href: '/dashboard/marketplace', icon: Store },
     ],
   },
   {
-    label: 'Fleet',
+    label: 'الأسطول',
     items: [
-      { label: 'Vehicles', href: '/dashboard/fleet', icon: Truck },
-      { label: 'Drivers', href: '/dashboard/drivers', icon: Users },
-      { label: 'Maintenance', href: '/dashboard/maintenance', icon: Wrench },
+      { label: 'المركبات', href: '/dashboard/fleet', icon: Truck },
+      { label: 'السائقون', href: '/dashboard/drivers', icon: Users },
+      { label: 'الصيانة', href: '/dashboard/maintenance', icon: Wrench },
     ],
   },
   {
-    label: 'B2B',
+    label: 'الأعمال',
     items: [
-      { label: 'Businesses', href: '/dashboard/businesses', icon: Building2 },
-      { label: 'Contracts', href: '/dashboard/contracts', icon: FileText },
-      { label: 'Collection Requests', href: '/dashboard/requests', icon: ClipboardList },
-      { label: 'Invoices', href: '/dashboard/invoices', icon: FileText },
-      { label: 'Payments', href: '/dashboard/payments', icon: CreditCard },
+      { label: 'الشركات', href: '/dashboard/businesses', icon: Building2 },
+      { label: 'العقود', href: '/dashboard/contracts', icon: FileText },
+      { label: 'طلبات الجمع', href: '/dashboard/requests', icon: ClipboardList },
+      { label: 'الفواتير', href: '/dashboard/invoices', icon: FileText },
+      { label: 'المدفوعات', href: '/dashboard/payments', icon: CreditCard },
     ],
   },
   {
-    label: 'Citizen',
+    label: 'المواطن',
     items: [
-      { label: 'Eco Points', href: '/dashboard/eco-points', icon: Trophy },
+      { label: 'نقاط البيئة', href: '/dashboard/eco-points', icon: Trophy },
     ],
   },
   {
-    label: 'Insights',
+    label: 'التحليلات',
     items: [
-      { label: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
-      { label: 'AI Copilot', href: '/dashboard/ai', icon: Bot },
+      { label: 'الإحصائيات', href: '/dashboard/analytics', icon: BarChart3 },
+      { label: 'مساعد الذكاء', href: '/dashboard/ai', icon: Bot },
     ],
   },
   {
-    label: 'Administration',
+    label: 'الإدارة',
     items: [
-      { label: 'Users & Roles', href: '/dashboard/users', icon: ShieldCheck },
-      { label: 'Audit Logs', href: '/dashboard/audit', icon: ScrollText },
-      { label: 'Settings', href: '/dashboard/settings', icon: Settings },
+      { label: 'المستخدمون والصلاحيات', href: '/dashboard/users', icon: ShieldCheck },
+      { label: 'سجل التدقيق', href: '/dashboard/audit', icon: ScrollText },
+      { label: 'الإعدادات', href: '/dashboard/settings', icon: Settings },
     ],
   },
 ];
@@ -102,21 +102,21 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden lg:flex flex-col w-64 bg-sidebar text-sidebar-foreground fixed inset-y-0 left-0 z-40 border-r border-white/5">
+    <aside className="hidden lg:flex flex-col w-64 bg-sidebar text-sidebar-foreground fixed inset-y-0 right-0 z-40 border-l border-white/5">
       <Link href="/dashboard" className="flex items-center gap-3 px-5 h-16 border-b border-white/5 transition-colors hover:bg-white/5 shrink-0">
         <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-sidebar-accent">
           <Recycle className="w-5 h-5 text-white" />
         </div>
         <div>
-          <div className="font-display font-semibold text-white text-sm tracking-tight">WASTE CITY OS</div>
-          <div className="text-[10px] text-white/40 uppercase tracking-wider">Smart Waste Platform</div>
+          <div className="font-display font-semibold text-white text-sm tracking-tight">وست سيتي أو إس</div>
+          <div className="text-[10px] text-white/40 tracking-wider">منصة إدارة النفايات الذكية</div>
         </div>
       </Link>
 
       <nav className="flex-1 overflow-y-auto scrollbar-thin px-3 py-4 space-y-4">
         {navSections.map((section) => (
           <div key={section.label}>
-            <div className="px-3 mb-1.5 text-[10px] font-medium text-white/30 uppercase tracking-wider">
+            <div className="px-3 mb-1.5 text-[10px] font-medium text-white/30 tracking-wider">
               {section.label}
             </div>
             <div className="space-y-0.5">
@@ -159,8 +159,8 @@ export function Sidebar() {
             <MapPin className="w-4 h-4 text-sidebar-accent" />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-xs font-medium text-white truncate">Alger Centre</div>
-            <div className="text-[10px] text-white/40 truncate">Wilaya d&apos;Alger · Zone 1-5</div>
+            <div className="text-xs font-medium text-white truncate">وسط الجزائر</div>
+            <div className="text-[10px] text-white/40 truncate">ولاية الجزائر · المناطق 1-5</div>
           </div>
         </div>
       </div>

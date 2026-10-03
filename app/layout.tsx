@@ -1,18 +1,25 @@
 import './globals.css';
 import type { Metadata } from 'next';
-import { Inter, Space_Grotesk } from 'next/font/google';
+import { Cairo, Tajawal } from 'next/font/google';
 import { AuthProvider } from '@/components/auth/auth-provider';
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
-const spaceGrotesk = Space_Grotesk({
-  subsets: ['latin'],
-  variable: '--font-space-grotesk',
+const cairo = Cairo({
+  subsets: ['arabic', 'latin'],
+  variable: '--font-cairo',
+  display: 'swap',
+});
+
+const tajawal = Tajawal({
+  subsets: ['arabic', 'latin'],
+  weight: ['400', '500', '700', '800'],
+  variable: '--font-tajawal',
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
-  title: 'Waste City OS — Smart Waste Management Platform',
+  title: 'وست سيتي أو إس — منصة إدارة النفايات الذكية',
   description:
-    'The operating system for a city\u2019s waste ecosystem. Connecting citizens, municipalities, businesses, waste companies, drivers, field teams, recyclers, fleet, IoT, and AI into one unified platform.',
+    'نظام التشغيل لمنظومة نفايات المدينة. يربط المواطنين والبلديات والشركات وسائقي الشاحنات وفرق الميدان ومرافق إعادة التدوير وأساطيل السيارات وإنترنت الأشياء والذكاء الاصطناعي في منصة موحدة.',
 };
 
 export default function RootLayout({
@@ -21,7 +28,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${inter.variable} ${spaceGrotesk.variable}`}>
+    <html lang="ar" dir="rtl" className={`${cairo.variable} ${tajawal.variable}`}>
       <body className="font-sans antialiased">
         <AuthProvider>{children}</AuthProvider>
       </body>

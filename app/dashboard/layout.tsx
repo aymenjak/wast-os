@@ -31,7 +31,7 @@ export default function DashboardLayout({
           </div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Loader2 className="w-4 h-4 animate-spin" />
-            Loading dashboard...
+            جارٍ تحميل لوحة التحكم...
           </div>
         </div>
       </div>
@@ -45,7 +45,7 @@ export default function DashboardLayout({
   return (
     <div className="min-h-screen bg-background">
       <Sidebar />
-      <div className="lg:pl-64">
+      <div className="lg:pr-64">
         <TopBar />
         <main className="p-4 lg:p-6 pb-20 lg:pb-6 min-h-[calc(100vh-4rem)]">
           {children}

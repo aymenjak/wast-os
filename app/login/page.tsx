@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/components/auth/auth-provider';
-import { Recycle, Mail, Lock, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
+import { Recycle, Mail, Lock, ArrowLeft, Loader2, AlertCircle } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -43,9 +43,9 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex">
       {/* Left panel */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary/10 via-background to-accent/5 relative overflow-hidden">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-[100px] pointer-events-none" />
-        <div className="absolute bottom-1/4 right-1/4 w-72 h-72 bg-accent/10 rounded-full blur-[80px] pointer-events-none" />
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-bl from-primary/10 via-background to-accent/5 relative overflow-hidden">
+        <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-primary/10 rounded-full blur-[100px] pointer-events-none" />
+        <div className="absolute bottom-1/4 left-1/4 w-72 h-72 bg-accent/10 rounded-full blur-[80px] pointer-events-none" />
 
         <div className="relative flex flex-col justify-between p-12 w-full">
           <Link href="/" className="flex items-center gap-2.5 w-fit">
@@ -53,30 +53,30 @@ export default function LoginPage() {
               <Recycle className="w-5 h-5 text-white" />
             </div>
             <div>
-              <div className="font-display font-semibold text-foreground text-base tracking-tight">WASTE CITY OS</div>
-              <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Smart Waste Platform</div>
+              <div className="font-display font-semibold text-foreground text-base tracking-tight">وست سيتي أو إس</div>
+              <div className="text-[10px] text-muted-foreground tracking-wider">منصة إدارة النفايات الذكية</div>
             </div>
           </Link>
 
           <div className="max-w-md">
             <h1 className="font-display text-3xl font-semibold tracking-tight text-foreground leading-tight">
-              The operating system for a city&apos;s waste ecosystem
+              نظام التشغيل لمنظومة نفايات المدينة
             </h1>
             <p className="text-muted-foreground mt-4 leading-relaxed">
-              Sign in to manage collections, fleet, containers, citizen reports, billing, and recycling — all in one platform.
+              سجّل الدخول لإدارة الجمع والأسطول والحاويات وبلاغات المواطنين والفوترة وإعادة التدوير — كل ذلك في منصة واحدة.
             </p>
             <div className="flex flex-wrap gap-4 mt-8 text-sm text-muted-foreground">
               <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-success" /> 1,847t managed monthly
+                <span className="w-2 h-2 rounded-full bg-success" /> 1,847 طن تُدار شهرياً
               </div>
               <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-info" /> 68.2% recycling rate
+                <span className="w-2 h-2 rounded-full bg-info" /> 68.2% نسبة إعادة التدوير
               </div>
             </div>
           </div>
 
           <div className="text-xs text-muted-foreground">
-            &copy; 2026 Waste City OS. All rights reserved.
+            &copy; 2026 وست سيتي أو إس. جميع الحقوق محفوظة.
           </div>
         </div>
       </div>
@@ -88,38 +88,38 @@ export default function LoginPage() {
             <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary">
               <Recycle className="w-5 h-5 text-white" />
             </div>
-            <div className="font-display font-semibold text-foreground tracking-tight">WASTE CITY OS</div>
+            <div className="font-display font-semibold text-foreground tracking-tight">وست سيتي أو إس</div>
           </div>
 
           <h2 className="font-display text-2xl font-semibold text-foreground">
-            {mode === 'login' ? 'Welcome back' : 'Create your account'}
+            {mode === 'login' ? 'مرحباً بعودتك' : 'أنشئ حسابك'}
           </h2>
           <p className="text-sm text-muted-foreground mt-1.5">
             {mode === 'login'
-              ? 'Sign in to access your dashboard'
-              : 'Sign up to start managing your city\'s waste'}
+              ? 'سجّل الدخول للوصول إلى لوحة التحكم'
+              : 'سجّل لبدء إدارة نفايات مدينتك'}
           </p>
 
           <form onSubmit={handleSubmit} className="mt-8 space-y-4">
             <div>
-              <label className="block text-xs font-medium text-foreground mb-1.5">Email</label>
+              <label className="block text-xs font-medium text-foreground mb-1.5">البريد الإلكتروني</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <input
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@city.gov"
-                  className="w-full h-11 pl-10 pr-4 text-sm bg-card rounded-lg border border-border focus:outline-none focus:border-primary/40 focus:ring-2 focus:ring-primary/10 transition-all"
+                  className="w-full h-11 pr-10 pl-4 text-sm bg-card rounded-lg border border-border focus:outline-none focus:border-primary/40 focus:ring-2 focus:ring-primary/10 transition-all"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-foreground mb-1.5">Password</label>
+              <label className="block text-xs font-medium text-foreground mb-1.5">كلمة المرور</label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <input
                   type="password"
                   required
@@ -127,7 +127,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full h-11 pl-10 pr-4 text-sm bg-card rounded-lg border border-border focus:outline-none focus:border-primary/40 focus:ring-2 focus:ring-primary/10 transition-all"
+                  className="w-full h-11 pr-10 pl-4 text-sm bg-card rounded-lg border border-border focus:outline-none focus:border-primary/40 focus:ring-2 focus:ring-primary/10 transition-all"
                 />
               </div>
             </div>
@@ -148,8 +148,8 @@ export default function LoginPage() {
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
                 <>
-                  {mode === 'login' ? 'Sign In' : 'Create Account'}
-                  <ArrowRight className="w-4 h-4" />
+                  {mode === 'login' ? 'تسجيل الدخول' : 'إنشاء حساب'}
+                  <ArrowLeft className="w-4 h-4" />
                 </>
               )}
             </button>
@@ -158,22 +158,22 @@ export default function LoginPage() {
           <div className="text-center mt-6 text-sm text-muted-foreground">
             {mode === 'login' ? (
               <>
-                Don&apos;t have an account?{' '}
+                ليس لديك حساب؟{' '}
                 <button
                   onClick={() => { setMode('signup'); setError(null); }}
                   className="text-primary font-medium hover:underline"
                 >
-                  Sign up
+                  سجّل الآن
                 </button>
               </>
             ) : (
               <>
-                Already have an account?{' '}
+                لديك حساب بالفعل؟{' '}
                 <button
                   onClick={() => { setMode('login'); setError(null); }}
                   className="text-primary font-medium hover:underline"
                 >
-                  Sign in
+                  سجّل الدخول
                 </button>
               </>
             )}
@@ -181,7 +181,7 @@ export default function LoginPage() {
 
           <div className="mt-8 pt-6 border-t border-border text-center">
             <Link href="/dashboard" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
-              Or explore the demo dashboard without signing in →
+              أو استكشف لوحة التحكم التجريبية بدون تسجيل دخول ←
             </Link>
           </div>
         </div>
