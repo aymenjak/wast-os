@@ -1,0 +1,643 @@
+// ============================================================================
+// NEXVO — Waste City OS Platform | Full Prisma Schema
+// Mirrors the Supabase PostgreSQL schema (single-tenant, no auth)
+// All tables use uuid primary keys with gen_random_uuid() defaults
+// ============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("SUPABASE_DB_URL")
+}
+
+// ============================================================================
+// Enums (modeled as TEXT + CHECK in DB; declared here for type safety)
+// ============================================================================
+
+enum ReportType {
+  overflowing_container
+  illegal_dumping
+  missed_collection
+  damaged_container
+  waste_scattered
+  large_waste
+  hazardous_waste
+  bad_smell
+  other
+}
+
+enum ReportStatus {
+  SUBMITTED
+  RECEIVED
+  AI_REVIEW
+  VERIFIED
+  ASSIGNED
+  EN_ROUTE
+  IN_PROGRESS
+  RESOLVED
+  REJECTED
+  DUPLICATE
+  CLOSED
+}
+
+enum Priority {
+  CRITICAL
+  HIGH
+  NORMAL
+  LOW
+}
+
+enum WorkOrderStatus {
+  OPEN
+  ASSIGNED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  OVERDUE
+}
+
+enum WorkOrderType {
+  citizen_complaint
+  b2b_collection
+  container_maintenance
+  emergency_cleanup
+  scheduled_route
+  illegal_dumping
+}
+
+enum SLAStatus {
+  ON_TRACK
+  AT_RISK
+  BREACHED
+}
+
+enum ContainerStatus {
+  ACTIVE
+  FULL
+  DAMAGED
+  MAINTENANCE
+  REMOVED
+}
+
+enum WasteType {
+  GENERAL
+  ORGANIC
+  PLASTIC
+  PAPER
+  CARDBOARD
+  GLASS
+  METAL
+  ELECTRONIC
+  CONSTRUCTION
+  MEDICAL
+  HAZARDOUS
+  LARGE_WASTE
+  USED_OIL
+  OTHER
+}
+
+enum VehicleStatus {
+  AVAILABLE
+  ON_ROUTE
+  LOADING
+  MAINTENANCE
+  OFFLINE
+}
+
+enum DriverStatus {
+  available
+  on_route
+  off_duty
+  on_leave
+}
+
+enum RouteStatus {
+  planned
+  active
+  completed
+  delayed
+}
+
+enum ContractStatus {
+  active
+  expired
+  pending
+  none
+}
+
+enum ContractState {
+  active
+  expiring
+  expired
+  pending
+}
+
+enum CollectionRequestStatus {
+  pending
+  priced
+  dispatched
+  collected
+  completed
+  cancelled
+}
+
+enum InvoiceStatus {
+  DRAFT
+  ISSUED
+  SENT
+  PARTIALLY_PAID
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+enum PaymentStatus {
+  completed
+  pending
+  failed
+}
+
+enum MarketplaceStatus {
+  available
+  reserved
+  sold
+}
+
+enum MaterialQuality {
+  A
+  B
+  C
+}
+
+enum WeighbridgeStatus {
+  entered
+  weighed
+  completed
+}
+
+enum TransferStationStatus {
+  operational
+  near_capacity
+  offline
+}
+
+enum MaintenanceStatus {
+  in_progress
+  scheduled
+  completed
+}
+
+enum ActivityFeedType {
+  report
+  workorder
+  collection
+  alert
+  vehicle
+  invoice
+}
+
+enum Trend {
+  up
+  down
+  neutral
+}
+
+enum SubscriptionPlan {
+  basic
+  pro
+  enterprise
+}
+
+enum SubscriptionStatus {
+  active
+  trial
+  expired
+  suspended
+  pending
+}
+
+enum OrgType {
+  municipality
+  business
+  recycler
+}
+
+// ============================================================================
+// Models
+// ============================================================================
+
+model CitizenReport {
+  id              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  reportId        String         @unique(map: "citizen_reports_report_id_key") @map("report_id")
+  type            ReportType
+  status          ReportStatus   @default(SUBMITTED)
+  priority        Priority       @default(NORMAL)
+  citizenName     String         @map("citizen_name")
+  location        String
+  zone            String
+  lat             Float
+  lng             Float
+  description     String
+  submittedAt     DateTime       @default(now()) @map("submitted_at") @db.Timestamptz
+  assignedTeam    String?        @map("assigned_team")
+  estimatedResponse String?      @map("estimated_response")
+  resolvedAt      DateTime?      @map("resolved_at") @db.Timestamptz
+  rating          Int?
+  aiConfidence    Float?         @map("ai_confidence")
+  hasPhoto        Boolean        @default(false) @map("has_photo")
+
+  @@index([status], map: "idx_citizen_reports_status")
+  @@index([priority], map: "idx_citizen_reports_priority")
+  @@map("citizen_reports")
+}
+
+model WorkOrder {
+  id              String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId         String          @unique(map: "work_orders_order_id_key") @map("order_id")
+  type            WorkOrderType
+  status          WorkOrderStatus @default(OPEN)
+  priority        Priority        @default(NORMAL)
+  location        String
+  zone            String
+  description     String
+  assignedTeam    String?         @map("assigned_team")
+  assignedVehicle String?         @map("assigned_vehicle")
+  driver          String?
+  dueTime         DateTime        @default(now()) @map("due_time") @db.Timestamptz
+  slaStatus       SLAStatus       @default(ON_TRACK) @map("sla_status")
+  createdAt       DateTime        @default(now()) @map("created_at") @db.Timestamptz
+  progress        Int             @default(0)
+
+  @@index([status], map: "idx_work_orders_status")
+  @@index([slaStatus], map: "idx_work_orders_sla_status")
+  @@map("work_orders")
+}
+
+model Container {
+  id              String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  containerId     String           @unique(map: "containers_container_id_key") @map("container_id")
+  type            String
+  capacity        Int
+  fillLevel       Int              @default(0) @map("fill_level")
+  wasteType       WasteType        @map("waste_type")
+  zone            String
+  location        String
+  lat             Float
+  lng             Float
+  status          ContainerStatus  @default(ACTIVE)
+  lastCollection  DateTime?        @map("last_collection") @db.Timestamptz
+  nextCollection  DateTime?        @map("next_collection") @db.Timestamptz
+  hasSensor       Boolean          @default(false) @map("has_sensor")
+
+  @@index([zone], map: "idx_containers_zone")
+  @@index([status], map: "idx_containers_status")
+  @@map("containers")
+}
+
+model Vehicle {
+  id              String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  plate           String          @unique(map: "vehicles_plate_key")
+  type            String
+  capacity        Int
+  currentLoad     Int             @default(0) @map("current_load")
+  driver          String
+  status          VehicleStatus   @default(AVAILABLE)
+  zone            String
+  lat             Float
+  lng             Float
+  mileage         Int             @default(0)
+  fuel            Int             @default(100)
+  speed           Int             @default(0)
+  routeProgress   Int             @default(0) @map("route_progress")
+  nextStop        String          @default("N/A") @map("next_stop")
+  eta             String          @default("N/A")
+
+  @@index([status], map: "idx_vehicles_status")
+  @@map("vehicles")
+}
+
+model Driver {
+  id              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name            String
+  phone           String
+  license         String
+  assignedVehicle String         @map("assigned_vehicle")
+  status          DriverStatus   @default(available)
+  rating          Float          @default(5.0)
+  completedRoutes Int            @default(0) @map("completed_routes")
+  hoursThisWeek   Int            @default(0) @map("hours_this_week")
+  zone            String
+
+  @@map("drivers")
+}
+
+model Route {
+  id                String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  routeId           String       @unique(map: "routes_route_id_key") @map("route_id")
+  driver            String
+  vehicle           String
+  zone              String
+  stops             Int          @default(0)
+  distance          Float        @default(0)
+  estimatedDuration String       @map("estimated_duration")
+  collectedWeight   Float        @default(0) @map("collected_weight")
+  progress          Int          @default(0)
+  status            RouteStatus  @default(planned)
+  startTime         DateTime     @default(now()) @map("start_time") @db.Timestamptz
+
+  @@index([status], map: "idx_routes_status")
+  @@map("routes")
+}
+
+model Business {
+  id                  String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                String
+  category            String
+  legalId             String         @map("legal_id")
+  address             String
+  zone                String
+  contactName         String         @map("contact_name")
+  contactEmail        String         @map("contact_email")
+  contactPhone        String         @map("contact_phone")
+  contractStatus      ContractStatus @default(none) @map("contract_status")
+  monthlyVolume       Float          @default(0) @map("monthly_volume")
+  recyclingRate       Int            @default(0) @map("recycling_rate")
+  outstandingBalance  Int            @default(0) @map("outstanding_balance")
+  locations           Int            @default(1)
+  containers          Int            @default(0)
+
+  @@map("businesses")
+}
+
+model Contract {
+  id               String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contractId       String        @unique(map: "contracts_contract_id_key") @map("contract_id")
+  customer         String
+  startDate        String        @map("start_date")
+  endDate          String        @map("end_date")
+  wasteTypes       String[]      @map("waste_types")
+  frequency        String
+  containerCount   Int           @default(0) @map("container_count")
+  monthlyPrice     Int           @default(0) @map("monthly_price")
+  extraPickupPrice Int           @default(0) @map("extra_pickup_price")
+  sla              String
+  paymentTerms     String        @map("payment_terms")
+  status           ContractState @default(pending)
+
+  @@map("contracts")
+}
+
+model CollectionRequest {
+  id             String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  requestId      String                   @unique(map: "collection_requests_request_id_key") @map("request_id")
+  business       String
+  wasteType      WasteType                @map("waste_type")
+  quantity       Int                      @default(0)
+  container      String
+  location       String
+  preferredDate  String                   @map("preferred_date")
+  priority       Priority                 @default(NORMAL)
+  status         CollectionRequestStatus  @default(pending)
+  notes          String?
+  price          Int?
+
+  @@index([status], map: "idx_collection_requests_status")
+  @@map("collection_requests")
+}
+
+model Invoice {
+  id         String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  invoiceId  String        @unique(map: "invoices_invoice_id_key") @map("invoice_id")
+  customer   String
+  issueDate  String        @map("issue_date")
+  dueDate    String        @map("due_date")
+  items      String[]
+  amount     Int           @default(0)
+  tax        Int           @default(0)
+  total      Int           @default(0)
+  status     InvoiceStatus @default(DRAFT)
+
+  @@index([status], map: "idx_invoices_status")
+  @@map("invoices")
+}
+
+model Payment {
+  id         String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  paymentId  String         @unique(map: "payments_payment_id_key") @map("payment_id")
+  invoiceRef String         @map("invoice_ref")
+  customer   String
+  amount     Int            @default(0)
+  method     String
+  date       String
+  status     PaymentStatus  @default(pending)
+
+  @@map("payments")
+}
+
+model RecyclerCenter {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name          String
+  location      String
+  zone          String
+  capacity      Int      @default(0)
+  incomingToday Int      @default(0) @map("incoming_today")
+  processedToday Int     @default(0) @map("processed_today")
+  recoveredToday Int     @default(0) @map("recovered_today")
+  rejectsToday  Int      @default(0) @map("rejects_today")
+  efficiency    Int      @default(0)
+  materials     String[]
+
+  @@map("recycler_centers")
+}
+
+model MaterialInventory {
+  id            String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  material      String
+  unit          String
+  openingStock  Int             @default(0) @map("opening_stock")
+  incoming      Int             @default(0)
+  processed     Int             @default(0)
+  sold          Int             @default(0)
+  currentStock  Int             @default(0) @map("current_stock")
+  quality       MaterialQuality
+  pricePerTon   Int             @default(0) @map("price_per_ton")
+
+  @@map("material_inventory")
+}
+
+model MarketplaceListing {
+  id            String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  listingId     String             @unique(map: "marketplace_listings_listing_id_key") @map("listing_id")
+  material      String
+  quantity      Int                @default(0)
+  unit          String
+  quality       String
+  price         Int                @default(0)
+  location      String
+  seller        String
+  availableDate String             @map("available_date")
+  status        MarketplaceStatus  @default(available)
+
+  @@map("marketplace_listings")
+}
+
+model WeighbridgeTransaction {
+  id          String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ticketId    String            @unique(map: "weighbridge_transactions_ticket_id_key") @map("ticket_id")
+  vehicle     String
+  driver      String
+  grossWeight Int               @default(0) @map("gross_weight")
+  tareWeight  Int               @default(0) @map("tare_weight")
+  netWeight   Int               @default(0) @map("net_weight")
+  wasteType   WasteType         @map("waste_type")
+  origin      String
+  destination String
+  timestamp   DateTime          @default(now()) @db.Timestamptz
+  status      WeighbridgeStatus @default(entered)
+
+  @@index([timestamp], map: "idx_weighbridge_transactions_timestamp")
+  @@map("weighbridge_transactions")
+}
+
+model TransferStation {
+  id               String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name             String
+  location         String
+  zone             String
+  incomingToday    Int                    @default(0) @map("incoming_today")
+  outgoingToday    Int                    @default(0) @map("outgoing_today")
+  storageCurrent   Int                    @default(0) @map("storage_current")
+  storageCapacity  Int                    @default(0) @map("storage_capacity")
+  trucksProcessed  Int                    @default(0) @map("trucks_processed")
+  avgWaitTime      String                 @map("avg_wait_time")
+  status           TransferStationStatus  @default(operational)
+
+  @@map("transfer_stations")
+}
+
+model MaintenanceRecord {
+  id             String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  vehicle        String
+  type           String
+  status         MaintenanceStatus @default(scheduled)
+  assignedTo     String            @map("assigned_to")
+  startDate      String            @map("start_date")
+  estCompletion  String            @map("est_completion")
+  cost           Int               @default(0)
+  mileage        Int               @default(0)
+
+  @@map("maintenance_records")
+}
+
+model AuditLog {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userName    String   @map("user_name")
+  action      String
+  entity      String
+  entityId    String   @map("entity_id")
+  timestamp   DateTime @default(now()) @db.Timestamptz
+  ip          String
+  beforeValue String?  @map("before_value")
+  afterValue  String?  @map("after_value")
+
+  @@index([timestamp], map: "idx_audit_logs_timestamp")
+  @@map("audit_logs")
+}
+
+model EcoProfile {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  citizen          String
+  ecoPoints        Int      @default(0) @map("eco_points")
+  level            String
+  totalReports     Int      @default(0) @map("total_reports")
+  verifiedReports  Int      @default(0) @map("verified_reports")
+  recyclingActions Int      @default(0) @map("recycling_actions")
+  cleanups         Int      @default(0)
+
+  @@map("eco_profiles")
+}
+
+model Zone {
+  id             String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  zone           String
+  reports        Int    @default(0)
+  wasteCollected Int    @default(0) @map("waste_collected")
+  recyclingRate  Int    @default(0) @map("recycling_rate")
+  slaCompliance  Int    @default(0) @map("sla_compliance")
+
+  @@map("zones")
+}
+
+model WasteByType {
+  id    String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  type  String
+  tons  Int    @default(0)
+  color String
+
+  @@map("waste_by_type")
+}
+
+model MonthlyCollection {
+  id         String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  month      String
+  collected  Int    @default(0)
+  recycled   Int    @default(0)
+  landfilled Int    @default(0)
+
+  @@map("monthly_collection")
+}
+
+model ActivityFeed {
+  id       String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  type     ActivityFeedType
+  message  String
+  time     String
+  priority Priority?
+
+  @@map("activity_feed")
+}
+
+model KpiData {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  label     String
+  value     String
+  change    Float    @default(0)
+  trend     Trend
+  icon      String
+  sparkline Int[]
+
+  @@map("kpi_data")
+}
+
+model Subscription {
+  id              String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orgName         String             @map("org_name")
+  orgType         OrgType            @map("org_type")
+  plan            SubscriptionPlan
+  status          SubscriptionStatus @default(pending)
+  startDate       String             @map("start_date")
+  endDate         String             @map("end_date")
+  monthlyFee      Int                @default(0) @map("monthly_fee")
+  includedUsers   Int                @default(0) @map("included_users")
+  usedUsers       Int                @default(0) @map("used_users")
+  includedZones   Int                @default(0) @map("included_zones")
+  usedZones       Int                @default(0) @map("used_zones")
+  apiCallsLimit   Int                @default(0) @map("api_calls_limit")
+  apiCallsUsed    Int                @default(0) @map("api_calls_used")
+  storageLimitGb  Int                @default(0) @map("storage_limit_gb")
+  storageUsedGb   Int                @default(0) @map("storage_used_gb")
+  autoRenew       Boolean            @default(false) @map("auto_renew")
+  paymentMethod   String             @map("payment_method")
+  contactName     String             @map("contact_name")
+  contactEmail    String             @map("contact_email")
+  contactPhone    String             @map("contact_phone")
+  createdAt       DateTime           @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([status], map: "idx_subscriptions_status")
+  @@index([plan], map: "idx_subscriptions_plan")
+  @@index([orgType], map: "idx_subscriptions_org_type")
+  @@map("subscriptions")
+}
