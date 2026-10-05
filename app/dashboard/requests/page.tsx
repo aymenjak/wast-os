@@ -4,7 +4,10 @@ import { useState, useMemo } from 'react';
 import { PageHeader } from '@/components/dashboard/page-header';
 import { PriorityBadge } from '@/components/dashboard/badges';
 import { cn } from '@/lib/utils';
-import { collectionRequests, wasteTypeLabels, priorityBadgeClass } from '@/lib/mock-data';
+import { useCrud } from '@/hooks/use-crud';
+import { requestConfig } from '@/lib/table-configs';
+import { wasteTypeLabels, priorityBadgeClass } from '@/lib/mock-data';
+import type { CollectionRequest } from '@/lib/types';
 import { Search, Plus, ClipboardList, Clock, Truck, CheckCircle2, Package } from 'lucide-react';
 
 const statusConfig: Record<string, { label: string; color: string }> = {
@@ -17,6 +20,7 @@ const statusConfig: Record<string, { label: string; color: string }> = {
 };
 
 export default function RequestsPage() {
+  const { data: collectionRequests, loading, error } = useCrud<CollectionRequest>(requestConfig);
   const [search, setSearch] = useState('');
 
   const filtered = useMemo(() =>
@@ -24,17 +28,19 @@ export default function RequestsPage() {
       r.business.toLowerCase().includes(search.toLowerCase()) ||
       r.requestId.toLowerCase().includes(search.toLowerCase())
     )
-  , [search]);
+  , [collectionRequests, search]);
 
   const stats = useMemo(() => ({
     total: collectionRequests.length,
     pending: collectionRequests.filter(r => r.status === 'pending').length,
     dispatched: collectionRequests.filter(r => r.status === 'dispatched').length,
     completed: collectionRequests.filter(r => r.status === 'completed').length,
-  }), []);
+  }), [collectionRequests]);
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {loading && <div className="text-center py-12 text-muted-foreground text-sm">جارٍ التحميل...</div>}
+      {error && <div className="text-center py-12 text-destructive text-sm">خطأ: {error}</div>}
       <PageHeader title="طلبات الجمع" description="طلبات جمع النفايات من الشركات">
         <button className="flex items-center gap-1.5 px-3 h-9 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">
           <Plus className="w-4 h-4" /> طلب جديد

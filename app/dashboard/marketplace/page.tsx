@@ -2,7 +2,9 @@
 
 import { PageHeader } from '@/components/dashboard/page-header';
 import { cn } from '@/lib/utils';
-import { marketplaceListings } from '@/lib/mock-data';
+import { useCrud } from '@/hooks/use-crud';
+import { marketplaceConfig } from '@/lib/table-configs';
+import type { MarketplaceListing } from '@/lib/types';
 import { Store, Search, Package, MapPin, Calendar, Plus } from 'lucide-react';
 import { useState, useMemo } from 'react';
 
@@ -13,11 +15,12 @@ const statusConfig: Record<string, { label: string; color: string }> = {
 };
 
 export default function MarketplacePage() {
+  const { data: marketplaceListings, loading, error } = useCrud<MarketplaceListing>(marketplaceConfig);
   const [search, setSearch] = useState('');
 
   const filtered = useMemo(() =>
     marketplaceListings.filter(l => l.material.toLowerCase().includes(search.toLowerCase()) || l.seller.toLowerCase().includes(search.toLowerCase()))
-  , [search]);
+  , [marketplaceListings, search]);
 
   const stats = {
     total: marketplaceListings.length,
@@ -27,6 +30,8 @@ export default function MarketplacePage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {loading && <div className="text-center py-12 text-muted-foreground text-sm">جارٍ التحميل...</div>}
+      {error && <div className="text-center py-12 text-destructive text-sm">خطأ: {error}</div>}
       <PageHeader title="سوق إعادة التدوير" description="سوق بين الشركات لبيع وشراء المواد المسترجعة">
         <button className="flex items-center gap-1.5 px-3 h-9 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">
           <Plus className="w-4 h-4" /> عرض مادة

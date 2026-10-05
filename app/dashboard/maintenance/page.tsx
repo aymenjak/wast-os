@@ -3,19 +3,10 @@
 import { PageHeader } from '@/components/dashboard/page-header';
 import { ProgressBar } from '@/components/dashboard/badges';
 import { cn } from '@/lib/utils';
-import { vehicles } from '@/lib/mock-data';
+import { useCrud } from '@/hooks/use-crud';
+import { maintenanceConfig, vehicleConfig } from '@/lib/table-configs';
+import type { MaintenanceRecord, Vehicle } from '@/lib/types';
 import { Wrench, Truck, Calendar, AlertTriangle, CheckCircle2, Clock } from 'lucide-react';
-
-const maintenanceItems = [
-  { id: 'm1', vehicle: 'TC-009', type: 'تغيير زيت', status: 'in_progress', assignedTo: 'الورشة المركزية', startDate: '2024-08-14', estCompletion: '2024-08-15', cost: 12000, mileage: 78420 },
-  { id: 'm2', vehicle: 'TC-022', type: 'إصلاح محرك', status: 'in_progress', assignedTo: 'الورشة المركزية', startDate: '2024-08-10', estCompletion: '2024-08-20', cost: 85000, mileage: 92100 },
-  { id: 'm3', vehicle: 'TC-023', type: 'نظام هيدروليكي', status: 'in_progress', assignedTo: 'ورشة الجنوب', startDate: '2024-08-12', estCompletion: '2024-08-18', cost: 45000, mileage: 67300 },
-  { id: 'm4', vehicle: 'TC-017', type: 'صيانة فرامل', status: 'scheduled', assignedTo: 'الورشة المركزية', startDate: '2024-08-20', estCompletion: '2024-08-21', cost: 15000, mileage: 54800 },
-  { id: 'm5', vehicle: 'TC-005', type: 'استبدال إطارات', status: 'scheduled', assignedTo: 'ورشة الشرق', startDate: '2024-08-22', estCompletion: '2024-08-22', cost: 28000, mileage: 81200 },
-  { id: 'm6', vehicle: 'TC-014', type: 'فحص سنوي', status: 'scheduled', assignedTo: 'الورشة المركزية', startDate: '2024-08-25', estCompletion: '2024-08-26', cost: 8000, mileage: 45600 },
-  { id: 'm7', vehicle: 'TC-002', type: 'صيانة ناقل الحركة', status: 'completed', assignedTo: 'الورشة المركزية', startDate: '2024-08-01', estCompletion: '2024-08-05', cost: 38000, mileage: 71900 },
-  { id: 'm8', vehicle: 'TC-008', type: 'تغيير زيت', status: 'completed', assignedTo: 'ورشة الشرق', startDate: '2024-08-03', estCompletion: '2024-08-04', cost: 11000, mileage: 52300 },
-];
 
 const statusConfig: Record<string, { label: string; color: string; icon: typeof CheckCircle2 }> = {
   in_progress: { label: 'قيد التنفيذ', color: 'bg-primary/15 text-primary', icon: Wrench },
@@ -24,6 +15,8 @@ const statusConfig: Record<string, { label: string; color: string; icon: typeof 
 };
 
 export default function MaintenancePage() {
+  const { data: maintenanceItems, loading: maintLoading, error: maintError } = useCrud<MaintenanceRecord>(maintenanceConfig);
+  const { data: vehicles, loading: vehLoading } = useCrud<Vehicle>(vehicleConfig);
   const inProgress = maintenanceItems.filter(m => m.status === 'in_progress');
   const scheduled = maintenanceItems.filter(m => m.status === 'scheduled');
   const completed = maintenanceItems.filter(m => m.status === 'completed');
@@ -32,6 +25,8 @@ export default function MaintenancePage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {(maintLoading || vehLoading) && <div className="text-center py-12 text-muted-foreground text-sm">جارٍ التحميل...</div>}
+      {maintError && <div className="text-center py-12 text-destructive text-sm">خطأ: {maintError}</div>}
       <PageHeader title="الصيانة" description="تتبع جداول صيانة المركبات وحالة الورشة" />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">

@@ -113,6 +113,8 @@ export default function ReportsPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {loading && <div className="text-center py-12 text-muted-foreground text-sm">جارٍ التحميل...</div>}
+      {error && <div className="text-center py-12 text-destructive text-sm">خطأ: {error}</div>}
       <PageHeader title="بلاغات المواطنين" description="تتبع وإدارة البلاغات المتعلقة بالنفايات المرسلة من المواطنين">
         <button onClick={handleExport} className="flex items-center gap-1.5 px-3 h-9 rounded-lg bg-card border border-border text-sm font-medium hover:bg-muted transition-colors">
           <Download className="w-4 h-4" /> تصدير

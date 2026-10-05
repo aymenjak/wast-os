@@ -3,17 +3,14 @@
 import { PageHeader } from '@/components/dashboard/page-header';
 import { ProgressBar } from '@/components/dashboard/badges';
 import { cn } from '@/lib/utils';
+import { useCrud } from '@/hooks/use-crud';
+import { transferStationConfig } from '@/lib/table-configs';
+import type { TransferStation } from '@/lib/types';
 import { CityMap, type MapEntity } from '@/components/dashboard/city-map';
 import { ArrowRightLeft, MapPin, Truck, Weight, Clock, TrendingUp } from 'lucide-react';
 
-const stations = [
-  { id: 'ts1', name: 'Transfer Station Est', location: 'Rouiba Industrial Zone', zone: 'Zone 3 — Est', lat: 36.7350, lng: 3.2780, incomingToday: 42, outgoingToday: 38, storageCurrent: 85, storageCapacity: 200, trucksProcessed: 14, avgWaitTime: '12 min', status: 'operational' },
-  { id: 'ts2', name: 'Transfer Station Oued Smar', location: 'Oued Smar', zone: 'Zone 5 — Ouest', lat: 36.6930, lng: 2.9980, incomingToday: 56, outgoingToday: 48, storageCurrent: 120, storageCapacity: 250, trucksProcessed: 18, avgWaitTime: '18 min', status: 'operational' },
-  { id: 'ts3', name: 'Transfer Station Centre', location: 'Hussein Dey', zone: 'Zone 1 — Centre', lat: 36.7510, lng: 3.0850, incomingToday: 38, outgoingToday: 35, storageCurrent: 68, storageCapacity: 150, trucksProcessed: 12, avgWaitTime: '8 min', status: 'operational' },
-  { id: 'ts4', name: 'Transfer Station Sud', location: 'Birkhadem', zone: 'Zone 4 — Sud', lat: 36.7220, lng: 3.0520, incomingToday: 29, outgoingToday: 22, storageCurrent: 142, storageCapacity: 180, trucksProcessed: 9, avgWaitTime: '25 min', status: 'near_capacity' },
-];
-
 export default function TransferStationsPage() {
+  const { data: stations, loading, error } = useCrud<TransferStation>(transferStationConfig);
   const totalIncoming = stations.reduce((s, st) => s + st.incomingToday, 0);
   const totalOutgoing = stations.reduce((s, st) => s + st.outgoingToday, 0);
   const totalTrucks = stations.reduce((s, st) => s + st.trucksProcessed, 0);
@@ -37,6 +34,8 @@ export default function TransferStationsPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {loading && <div className="text-center py-12 text-muted-foreground text-sm">جارٍ التحميل...</div>}
+      {error && <div className="text-center py-12 text-destructive text-sm">خطأ: {error}</div>}
       <PageHeader title="محطات التحويل" description="مراقبة تدفق النفايات عبر محطات التحويل" />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">

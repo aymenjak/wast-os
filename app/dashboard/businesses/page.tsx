@@ -3,7 +3,9 @@
 import { useState, useMemo } from 'react';
 import { PageHeader } from '@/components/dashboard/page-header';
 import { cn } from '@/lib/utils';
-import { businesses } from '@/lib/mock-data';
+import { useCrud } from '@/hooks/use-crud';
+import { businessConfig } from '@/lib/table-configs';
+import type { Business } from '@/lib/types';
 import {
   Search, Plus, Download, Building2, MapPin, Mail, Phone,
   Recycle, FileText, AlertCircle, CheckCircle2, Clock, XCircle, X,
@@ -28,9 +30,10 @@ const contractStatusConfig: Record<string, { label: string; color: string; icon:
 };
 
 export default function BusinessesPage() {
+  const { data: businesses, loading, error } = useCrud<Business>(businessConfig);
   const [search, setSearch] = useState('');
   const [showAdd, setShowAdd] = useState(false);
-  const [selectedBusiness, setSelectedBusiness] = useState<typeof businesses[0] | null>(null);
+  const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(null);
   const [showRequest, setShowRequest] = useState(false);
 
   const handleExport = () => {
@@ -47,17 +50,19 @@ export default function BusinessesPage() {
       b.category.toLowerCase().includes(search.toLowerCase()) ||
       b.zone.toLowerCase().includes(search.toLowerCase())
     );
-  }, [search]);
+  }, [businesses, search]);
 
   const stats = useMemo(() => ({
     total: businesses.length,
     activeContracts: businesses.filter(b => b.contractStatus === 'active').length,
     outstanding: businesses.reduce((sum, b) => sum + b.outstandingBalance, 0),
     totalVolume: Math.round(businesses.reduce((sum, b) => sum + b.monthlyVolume, 0) * 10) / 10,
-  }), []);
+  }), [businesses]);
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {loading && <div className="text-center py-12 text-muted-foreground text-sm">جارٍ التحميل...</div>}
+      {error && <div className="text-center py-12 text-destructive text-sm">خطأ: {error}</div>}
       <PageHeader title="الشركات" description="إدارة عملاء الأعمال والعقود وخدمات الجمع">
         <button onClick={handleExport} className="flex items-center gap-1.5 px-3 h-9 rounded-lg bg-card border border-border text-sm font-medium hover:bg-muted transition-colors">
           <Download className="w-4 h-4" /> تصدير
@@ -214,7 +219,7 @@ function AddBusinessModal({ onClose }: { onClose: () => void }) {
   );
 }
 
-function BusinessDetailsModal({ business, onClose, onRequest }: { business: typeof businesses[0]; onClose: () => void; onRequest: () => void }) {
+function BusinessDetailsModal({ business, onClose, onRequest }: { business: Business; onClose: () => void; onRequest: () => void }) {
   return (
     <>
       <div className="fixed inset-0 bg-black/40 z-50 animate-fade-in" onClick={onClose} />
@@ -247,7 +252,7 @@ function BusinessDetailsModal({ business, onClose, onRequest }: { business: type
   );
 }
 
-function RequestModal({ business, onClose }: { business: typeof businesses[0]; onClose: () => void }) {
+function RequestModal({ business, onClose }: { business: Business; onClose: () => void }) {
   return (
     <>
       <div className="fixed inset-0 bg-black/40 z-50 animate-fade-in" onClick={onClose} />

@@ -3,7 +3,9 @@
 import { useState, useMemo } from 'react';
 import { PageHeader } from '@/components/dashboard/page-header';
 import { cn } from '@/lib/utils';
-import { payments } from '@/lib/mock-data';
+import { useCrud } from '@/hooks/use-crud';
+import { paymentConfig } from '@/lib/table-configs';
+import type { Payment } from '@/lib/types';
 import { Search, Download, CreditCard, CheckCircle2, Clock, XCircle } from 'lucide-react';
 
 const statusConfig: Record<string, { color: string; icon: typeof CheckCircle2 }> = {
@@ -13,21 +15,24 @@ const statusConfig: Record<string, { color: string; icon: typeof CheckCircle2 }>
 };
 
 export default function PaymentsPage() {
+  const { data: payments, loading, error } = useCrud<Payment>(paymentConfig);
   const [search, setSearch] = useState('');
 
   const filtered = useMemo(() =>
     payments.filter(p => p.paymentId.toLowerCase().includes(search.toLowerCase()) || p.customer.toLowerCase().includes(search.toLowerCase()))
-  , [search]);
+  , [payments, search]);
 
   const stats = useMemo(() => ({
     total: payments.length,
     completed: payments.filter(p => p.status === 'completed').length,
     pending: payments.filter(p => p.status === 'pending').length,
     totalCollected: payments.filter(p => p.status === 'completed').reduce((s, p) => s + p.amount, 0),
-  }), []);
+  }), [payments]);
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {loading && <div className="text-center py-12 text-muted-foreground text-sm">جارٍ التحميل...</div>}
+      {error && <div className="text-center py-12 text-destructive text-sm">خطأ: {error}</div>}
       <PageHeader title="المدفوعات" description="تتبع المدفوعات المستلمة من عملاء الأعمال">
         <button className="flex items-center gap-1.5 px-3 h-9 rounded-lg bg-card border border-border text-sm font-medium hover:bg-muted transition-colors">
           <Download className="w-4 h-4" /> تصدير

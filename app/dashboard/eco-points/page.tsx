@@ -2,7 +2,10 @@
 
 import { PageHeader } from '@/components/dashboard/page-header';
 import { cn } from '@/lib/utils';
-import { ecoProfiles, ecoLevels } from '@/lib/mock-data';
+import { useCrud } from '@/hooks/use-crud';
+import { ecoProfileConfig } from '@/lib/table-configs';
+import { ecoLevels } from '@/lib/mock-data';
+import type { EcoProfile } from '@/lib/types';
 import { Trophy, Star, Recycle, ClipboardList, CheckCircle2, Award, TrendingUp } from 'lucide-react';
 
 const levelColors: Record<string, string> = {
@@ -14,6 +17,7 @@ const levelColors: Record<string, string> = {
 };
 
 export default function EcoPointsPage() {
+  const { data: ecoProfiles, loading, error } = useCrud<EcoProfile>(ecoProfileConfig);
   const totalPoints = ecoProfiles.reduce((s, p) => s + p.ecoPoints, 0);
   const totalReports = ecoProfiles.reduce((s, p) => s + p.totalReports, 0);
   const totalVerified = ecoProfiles.reduce((s, p) => s + p.verifiedReports, 0);
@@ -22,6 +26,8 @@ export default function EcoPointsPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {loading && <div className="text-center py-12 text-muted-foreground text-sm">جارٍ التحميل...</div>}
+      {error && <div className="text-center py-12 text-destructive text-sm">خطأ: {error}</div>}
       <PageHeader title="النقاط البيئية" description="تحفيز المواطنين — مكافأة البلاغات وإعادة التدوير والتنظيفات" />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">

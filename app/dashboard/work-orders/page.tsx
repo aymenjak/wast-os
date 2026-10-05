@@ -36,11 +36,11 @@ const slaBadgeClass: Record<SLAStatus, string> = {
 
 export default function WorkOrdersPage() {
   const router = useRouter();
+  const { data: workOrders, loading, error } = useCrud<WorkOrder>(workOrderConfig);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<WorkOrderStatus | 'ALL'>('ALL');
   const [slaFilter, setSlaFilter] = useState<SLAStatus | 'ALL'>('ALL');
   const [showCreate, setShowCreate] = useState(false);
-  const { data: workOrders, loading, error } = useCrud<WorkOrder>(workOrderConfig);
 
   const filtered = useMemo(() => {
     if (!workOrders) return [];
@@ -121,6 +121,8 @@ export default function WorkOrdersPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {loading && <div className="text-center py-12 text-muted-foreground text-sm">جارٍ التحميل...</div>}
+      {error && <div className="text-center py-12 text-destructive text-sm">خطأ: {error}</div>}
       <PageHeader title="أوامر العمل" description="إدارة وتتبع جميع أوامر العمل التشغيلية عبر المدينة">
         <button
           onClick={handleExport}

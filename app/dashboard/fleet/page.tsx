@@ -3,8 +3,10 @@
 import { useState, useMemo } from 'react';
 import { PageHeader } from '@/components/dashboard/page-header';
 import { StatusBadge, ProgressBar } from '@/components/dashboard/badges';
-import { vehicles, vehicleStatusBadgeClass } from '@/lib/mock-data';
-import type { VehicleStatus } from '@/lib/types';
+import { useCrud } from '@/hooks/use-crud';
+import { vehicleConfig } from '@/lib/table-configs';
+import { vehicleStatusBadgeClass } from '@/lib/mock-data';
+import type { Vehicle, VehicleStatus } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import {
   Search, Download, Plus, Truck, Fuel, Gauge,
@@ -25,6 +27,7 @@ function downloadCSV(headers: string[], rows: (string | number)[][], filename: s
 const statusOptions: (VehicleStatus | 'ALL')[] = ['ALL', 'AVAILABLE', 'ON_ROUTE', 'LOADING', 'MAINTENANCE', 'OFFLINE'];
 
 export default function FleetPage() {
+  const { data: vehicles, loading, error } = useCrud<Vehicle>(vehicleConfig);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<VehicleStatus | 'ALL'>('ALL');
   const [showAdd, setShowAdd] = useState(false);
@@ -45,7 +48,7 @@ export default function FleetPage() {
       const matchesStatus = statusFilter === 'ALL' || v.status === statusFilter;
       return matchesSearch && matchesStatus;
     });
-  }, [search, statusFilter]);
+  }, [vehicles, search, statusFilter]);
 
   const stats = useMemo(() => {
     const total = vehicles.length;
@@ -53,12 +56,14 @@ export default function FleetPage() {
     const available = vehicles.filter(v => v.status === 'AVAILABLE').length;
     const maintenance = vehicles.filter(v => v.status === 'MAINTENANCE').length;
     const offline = vehicles.filter(v => v.status === 'OFFLINE').length;
-    const avgFuel = Math.round(vehicles.filter(v => v.status !== 'OFFLINE').reduce((sum, v) => sum + v.fuel, 0) / (total - offline));
+    const avgFuel = total > offline && total > 0 ? Math.round(vehicles.filter(v => v.status !== 'OFFLINE').reduce((sum, v) => sum + v.fuel, 0) / (total - offline)) : 0;
     return { total, onRoute, available, maintenance, offline, avgFuel };
-  }, []);
+  }, [vehicles]);
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {loading && <div className="text-center py-12 text-muted-foreground text-sm">جارٍ التحميل...</div>}
+      {error && <div className="text-center py-12 text-destructive text-sm">خطأ: {error}</div>}
       <PageHeader title="إدارة الأسطول" description="مراقبة المركبات والسائقين والوقود والصيانة">
         <button onClick={handleExport} className="flex items-center gap-1.5 px-3 h-9 rounded-lg bg-card border border-border text-sm font-medium hover:bg-muted transition-colors">
           <Download className="w-4 h-4" /> تصدير

@@ -4,7 +4,9 @@ import { useState, useMemo } from 'react';
 import { PageHeader } from '@/components/dashboard/page-header';
 import { ProgressBar } from '@/components/dashboard/badges';
 import { cn } from '@/lib/utils';
-import { routes } from '@/lib/mock-data';
+import { useCrud } from '@/hooks/use-crud';
+import { routeConfig } from '@/lib/table-configs';
+import type { Route } from '@/lib/types';
 import { Search, Navigation, Plus, CheckCircle2, Clock, AlertTriangle, MapPin, Truck, Weight, X } from 'lucide-react';
 
 const statusConfig: Record<string, { label: string; color: string; icon: typeof CheckCircle2 }> = {
@@ -15,6 +17,7 @@ const statusConfig: Record<string, { label: string; color: string; icon: typeof 
 };
 
 export default function RoutesPage() {
+  const { data: routes, loading, error } = useCrud<Route>(routeConfig);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [showPlan, setShowPlan] = useState(false);
@@ -25,17 +28,19 @@ export default function RoutesPage() {
       const matchesStatus = statusFilter === 'ALL' || r.status === statusFilter;
       return matchesSearch && matchesStatus;
     })
-  , [search, statusFilter]);
+  , [routes, search, statusFilter]);
 
   const stats = useMemo(() => ({
     total: routes.length,
     active: routes.filter(r => r.status === 'active').length,
     completed: routes.filter(r => r.status === 'completed').length,
     totalWeight: Math.round(routes.reduce((s, r) => s + r.collectedWeight, 0) * 10) / 10,
-  }), []);
+  }), [routes]);
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {loading && <div className="text-center py-12 text-muted-foreground text-sm">جارٍ التحميل...</div>}
+      {error && <div className="text-center py-12 text-destructive text-sm">خطأ: {error}</div>}
       <PageHeader title="المسارات" description="تخطيط وتتبع مسارات الجمع عبر المناطق">
         <button onClick={() => setShowPlan(true)} className="flex items-center gap-1.5 px-3 h-9 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">
           <Plus className="w-4 h-4" /> تخطيط مسار

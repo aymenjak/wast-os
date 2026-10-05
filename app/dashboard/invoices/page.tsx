@@ -3,13 +3,16 @@
 import { useState, useMemo } from 'react';
 import { PageHeader } from '@/components/dashboard/page-header';
 import { cn } from '@/lib/utils';
-import { invoices, invoiceStatusBadgeClass } from '@/lib/mock-data';
+import { useCrud } from '@/hooks/use-crud';
+import { invoiceConfig } from '@/lib/table-configs';
+import { invoiceStatusBadgeClass } from '@/lib/mock-data';
 import { Search, Download, Plus, FileText, CheckCircle2, AlertCircle, Clock } from 'lucide-react';
-import type { InvoiceStatus } from '@/lib/types';
+import type { Invoice, InvoiceStatus } from '@/lib/types';
 
 const statusOptions: (InvoiceStatus | 'ALL')[] = ['ALL', 'DRAFT', 'ISSUED', 'SENT', 'PARTIALLY_PAID', 'PAID', 'OVERDUE', 'CANCELLED'];
 
 export default function InvoicesPage() {
+  const { data: invoices, loading, error } = useCrud<Invoice>(invoiceConfig);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<InvoiceStatus | 'ALL'>('ALL');
 
@@ -19,17 +22,19 @@ export default function InvoicesPage() {
       const matchesStatus = statusFilter === 'ALL' || inv.status === statusFilter;
       return matchesSearch && matchesStatus;
     })
-  , [search, statusFilter]);
+  , [invoices, search, statusFilter]);
 
   const stats = useMemo(() => ({
     total: invoices.length,
     paid: invoices.filter(i => i.status === 'PAID').length,
     overdue: invoices.filter(i => i.status === 'OVERDUE').length,
     totalOutstanding: invoices.filter(i => i.status !== 'PAID' && i.status !== 'CANCELLED').reduce((s, i) => s + i.total, 0),
-  }), []);
+  }), [invoices]);
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {loading && <div className="text-center py-12 text-muted-foreground text-sm">جارٍ التحميل...</div>}
+      {error && <div className="text-center py-12 text-destructive text-sm">خطأ: {error}</div>}
       <PageHeader title="الفواتير" description="إدارة الفوترة لعملاء الأعمال">
         <button className="flex items-center gap-1.5 px-3 h-9 rounded-lg bg-card border border-border text-sm font-medium hover:bg-muted transition-colors">
           <Download className="w-4 h-4" /> تصدير

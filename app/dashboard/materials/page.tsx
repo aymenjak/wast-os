@@ -3,7 +3,9 @@
 import { PageHeader } from '@/components/dashboard/page-header';
 import { ProgressBar } from '@/components/dashboard/badges';
 import { cn } from '@/lib/utils';
-import { materialInventory } from '@/lib/mock-data';
+import { useCrud } from '@/hooks/use-crud';
+import { materialConfig } from '@/lib/table-configs';
+import type { MaterialInventory } from '@/lib/types';
 import { Package, Search, TrendingUp, TrendingDown, Plus } from 'lucide-react';
 import { useState, useMemo } from 'react';
 
@@ -14,11 +16,12 @@ const qualityColors: Record<string, string> = {
 };
 
 export default function MaterialsPage() {
+  const { data: materialInventory, loading, error } = useCrud<MaterialInventory>(materialConfig);
   const [search, setSearch] = useState('');
 
   const filtered = useMemo(() =>
     materialInventory.filter(m => m.material.toLowerCase().includes(search.toLowerCase()))
-  , [search]);
+  , [materialInventory, search]);
 
   const stats = {
     totalStock: materialInventory.reduce((s, m) => s + m.currentStock, 0),
@@ -29,6 +32,8 @@ export default function MaterialsPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {loading && <div className="text-center py-12 text-muted-foreground text-sm">جارٍ التحميل...</div>}
+      {error && <div className="text-center py-12 text-destructive text-sm">خطأ: {error}</div>}
       <PageHeader title="المواد والمخزون" description="تتبع مخزون المواد المسترجعة وحركاتها وتقييمها">
         <button className="flex items-center gap-1.5 px-3 h-9 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">
           <Plus className="w-4 h-4" /> إضافة مخزون

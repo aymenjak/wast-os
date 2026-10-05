@@ -3,7 +3,10 @@
 import { useState, useMemo } from 'react';
 import { PageHeader } from '@/components/dashboard/page-header';
 import { cn } from '@/lib/utils';
-import { weighbridgeTransactions, wasteTypeLabels, formatTimeAgo } from '@/lib/mock-data';
+import { useCrud } from '@/hooks/use-crud';
+import { weighbridgeConfig } from '@/lib/table-configs';
+import { wasteTypeLabels, formatTimeAgo } from '@/lib/mock-data';
+import type { WeighbridgeTransaction } from '@/lib/types';
 import { Search, Scale, Plus, Truck, Weight, ArrowRight, CheckCircle2, Clock } from 'lucide-react';
 
 const statusConfig: Record<string, { label: string; color: string }> = {
@@ -13,6 +16,7 @@ const statusConfig: Record<string, { label: string; color: string }> = {
 };
 
 export default function WeighbridgePage() {
+  const { data: weighbridgeTransactions, loading, error } = useCrud<WeighbridgeTransaction>(weighbridgeConfig);
   const [search, setSearch] = useState('');
 
   const filtered = useMemo(() =>
@@ -21,17 +25,19 @@ export default function WeighbridgePage() {
       t.vehicle.toLowerCase().includes(search.toLowerCase()) ||
       t.driver.toLowerCase().includes(search.toLowerCase())
     )
-  , [search]);
+  , [weighbridgeTransactions, search]);
 
   const stats = useMemo(() => ({
     total: weighbridgeTransactions.length,
     totalNet: weighbridgeTransactions.reduce((s, t) => s + t.netWeight, 0),
     completed: weighbridgeTransactions.filter(t => t.status === 'completed').length,
     pending: weighbridgeTransactions.filter(t => t.status !== 'completed').length,
-  }), []);
+  }), [weighbridgeTransactions]);
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {loading && <div className="text-center py-12 text-muted-foreground text-sm">جارٍ التحميل...</div>}
+      {error && <div className="text-center py-12 text-destructive text-sm">خطأ: {error}</div>}
       <PageHeader title="الميزان" description="تسجيل وتتبع عمليات وزن المركبات">
         <button className="flex items-center gap-1.5 px-3 h-9 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">
           <Plus className="w-4 h-4" /> وزن جديد

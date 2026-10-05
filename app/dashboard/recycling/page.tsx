@@ -2,19 +2,24 @@
 
 import { PageHeader } from '@/components/dashboard/page-header';
 import { cn } from '@/lib/utils';
-import { recyclerCenters } from '@/lib/mock-data';
+import { useCrud } from '@/hooks/use-crud';
+import { recyclerConfig } from '@/lib/table-configs';
+import type { RecyclerCenter } from '@/lib/types';
 import { Recycle, MapPin, Package, TrendingUp, Percent } from 'lucide-react';
 
 export default function RecyclingPage() {
+  const { data: recyclerCenters, loading, error } = useCrud<RecyclerCenter>(recyclerConfig);
   const stats = {
     totalCapacity: recyclerCenters.reduce((s, c) => s + c.capacity, 0),
     totalIncoming: recyclerCenters.reduce((s, c) => s + c.incomingToday, 0),
     totalRecovered: recyclerCenters.reduce((s, c) => s + c.recoveredToday, 0),
-    avgEfficiency: Math.round(recyclerCenters.reduce((s, c) => s + c.efficiency, 0) / recyclerCenters.length),
+    avgEfficiency: recyclerCenters.length > 0 ? Math.round(recyclerCenters.reduce((s, c) => s + c.efficiency, 0) / recyclerCenters.length) : 0,
   };
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {loading && <div className="text-center py-12 text-muted-foreground text-sm">جارٍ التحميل...</div>}
+      {error && <div className="text-center py-12 text-destructive text-sm">خطأ: {error}</div>}
       <PageHeader title="مراكز إعادة التدوير" description="مراقبة النفايات الواردة والمعالجة واسترجاع المواد" />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">

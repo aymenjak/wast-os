@@ -3,7 +3,9 @@
 import { useState, useMemo } from 'react';
 import { PageHeader } from '@/components/dashboard/page-header';
 import { cn } from '@/lib/utils';
-import { drivers } from '@/lib/mock-data';
+import { useCrud } from '@/hooks/use-crud';
+import { driverConfig } from '@/lib/table-configs';
+import type { Driver } from '@/lib/types';
 import { Search, Users, Star, Truck, Clock, MapPin, Phone } from 'lucide-react';
 
 const statusConfig: Record<string, { label: string; color: string }> = {
@@ -14,22 +16,29 @@ const statusConfig: Record<string, { label: string; color: string }> = {
 };
 
 export default function DriversPage() {
+  const { data: drivers, loading, error } = useCrud<Driver>(driverConfig);
   const [search, setSearch] = useState('');
 
   const filtered = useMemo(() =>
     drivers.filter(d => d.name.toLowerCase().includes(search.toLowerCase()) || d.assignedVehicle.toLowerCase().includes(search.toLowerCase()))
-  , [search]);
+  , [drivers, search]);
 
-  const stats = useMemo(() => ({
-    total: drivers.length,
-    onRoute: drivers.filter(d => d.status === 'on_route').length,
-    available: drivers.filter(d => d.status === 'available').length,
-    avgRating: (drivers.reduce((s, d) => s + d.rating, 0) / drivers.length).toFixed(1),
-  }), []);
+  const stats = useMemo(() => {
+    if (!drivers.length) return { total: 0, onRoute: 0, available: 0, avgRating: '0.0' };
+    return {
+      total: drivers.length,
+      onRoute: drivers.filter(d => d.status === 'on_route').length,
+      available: drivers.filter(d => d.status === 'available').length,
+      avgRating: (drivers.reduce((s, d) => s + d.rating, 0) / drivers.length).toFixed(1),
+    };
+  }, [drivers]);
 
   return (
     <div className="space-y-6 animate-fade-in">
       <PageHeader title="السائقون" description="إدارة تعيينات السائقين وجداولهم وأدائهم" />
+
+      {loading && <div className="text-center py-12 text-muted-foreground text-sm">جارٍ التحميل...</div>}
+      {error && <div className="text-center py-12 text-destructive text-sm">خطأ: {error}</div>}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
