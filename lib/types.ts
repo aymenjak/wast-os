@@ -353,7 +353,7 @@ export interface WeighbridgeTransaction {
 
 export interface AuditLogEntry {
   id: string;
-  user: string;
+  userName: string;
   action: string;
   entity: string;
   entityId: string;

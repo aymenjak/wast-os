@@ -41,7 +41,7 @@ export default function AuditPage() {
 
   const filtered = useMemo(() =>
     auditLogs.filter(l =>
-      l.user.toLowerCase().includes(search.toLowerCase()) ||
+      l.userName.toLowerCase().includes(search.toLowerCase()) ||
       l.action.toLowerCase().includes(search.toLowerCase()) ||
       l.entityId.toLowerCase().includes(search.toLowerCase())
     )
@@ -104,7 +104,7 @@ export default function AuditPage() {
                         {log.action}
                       </span>
                     </td>
-                    <td className="px-3 py-3 font-medium text-foreground whitespace-nowrap">{log.user}</td>
+                    <td className="px-3 py-3 font-medium text-foreground whitespace-nowrap">{log.userName}</td>
                     <td className="px-3 py-3 hidden md:table-cell text-xs text-muted-foreground">{log.entity} <span className="font-mono">{log.entityId}</span></td>
                     <td className="px-3 py-3 hidden lg:table-cell text-xs text-muted-foreground font-mono">{log.beforeValue || '—'}</td>
                     <td className="px-3 py-3 hidden lg:table-cell text-xs text-foreground font-mono">{log.afterValue || '—'}</td>

@@ -8,7 +8,6 @@ import {
   Truck, Recycle, Clock, Zap, Brain, ArrowRight, Lightbulb,
   type LucideIcon,
 } from 'lucide-react';
-import { zones, wasteByType, monthlyCollection } from '@/lib/mock-data';
 import { useCrud } from '@/hooks/use-crud';
 import { zoneConfig, wasteTypeConfig, monthlyConfig } from '@/lib/table-configs';
 import type { ZoneData, WasteByTypeData, MonthlyCollectionData } from '@/lib/types';
