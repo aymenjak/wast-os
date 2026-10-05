@@ -4,10 +4,12 @@ import { useState, useMemo } from 'react';
 import { PageHeader } from '@/components/dashboard/page-header';
 import { StatusBadge, ProgressBar } from '@/components/dashboard/badges';
 import {
-  containers, wasteTypeLabels, containerStatusBadgeClass,
+  wasteTypeLabels, containerStatusBadgeClass,
   getFillLevelBg, getFillLevelColor, formatTimeAgo,
 } from '@/lib/mock-data';
-import type { ContainerStatus } from '@/lib/types';
+import type { ContainerStatus, Container } from '@/lib/types';
+import { containerConfig } from '@/lib/table-configs';
+import { useCrud } from '@/hooks/use-crud';
 import { cn } from '@/lib/utils';
 import {
   Search, Download, Plus, Trash2, QrCode, MapPin,
@@ -37,6 +39,7 @@ export default function ContainersPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<ContainerStatus | 'ALL'>('ALL');
   const [showRegister, setShowRegister] = useState(false);
+  const { data: containers, loading, error } = useCrud<Container>(containerConfig);
 
   const handleExport = () => {
     downloadCSV(
@@ -47,6 +50,7 @@ export default function ContainersPage() {
   };
 
   const filtered = useMemo(() => {
+    if (!containers) return [];
     return containers.filter((c) => {
       const matchesSearch = c.containerId.toLowerCase().includes(search.toLowerCase()) ||
         c.location.toLowerCase().includes(search.toLowerCase()) ||
@@ -54,9 +58,10 @@ export default function ContainersPage() {
       const matchesStatus = statusFilter === 'ALL' || c.status === statusFilter;
       return matchesSearch && matchesStatus;
     });
-  }, [search, statusFilter]);
+  }, [containers, search, statusFilter]);
 
   const stats = useMemo(() => {
+    if (!containers || containers.length === 0) return { total: 0, active: 0, full: 0, damaged: 0, withSensors: 0, avgFill: 0 };
     const total = containers.length;
     const active = containers.filter(c => c.status === 'ACTIVE').length;
     const full = containers.filter(c => c.status === 'FULL').length;
@@ -64,7 +69,46 @@ export default function ContainersPage() {
     const withSensors = containers.filter(c => c.hasSensor).length;
     const avgFill = Math.round(containers.reduce((sum, c) => sum + c.fillLevel, 0) / containers.length);
     return { total, active, full, damaged, withSensors, avgFill };
-  }, []);
+  }, [containers]);
+
+  if (loading) {
+    return (
+      <div className="space-y-6 animate-fade-in">
+        <PageHeader title="الحاويات" description="مراقبة مستوى امتلاء الحاويات وحالتها وصيانتها">
+          <button className="flex items-center gap-1.5 px-3 h-9 rounded-lg bg-card border border-border text-sm font-medium opacity-50" disabled>
+            <Download className="w-4 h-4" /> تصدير
+          </button>
+          <button className="flex items-center gap-1.5 px-3 h-9 rounded-lg bg-primary text-primary-foreground text-sm font-medium opacity-50" disabled>
+            <Plus className="w-4 h-4" /> تسجيل
+          </button>
+        </PageHeader>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="rounded-xl border border-border p-4 bg-card animate-pulse">
+              <div className="h-7 w-16 bg-muted rounded" />
+              <div className="h-3 w-24 bg-muted rounded mt-2" />
+            </div>
+          ))}
+        </div>
+        <div className="bg-card rounded-xl border border-border p-5 animate-pulse">
+          <div className="h-4 w-48 bg-muted rounded" />
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6 animate-fade-in">
+        <PageHeader title="الحاويات" description="مراقبة مستوى امتلاء الحاويات وحالتها وصيانتها" />
+        <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-6 text-center">
+          <AlertTriangle className="w-8 h-8 mx-auto mb-2 text-destructive" />
+          <p className="text-sm font-medium text-destructive">فشل تحميل الحاويات</p>
+          <p className="text-xs text-muted-foreground mt-1">{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -104,8 +148,8 @@ export default function ContainersPage() {
         <h3 className="font-display font-semibold text-foreground mb-4">توزيع مستوى الامتلاء</h3>
         <div className="flex h-4 rounded-full overflow-hidden">
           {fillBuckets.map((bucket) => {
-            const count = containers.filter(c => bucket.filter(c.fillLevel)).length;
-            const pct = (count / containers.length) * 100;
+            const count = containers ? containers.filter(c => bucket.filter(c.fillLevel)).length : 0;
+            const pct = containers && containers.length ? (count / containers.length) * 100 : 0;
             return (
               <div
                 key={bucket.label}
@@ -118,7 +162,7 @@ export default function ContainersPage() {
         </div>
         <div className="flex flex-wrap gap-4 mt-3 text-xs">
           {fillBuckets.map((bucket) => {
-            const count = containers.filter(c => bucket.filter(c.fillLevel)).length;
+            const count = containers ? containers.filter(c => bucket.filter(c.fillLevel)).length : 0;
             return (
               <div key={bucket.label} className="flex items-center gap-1.5">
                 <span className={cn('w-2.5 h-2.5 rounded-sm', bucket.color)} />

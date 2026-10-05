@@ -5,17 +5,18 @@ import { useRouter } from 'next/navigation';
 import { PageHeader } from '@/components/dashboard/page-header';
 import { StatusBadge, PriorityBadge } from '@/components/dashboard/badges';
 import {
-  citizenReports,
   reportTypeLabels,
   priorityBadgeClass,
   reportStatusBadgeClass,
   formatTimeAgo,
 } from '@/lib/mock-data';
 import type { ReportStatus, Priority, CitizenReport } from '@/lib/types';
+import { reportConfig } from '@/lib/table-configs';
+import { useCrud } from '@/hooks/use-crud';
 import { cn } from '@/lib/utils';
 import {
   Search, Filter, Download, MapPin, Clock, User, Camera,
-  Brain, Star, X, ChevronRight, Plus, Navigation,
+  Brain, Star, X, ChevronRight, Plus, Navigation, AlertTriangle,
 } from 'lucide-react';
 
 const statusOptions: (ReportStatus | 'ALL')[] = ['ALL', 'SUBMITTED', 'AI_REVIEW', 'ASSIGNED', 'IN_PROGRESS', 'RESOLVED'];
@@ -28,9 +29,10 @@ export default function ReportsPage() {
   const [priorityFilter, setPriorityFilter] = useState<Priority | 'ALL'>('ALL');
   const [selected, setSelected] = useState<CitizenReport | null>(null);
   const [showCreate, setShowCreate] = useState(false);
-  const [reports, setReports] = useState(citizenReports);
+  const { data: reports, loading, error, update } = useCrud<CitizenReport>(reportConfig);
 
   const filtered = useMemo(() => {
+    if (!reports) return [];
     return reports.filter((r) => {
       const matchesSearch = r.reportId.toLowerCase().includes(search.toLowerCase()) ||
         r.location.toLowerCase().includes(search.toLowerCase()) ||
@@ -43,6 +45,7 @@ export default function ReportsPage() {
   }, [reports, search, statusFilter, priorityFilter]);
 
   const counts = useMemo(() => {
+    if (!reports) return { total: 0, resolved: 0, active: 0, critical: 0 };
     const total = reports.length;
     const resolved = reports.filter(r => r.status === 'RESOLVED').length;
     const active = reports.filter(r => !['RESOLVED', 'CLOSED', 'REJECTED', 'DUPLICATE'].includes(r.status)).length;
@@ -50,9 +53,10 @@ export default function ReportsPage() {
     return { total, resolved, active, critical };
   }, [reports]);
 
-  const updateReportStatus = (id: string, status: ReportStatus) => {
-    setReports(prev => prev.map(r => r.id === id ? { ...r, status, resolvedAt: status === 'RESOLVED' ? new Date().toISOString() : r.resolvedAt } : r));
-    setSelected(prev => prev && prev.id === id ? { ...prev, status, resolvedAt: status === 'RESOLVED' ? new Date().toISOString() : prev.resolvedAt } : prev);
+  const updateReportStatus = async (id: string, status: ReportStatus) => {
+    const resolvedAt = status === 'RESOLVED' ? new Date().toISOString() : undefined;
+    const updated = await update(id, { status, ...(resolvedAt ? { resolvedAt } : {}) });
+    setSelected(prev => prev && prev.id === id && updated ? updated : prev);
   };
 
   const handleExport = () => {
@@ -67,6 +71,45 @@ export default function ReportsPage() {
     a.click();
     URL.revokeObjectURL(url);
   };
+
+  if (loading) {
+    return (
+      <div className="space-y-6 animate-fade-in">
+        <PageHeader title="بلاغات المواطنين" description="تتبع وإدارة البلاغات المتعلقة بالنفايات المرسلة من المواطنين">
+          <button className="flex items-center gap-1.5 px-3 h-9 rounded-lg bg-card border border-border text-sm font-medium opacity-50" disabled>
+            <Download className="w-4 h-4" /> تصدير
+          </button>
+          <button className="flex items-center gap-1.5 px-3 h-9 rounded-lg bg-primary text-primary-foreground text-sm font-medium opacity-50" disabled>
+            <Plus className="w-4 h-4" /> بلاغ جديد
+          </button>
+        </PageHeader>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="rounded-xl border border-border p-4 bg-card animate-pulse">
+              <div className="h-7 w-16 bg-muted rounded" />
+              <div className="h-3 w-24 bg-muted rounded mt-2" />
+            </div>
+          ))}
+        </div>
+        <div className="bg-card rounded-xl border border-border p-5 animate-pulse">
+          <div className="h-4 w-48 bg-muted rounded" />
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6 animate-fade-in">
+        <PageHeader title="بلاغات المواطنين" description="تتبع وإدارة البلاغات المتعلقة بالنفايات المرسلة من المواطنين" />
+        <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-6 text-center">
+          <AlertTriangle className="w-8 h-8 mx-auto mb-2 text-destructive" />
+          <p className="text-sm font-medium text-destructive">فشل تحميل البلاغات</p>
+          <p className="text-xs text-muted-foreground mt-1">{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -147,12 +190,12 @@ export default function ReportsPage() {
           </table>
         </div>
         <div className="flex items-center justify-between px-5 py-3 border-t border-border text-xs text-muted-foreground">
-          <span>عرض {filtered.length} من {reports.length} بلاغ</span>
+          <span>عرض {filtered.length} من {reports?.length ?? 0} بلاغ</span>
         </div>
       </div>
 
       {selected && <ReportDrawer report={selected} onClose={() => setSelected(null)} onUpdateStatus={updateReportStatus} onViewMap={() => router.push('/dashboard/dispatch')} />}
-      {showCreate && <CreateReportModal onClose={() => setShowCreate(false)} onCreate={(r) => { setReports(prev => [r, ...prev]); }} />}
+      {showCreate && <CreateReportModal onClose={() => setShowCreate(false)} onCreate={() => {}} />}
     </div>
   );
 }

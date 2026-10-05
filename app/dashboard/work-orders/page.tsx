@@ -5,9 +5,11 @@ import { useRouter } from 'next/navigation';
 import { PageHeader } from '@/components/dashboard/page-header';
 import { StatusBadge, PriorityBadge, ProgressBar } from '@/components/dashboard/badges';
 import {
-  workOrders, priorityBadgeClass, slaStatusClass, formatTimeAgo,
+  priorityBadgeClass, slaStatusClass, formatTimeAgo,
 } from '@/lib/mock-data';
-import type { WorkOrderStatus, SLAStatus } from '@/lib/types';
+import type { WorkOrderStatus, SLAStatus, WorkOrder } from '@/lib/types';
+import { workOrderConfig } from '@/lib/table-configs';
+import { useCrud } from '@/hooks/use-crud';
 import { cn } from '@/lib/utils';
 import {
   Search, Download, Plus, Clock, AlertTriangle,
@@ -38,8 +40,10 @@ export default function WorkOrdersPage() {
   const [statusFilter, setStatusFilter] = useState<WorkOrderStatus | 'ALL'>('ALL');
   const [slaFilter, setSlaFilter] = useState<SLAStatus | 'ALL'>('ALL');
   const [showCreate, setShowCreate] = useState(false);
+  const { data: workOrders, loading, error } = useCrud<WorkOrder>(workOrderConfig);
 
   const filtered = useMemo(() => {
+    if (!workOrders) return [];
     return workOrders.filter((w) => {
       const matchesSearch = w.orderId.toLowerCase().includes(search.toLowerCase()) ||
         w.location.toLowerCase().includes(search.toLowerCase()) ||
@@ -48,16 +52,17 @@ export default function WorkOrdersPage() {
       const matchesSla = slaFilter === 'ALL' || w.slaStatus === slaFilter;
       return matchesSearch && matchesStatus && matchesSla;
     });
-  }, [search, statusFilter, slaFilter]);
+  }, [workOrders, search, statusFilter, slaFilter]);
 
   const stats = useMemo(() => {
+    if (!workOrders) return { open: 0, inProgress: 0, completed: 0, breaches: 0, atRisk: 0, total: 0 };
     const open = workOrders.filter(w => w.status === 'OPEN').length;
     const inProgress = workOrders.filter(w => w.status === 'IN_PROGRESS').length;
     const completed = workOrders.filter(w => w.status === 'COMPLETED').length;
     const breaches = workOrders.filter(w => w.slaStatus === 'BREACHED').length;
     const atRisk = workOrders.filter(w => w.slaStatus === 'AT_RISK').length;
     return { open, inProgress, completed, breaches, atRisk, total: workOrders.length };
-  }, []);
+  }, [workOrders]);
 
   const handleExport = () => {
     const headers = ['رقم الأمر', 'النوع', 'الموقع', 'الأولوية', 'الحالة', 'الخدمة', 'التقدم', 'الاستحقاق'];
@@ -74,6 +79,45 @@ export default function WorkOrdersPage() {
     a.click();
     URL.revokeObjectURL(url);
   };
+
+  if (loading) {
+    return (
+      <div className="space-y-6 animate-fade-in">
+        <PageHeader title="أوامر العمل" description="إدارة وتتبع جميع أوامر العمل التشغيلية عبر المدينة">
+          <button className="flex items-center gap-1.5 px-3 h-9 rounded-lg bg-card border border-border text-sm font-medium opacity-50" disabled>
+            <Download className="w-4 h-4" /> تصدير
+          </button>
+          <button className="flex items-center gap-1.5 px-3 h-9 rounded-lg bg-primary text-primary-foreground text-sm font-medium opacity-50" disabled>
+            <Plus className="w-4 h-4" /> إنشاء أمر
+          </button>
+        </PageHeader>
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="rounded-xl border border-border p-4 bg-card animate-pulse">
+              <div className="h-7 w-16 bg-muted rounded" />
+              <div className="h-3 w-20 bg-muted rounded mt-2" />
+            </div>
+          ))}
+        </div>
+        <div className="bg-card rounded-xl border border-border p-5 animate-pulse">
+          <div className="h-4 w-48 bg-muted rounded" />
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6 animate-fade-in">
+        <PageHeader title="أوامر العمل" description="إدارة وتتبع جميع أوامر العمل التشغيلية عبر المدينة" />
+        <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-6 text-center">
+          <AlertTriangle className="w-8 h-8 mx-auto mb-2 text-destructive" />
+          <p className="text-sm font-medium text-destructive">فشل تحميل أوامر العمل</p>
+          <p className="text-xs text-muted-foreground mt-1">{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -236,7 +280,7 @@ export default function WorkOrdersPage() {
           </table>
         </div>
         <div className="flex items-center justify-between px-5 py-3 border-t border-border text-xs text-muted-foreground">
-          <span>عرض {filtered.length} من {workOrders.length} أمر عمل</span>
+          <span>عرض {filtered.length} من {workOrders?.length ?? 0} أمر عمل</span>
         </div>
       </div>
 
