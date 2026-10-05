@@ -379,6 +379,8 @@ export interface TransferStation {
   name: string;
   location: string;
   zone: string;
+  lat: number;
+  lng: number;
   incomingToday: number;
   outgoingToday: number;
   storageCurrent: number;

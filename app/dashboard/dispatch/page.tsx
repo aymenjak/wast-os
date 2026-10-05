@@ -2,7 +2,8 @@
 
 import { useState, useMemo } from 'react';
 import { PageHeader } from '@/components/dashboard/page-header';
-import { vehicles, containers, citizenReports } from '@/lib/mock-data';
+import { useCrud } from '@/hooks/use-crud';
+import { vehicleConfig, containerConfig, reportConfig } from '@/lib/table-configs';
 import { cn } from '@/lib/utils';
 import { CityMap, type MapEntity } from '@/components/dashboard/city-map';
 import {
@@ -13,6 +14,11 @@ import type { Vehicle, Container, CitizenReport } from '@/lib/types';
 type LayerType = 'trucks' | 'containers' | 'reports';
 
 export default function DispatchPage() {
+  const { data: vehicles, loading: vehLoading, error: vehError } = useCrud<Vehicle>(vehicleConfig);
+  const { data: containers, loading: contLoading, error: contError } = useCrud<Container>(containerConfig);
+  const { data: citizenReports, loading: repLoading, error: repError } = useCrud<CitizenReport>(reportConfig);
+  const loading = vehLoading || contLoading || repLoading;
+  const error = vehError || contError || repError;
   const [activeLayers, setActiveLayers] = useState<Record<LayerType, boolean>>({
     trucks: true,
     containers: true,
@@ -84,7 +90,7 @@ export default function DispatchPage() {
       });
     }
     return result;
-  }, [activeLayers]);
+  }, [activeLayers, vehicles, containers, citizenReports]);
 
   const counts = {
     trucks: vehicles.filter(v => v.status === 'ON_ROUTE' || v.status === 'LOADING').length,
@@ -102,6 +108,8 @@ export default function DispatchPage() {
 
   return (
     <div className="space-y-4 animate-fade-in">
+      {loading && <div className="text-center py-12 text-muted-foreground text-sm">جارٍ التحميل...</div>}
+      {error && <div className="text-center py-12 text-destructive text-sm">خطأ: {error}</div>}
       <PageHeader title="خريطة الإرسال المباشرة" description="مواقع لحظية للأسطول والحاويات والبلاغات عبر المدينة">
         <div className="flex items-center gap-2 px-3 h-9 rounded-lg bg-success/10 text-success text-sm font-medium">
           <span className="relative w-2 h-2 rounded-full bg-success">

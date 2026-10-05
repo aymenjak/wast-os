@@ -3,7 +3,10 @@
 import { StatCard } from '@/components/dashboard/stat-card';
 import { PageHeader } from '@/components/dashboard/page-header';
 import { StatusBadge, PriorityBadge, ProgressBar } from '@/components/dashboard/badges';
-import { kpiData, zones, wasteByType, monthlyCollection, activityFeed, citizenReports, workOrders, vehicles, priorityBadgeClass, reportStatusBadgeClass } from '@/lib/mock-data';
+import { useCrud } from '@/hooks/use-crud';
+import { kpiConfig, zoneConfig, wasteTypeConfig, monthlyConfig, activityConfig, reportConfig, workOrderConfig, vehicleConfig } from '@/lib/table-configs';
+import { priorityBadgeClass, reportStatusBadgeClass } from '@/lib/mock-data';
+import type { KpiData, ZoneData, WasteByTypeData, MonthlyCollectionData, ActivityFeedItem, CitizenReport, WorkOrder, Vehicle } from '@/lib/types';
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -33,6 +36,16 @@ const activityColors: Record<string, string> = {
 };
 
 export default function DashboardPage() {
+  const { data: kpiData, loading: kpiLoading } = useCrud<KpiData>(kpiConfig);
+  const { data: zones, loading: zoneLoading } = useCrud<ZoneData>(zoneConfig);
+  const { data: wasteByType, loading: wasteLoading } = useCrud<WasteByTypeData>(wasteTypeConfig);
+  const { data: monthlyCollection, loading: monthlyLoading } = useCrud<MonthlyCollectionData>(monthlyConfig);
+  const { data: activityFeed, loading: actLoading } = useCrud<ActivityFeedItem>(activityConfig);
+  const { data: citizenReports, loading: repLoading } = useCrud<CitizenReport>(reportConfig);
+  const { data: workOrders, loading: woLoading } = useCrud<WorkOrder>(workOrderConfig);
+  const { data: vehicles, loading: vehLoading } = useCrud<Vehicle>(vehicleConfig);
+  const loading = kpiLoading || zoneLoading || wasteLoading || monthlyLoading || actLoading || repLoading || woLoading || vehLoading;
+
   const activeReports = citizenReports.filter(r => !['RESOLVED', 'CLOSED', 'REJECTED', 'DUPLICATE'].includes(r.status)).length;
   const activeWorkOrders = workOrders.filter(w => !['COMPLETED', 'CANCELLED'].includes(w.status)).length;
   const activeVehicles = vehicles.filter(v => v.status === 'ON_ROUTE' || v.status === 'LOADING').length;
@@ -48,6 +61,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {loading && <div className="text-center py-12 text-muted-foreground text-sm">جارٍ التحميل...</div>}
       <PageHeader
         title="مركز القيادة"
         description="نظرة عامة لحظية على عمليات منظومة نفايات المدينة"

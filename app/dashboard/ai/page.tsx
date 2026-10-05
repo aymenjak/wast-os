@@ -9,6 +9,9 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { zones, wasteByType, monthlyCollection } from '@/lib/mock-data';
+import { useCrud } from '@/hooks/use-crud';
+import { zoneConfig, wasteTypeConfig, monthlyConfig } from '@/lib/table-configs';
+import type { ZoneData, WasteByTypeData, MonthlyCollectionData } from '@/lib/types';
 
 interface ChatMessage {
   id: string;
@@ -95,6 +98,9 @@ const predictionCards = [
 ];
 
 export default function AICopilotPage() {
+  const { data: zones } = useCrud<ZoneData>(zoneConfig);
+  const { data: wasteByType } = useCrud<WasteByTypeData>(wasteTypeConfig);
+  const { data: monthlyCollection } = useCrud<MonthlyCollectionData>(monthlyConfig);
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 'init',

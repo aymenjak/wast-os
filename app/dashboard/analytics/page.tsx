@@ -3,8 +3,10 @@
 import { PageHeader } from '@/components/dashboard/page-header';
 import { ProgressBar } from '@/components/dashboard/badges';
 import {
-  zones, wasteByType, monthlyCollection, kpiData,
-} from '@/lib/mock-data';
+  zoneConfig, wasteTypeConfig, monthlyConfig, kpiConfig,
+} from '@/lib/table-configs';
+import { useCrud } from '@/hooks/use-crud';
+import type { ZoneData, WasteByTypeData, MonthlyCollectionData, KpiData } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
@@ -60,8 +62,16 @@ const esgData = [
 ];
 
 export default function AnalyticsPage() {
+  const { data: zones, loading: zoneLoading, error: zoneError } = useCrud<ZoneData>(zoneConfig);
+  const { data: wasteByType, loading: wasteLoading } = useCrud<WasteByTypeData>(wasteTypeConfig);
+  const { data: monthlyCollection, loading: monthlyLoading } = useCrud<MonthlyCollectionData>(monthlyConfig);
+  const { data: kpiData, loading: kpiLoading } = useCrud<KpiData>(kpiConfig);
+  const loading = zoneLoading || wasteLoading || monthlyLoading || kpiLoading;
+  const error = zoneError;
   return (
     <div className="space-y-6 animate-fade-in">
+      {loading && <div className="text-center py-12 text-muted-foreground text-sm">جارٍ التحميل...</div>}
+      {error && <div className="text-center py-12 text-destructive text-sm">خطأ: {error}</div>}
       <PageHeader title="الإحصائيات" description="رؤى عميقة عبر العمليات والنفايات والمالية ومؤشرات ESG">
         <button className="flex items-center gap-1.5 px-3 h-9 rounded-lg bg-card border border-border text-sm font-medium hover:bg-muted transition-colors">
           <Download className="w-4 h-4" /> تصدير CSV

@@ -3,7 +3,10 @@
 import { useState, useMemo } from 'react';
 import { PageHeader } from '@/components/dashboard/page-header';
 import { cn } from '@/lib/utils';
-import { auditLogs, formatTimeAgo } from '@/lib/mock-data';
+import { useCrud } from '@/hooks/use-crud';
+import { auditConfig } from '@/lib/table-configs';
+import { formatTimeAgo } from '@/lib/mock-data';
+import type { AuditLogEntry } from '@/lib/types';
 import { Search, ScrollText, Edit, Plus, Shield, ArrowRightLeft, CreditCard, Settings, type LucideIcon } from 'lucide-react';
 
 const actionIcons: Record<string, LucideIcon> = {
@@ -33,6 +36,7 @@ const actionColors: Record<string, string> = {
 };
 
 export default function AuditPage() {
+  const { data: auditLogs, loading, error } = useCrud<AuditLogEntry>(auditConfig);
   const [search, setSearch] = useState('');
 
   const filtered = useMemo(() =>
@@ -41,10 +45,12 @@ export default function AuditPage() {
       l.action.toLowerCase().includes(search.toLowerCase()) ||
       l.entityId.toLowerCase().includes(search.toLowerCase())
     )
-  , [search]);
+  , [auditLogs, search]);
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {loading && <div className="text-center py-12 text-muted-foreground text-sm">جارٍ التحميل...</div>}
+      {error && <div className="text-center py-12 text-destructive text-sm">خطأ: {error}</div>}
       <PageHeader title="سجلات التدقيق" description="تتبع جميع الإجراءات الحساسة بتتبع كامل" />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">

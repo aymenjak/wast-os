@@ -5,11 +5,12 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { PageHeader } from '@/components/dashboard/page-header';
 import { StatusBadge, PriorityBadge, ProgressBar } from '@/components/dashboard/badges';
+import { useCrud } from '@/hooks/use-crud';
+import { workOrderConfig, vehicleConfig, driverConfig, reportConfig } from '@/lib/table-configs';
 import {
-  workOrders, vehicles, drivers, citizenReports,
   priorityBadgeClass, reportStatusBadgeClass, formatTimeAgo,
 } from '@/lib/mock-data';
-import type { WorkOrderStatus, SLAStatus } from '@/lib/types';
+import type { WorkOrder, Vehicle, Driver, CitizenReport, WorkOrderStatus, SLAStatus } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { CityMap, type MapEntity } from '@/components/dashboard/city-map';
 import {
@@ -40,7 +41,12 @@ export default function WorkOrderDetailPage() {
   const router = useRouter();
   const id = params.id as string;
 
-  const wo = useMemo(() => workOrders.find(w => w.id === id), [id]);
+  const { data: workOrders, loading, error } = useCrud<WorkOrder>(workOrderConfig);
+  const { data: vehicles } = useCrud<Vehicle>(vehicleConfig);
+  const { data: drivers } = useCrud<Driver>(driverConfig);
+  const { data: citizenReports } = useCrud<CitizenReport>(reportConfig);
+
+  const wo = useMemo(() => workOrders.find(w => w.id === id), [workOrders, id]);
 
   const [currentStatus, setCurrentStatus] = useState<WorkOrderStatus | null>(null);
   const [currentProgress, setCurrentProgress] = useState<number | null>(null);
@@ -100,6 +106,12 @@ export default function WorkOrderDetailPage() {
     return entities;
   }, [wo, relatedReport, displayStatus]);
 
+  if (loading) {
+    return <div className="text-center py-12 text-muted-foreground text-sm">جارٍ التحميل...</div>;
+  }
+  if (error) {
+    return <div className="text-center py-12 text-destructive text-sm">خطأ: {error}</div>;
+  }
   if (!wo) {
     return (
       <div className="flex flex-col items-center justify-center py-20 animate-fade-in">

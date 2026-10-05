@@ -4,7 +4,10 @@ import { useState, useMemo } from 'react';
 import { PageHeader } from '@/components/dashboard/page-header';
 import { ProgressBar } from '@/components/dashboard/badges';
 import { cn } from '@/lib/utils';
-import { subscriptions, planFeatures } from '@/lib/mock-data';
+import { useCrud } from '@/hooks/use-crud';
+import { subscriptionConfig } from '@/lib/table-configs';
+import { planFeatures } from '@/lib/mock-data';
+import type { Subscription } from '@/lib/types';
 import {
   Search, CreditCard, CheckCircle2, Clock, XCircle, AlertTriangle,
   Building2, Users, MapPin, Database, Zap, HardDrive, Check, X,
@@ -32,6 +35,7 @@ const orgTypeLabels: Record<string, string> = {
 };
 
 export default function SubscriptionsPage() {
+  const { data: subscriptions, loading, error } = useCrud<Subscription>(subscriptionConfig);
   const [search, setSearch] = useState('');
   const [planFilter, setPlanFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
@@ -45,17 +49,19 @@ export default function SubscriptionsPage() {
       const matchesStatus = statusFilter === 'ALL' || s.status === statusFilter;
       return matchesSearch && matchesPlan && matchesStatus;
     })
-  , [search, planFilter, statusFilter]);
+  , [subscriptions, search, planFilter, statusFilter]);
 
   const stats = useMemo(() => ({
     total: subscriptions.length,
     active: subscriptions.filter(s => s.status === 'active').length,
     mrr: subscriptions.filter(s => s.status === 'active').reduce((sum, s) => sum + s.monthlyFee, 0),
     trial: subscriptions.filter(s => s.status === 'trial').length,
-  }), []);
+  }), [subscriptions]);
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {loading && <div className="text-center py-12 text-muted-foreground text-sm">جارٍ التحميل...</div>}
+      {error && <div className="text-center py-12 text-destructive text-sm">خطأ: {error}</div>}
       <PageHeader title="الاشتراكات" description="إدارة اشتراكات المنصة والباقات والفوترة">
         <button className="flex items-center gap-1.5 px-3 h-9 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">
           <Plus className="w-4 h-4" /> اشتراك جديد

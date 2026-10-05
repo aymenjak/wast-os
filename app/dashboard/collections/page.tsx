@@ -2,11 +2,18 @@
 
 import { PageHeader } from '@/components/dashboard/page-header';
 import { cn } from '@/lib/utils';
-import { monthlyCollection, zones, wasteByType } from '@/lib/mock-data';
+import { useCrud } from '@/hooks/use-crud';
+import { monthlyConfig, zoneConfig, wasteTypeConfig } from '@/lib/table-configs';
+import type { MonthlyCollectionData, ZoneData, WasteByTypeData } from '@/lib/types';
 import { Recycle, TrendingUp, Calendar, MapPin, Trash2, BarChart3 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 export default function CollectionsPage() {
+  const { data: monthlyCollection, loading: monthlyLoading, error: monthlyError } = useCrud<MonthlyCollectionData>(monthlyConfig);
+  const { data: zones, loading: zoneLoading } = useCrud<ZoneData>(zoneConfig);
+  const { data: wasteByType, loading: wasteLoading } = useCrud<WasteByTypeData>(wasteTypeConfig);
+  const loading = monthlyLoading || zoneLoading || wasteLoading;
+  const error = monthlyError;
   const totalCollected = monthlyCollection.reduce((s, m) => s + m.collected, 0);
   const totalRecycled = monthlyCollection.reduce((s, m) => s + m.recycled, 0);
   const totalLandfilled = monthlyCollection.reduce((s, m) => s + m.landfilled, 0);
@@ -14,6 +21,8 @@ export default function CollectionsPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {loading && <div className="text-center py-12 text-muted-foreground text-sm">جارٍ التحميل...</div>}
+      {error && <div className="text-center py-12 text-destructive text-sm">خطأ: {error}</div>}
       <PageHeader title="الجمع" description="تتبع عمليات جمع النفايات والأحجام والجداول" />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
