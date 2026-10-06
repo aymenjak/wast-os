@@ -435,3 +435,24 @@ export interface PlanFeature {
   pro: boolean | string;
   enterprise: boolean | string;
 }
+
+export type UserRole =
+  | 'SUPER_ADMIN' | 'PLATFORM_ADMIN' | 'MUNICIPALITY_ADMIN' | 'MUNICIPALITY_MANAGER'
+  | 'OPERATIONS_MANAGER' | 'DISPATCHER' | 'SUPERVISOR' | 'DRIVER' | 'FIELD_WORKER'
+  | 'B2B_ADMIN' | 'B2B_USER' | 'RECYCLER_ADMIN' | 'WEIGHBRIDGE_OPERATOR'
+  | 'ACCOUNTANT' | 'AUDITOR' | 'CITIZEN';
+
+export type UserStatus = 'active' | 'pending' | 'suspended';
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  role: UserRole;
+  organization: string;
+  zone: string;
+  status: UserStatus;
+  lastActive: string;
+  avatar: string;
+}

@@ -24,6 +24,7 @@ import type {
   ActivityFeedItem,
   KpiData,
   Subscription,
+  User,
 } from '@/lib/types';
 import { transformRow, transformModel, type TableConfig } from '@/lib/db';
 
@@ -199,5 +200,12 @@ export const subscriptionConfig: TableConfig<Subscription> = {
   table: 'subscriptions',
   idField: 'id',
   toModel: (r) => transformRow(r) as unknown as Subscription,
+  toRow: (m) => transformModel(m as Record<string, unknown>),
+};
+
+export const userConfig: TableConfig<User> = {
+  table: 'users',
+  idField: 'id',
+  toModel: (r) => transformRow(r) as unknown as User,
   toRow: (m) => transformModel(m as Record<string, unknown>),
 };
