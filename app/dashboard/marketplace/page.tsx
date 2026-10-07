@@ -2,25 +2,22 @@
 
 import { PageHeader } from '@/components/dashboard/page-header';
 import { cn } from '@/lib/utils';
-import { useCrud } from '@/hooks/use-crud';
-import { marketplaceConfig } from '@/lib/table-configs';
-import type { MarketplaceListing } from '@/lib/types';
+import { marketplaceListings } from '@/lib/mock-data';
 import { Store, Search, Package, MapPin, Calendar, Plus } from 'lucide-react';
 import { useState, useMemo } from 'react';
 
 const statusConfig: Record<string, { label: string; color: string }> = {
-  available: { label: 'متاح', color: 'bg-success/15 text-success' },
-  reserved: { label: 'محجوز', color: 'bg-warning/15 text-warning' },
-  sold: { label: 'مباع', color: 'bg-muted text-muted-foreground' },
+  available: { label: 'Available', color: 'bg-success/15 text-success' },
+  reserved: { label: 'Reserved', color: 'bg-warning/15 text-warning' },
+  sold: { label: 'Sold', color: 'bg-muted text-muted-foreground' },
 };
 
 export default function MarketplacePage() {
-  const { data: marketplaceListings, loading, error } = useCrud<MarketplaceListing>(marketplaceConfig);
   const [search, setSearch] = useState('');
 
   const filtered = useMemo(() =>
     marketplaceListings.filter(l => l.material.toLowerCase().includes(search.toLowerCase()) || l.seller.toLowerCase().includes(search.toLowerCase()))
-  , [marketplaceListings, search]);
+  , [search]);
 
   const stats = {
     total: marketplaceListings.length,
@@ -30,19 +27,17 @@ export default function MarketplacePage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {loading && <div className="text-center py-12 text-muted-foreground text-sm">جارٍ التحميل...</div>}
-      {error && <div className="text-center py-12 text-destructive text-sm">خطأ: {error}</div>}
-      <PageHeader title="سوق إعادة التدوير" description="سوق بين الشركات لبيع وشراء المواد المسترجعة">
+      <PageHeader title="Recycling Marketplace" description="B2B marketplace for buying and selling recovered materials">
         <button className="flex items-center gap-1.5 px-3 h-9 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">
-          <Plus className="w-4 h-4" /> عرض مادة
+          <Plus className="w-4 h-4" /> List Material
         </button>
       </PageHeader>
 
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
         {[
-          { label: 'إجمالي العروض', value: stats.total, icon: Store, color: 'text-foreground', bg: 'bg-card', border: 'border-border' },
-          { label: 'متاح', value: stats.available, icon: Package, color: 'text-success', bg: 'bg-success/5', border: 'border-success/20' },
-          { label: 'القيمة السوقية', value: `${(stats.totalValue / 1000000).toFixed(1)}م دج`, icon: Store, color: 'text-info', bg: 'bg-info/5', border: 'border-info/20' },
+          { label: 'Total Listings', value: stats.total, icon: Store, color: 'text-foreground', bg: 'bg-card', border: 'border-border' },
+          { label: 'Available', value: stats.available, icon: Package, color: 'text-success', bg: 'bg-success/5', border: 'border-success/20' },
+          { label: 'Market Value', value: `${(stats.totalValue / 1000000).toFixed(1)}M DZD`, icon: Store, color: 'text-info', bg: 'bg-info/5', border: 'border-info/20' },
         ].map(s => {
           const Icon = s.icon;
           return (
@@ -58,7 +53,7 @@ export default function MarketplacePage() {
       </div>
 
       <div className="relative">
-        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <input
           type="text"
           value={search}
@@ -83,16 +78,16 @@ export default function MarketplacePage() {
               <div className="flex items-baseline gap-2 mb-3">
                 <span className="text-3xl font-display font-bold text-foreground">{l.quantity}</span>
                 <span className="text-sm text-muted-foreground">{l.unit}</span>
-                <span className="text-sm font-medium text-foreground ml-auto">{l.price.toLocaleString()} دج/{l.unit}</span>
+                <span className="text-sm font-medium text-foreground ml-auto">{l.price.toLocaleString()} DZD/{l.unit}</span>
               </div>
               <div className="space-y-1.5 text-xs text-muted-foreground">
                 <div className="flex items-center gap-1.5"><Package className="w-3.5 h-3.5" /> {l.seller}</div>
                 <div className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5" /> {l.location}</div>
-                <div className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" /> متاح: {l.availableDate}</div>
+                <div className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" /> Available: {l.availableDate}</div>
               </div>
               {l.status === 'available' && (
                 <button className="w-full mt-4 h-8 rounded-lg bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-colors">
-                  طلب شراء
+                  Request to Buy
                 </button>
               )}
             </div>

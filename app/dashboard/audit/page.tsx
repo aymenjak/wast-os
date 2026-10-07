@@ -3,10 +3,7 @@
 import { useState, useMemo } from 'react';
 import { PageHeader } from '@/components/dashboard/page-header';
 import { cn } from '@/lib/utils';
-import { useCrud } from '@/hooks/use-crud';
-import { auditConfig } from '@/lib/table-configs';
-import { formatTimeAgo } from '@/lib/mock-data';
-import type { AuditLogEntry } from '@/lib/types';
+import { auditLogs, formatTimeAgo } from '@/lib/mock-data';
 import { Search, ScrollText, Edit, Plus, Shield, ArrowRightLeft, CreditCard, Settings, type LucideIcon } from 'lucide-react';
 
 const actionIcons: Record<string, LucideIcon> = {
@@ -36,29 +33,26 @@ const actionColors: Record<string, string> = {
 };
 
 export default function AuditPage() {
-  const { data: auditLogs, loading, error } = useCrud<AuditLogEntry>(auditConfig);
   const [search, setSearch] = useState('');
 
   const filtered = useMemo(() =>
     auditLogs.filter(l =>
-      l.userName.toLowerCase().includes(search.toLowerCase()) ||
+      l.user.toLowerCase().includes(search.toLowerCase()) ||
       l.action.toLowerCase().includes(search.toLowerCase()) ||
       l.entityId.toLowerCase().includes(search.toLowerCase())
     )
-  , [auditLogs, search]);
+  , [search]);
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {loading && <div className="text-center py-12 text-muted-foreground text-sm">جارٍ التحميل...</div>}
-      {error && <div className="text-center py-12 text-destructive text-sm">خطأ: {error}</div>}
-      <PageHeader title="سجلات التدقيق" description="تتبع جميع الإجراءات الحساسة بتتبع كامل" />
+      <PageHeader title="Audit Logs" description="Track all sensitive actions with full traceability" />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: 'إجمالي الأحداث', value: auditLogs.length, icon: ScrollText, color: 'text-foreground', bg: 'bg-card', border: 'border-border' },
-          { label: 'تعديلات', value: auditLogs.filter(l => l.action.includes('MODIFIED') || l.action.includes('CHANGED')).length, icon: Edit, color: 'text-warning', bg: 'bg-warning/5', border: 'border-warning/20' },
-          { label: 'إنشاءات', value: auditLogs.filter(l => l.action.includes('CREATED')).length, icon: Plus, color: 'text-success', bg: 'bg-success/5', border: 'border-success/20' },
-          { label: 'تغييرات الصلاحيات', value: auditLogs.filter(l => l.action.includes('PERMISSION') || l.action.includes('SLA')).length, icon: Shield, color: 'text-destructive', bg: 'bg-destructive/5', border: 'border-destructive/20' },
+          { label: 'Total Events', value: auditLogs.length, icon: ScrollText, color: 'text-foreground', bg: 'bg-card', border: 'border-border' },
+          { label: 'Modifications', value: auditLogs.filter(l => l.action.includes('MODIFIED') || l.action.includes('CHANGED')).length, icon: Edit, color: 'text-warning', bg: 'bg-warning/5', border: 'border-warning/20' },
+          { label: 'Creations', value: auditLogs.filter(l => l.action.includes('CREATED')).length, icon: Plus, color: 'text-success', bg: 'bg-success/5', border: 'border-success/20' },
+          { label: 'Permission Changes', value: auditLogs.filter(l => l.action.includes('PERMISSION') || l.action.includes('SLA')).length, icon: Shield, color: 'text-destructive', bg: 'bg-destructive/5', border: 'border-destructive/20' },
         ].map(s => {
           const Icon = s.icon;
           return (
@@ -74,8 +68,8 @@ export default function AuditPage() {
       </div>
 
       <div className="relative">
-        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="ابحث بالمستخدم، الإجراء، أو الكيان..." className="w-full h-9 pr-9 pl-4 text-sm bg-card rounded-lg border border-border focus:outline-none focus:border-primary/40 transition-colors" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by user, action, or entity..." className="w-full h-9 pl-9 pr-4 text-sm bg-card rounded-lg border border-border focus:outline-none focus:border-primary/40 transition-colors" />
       </div>
 
       <div className="bg-card rounded-xl border border-border overflow-hidden">
@@ -83,13 +77,13 @@ export default function AuditPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-muted/30">
-                <th className="text-left font-medium text-muted-foreground text-xs px-5 py-3">الإجراء</th>
-                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3">المستخدم</th>
-                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3 hidden md:table-cell">الكيان</th>
-                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3 hidden lg:table-cell">قبل</th>
-                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3 hidden lg:table-cell">بعد</th>
+                <th className="text-left font-medium text-muted-foreground text-xs px-5 py-3">Action</th>
+                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3">User</th>
+                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3 hidden md:table-cell">Entity</th>
+                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3 hidden lg:table-cell">Before</th>
+                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3 hidden lg:table-cell">After</th>
                 <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3 hidden sm:table-cell">IP</th>
-                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3">الوقت</th>
+                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3">Time</th>
               </tr>
             </thead>
             <tbody>
@@ -104,7 +98,7 @@ export default function AuditPage() {
                         {log.action}
                       </span>
                     </td>
-                    <td className="px-3 py-3 font-medium text-foreground whitespace-nowrap">{log.userName}</td>
+                    <td className="px-3 py-3 font-medium text-foreground whitespace-nowrap">{log.user}</td>
                     <td className="px-3 py-3 hidden md:table-cell text-xs text-muted-foreground">{log.entity} <span className="font-mono">{log.entityId}</span></td>
                     <td className="px-3 py-3 hidden lg:table-cell text-xs text-muted-foreground font-mono">{log.beforeValue || '—'}</td>
                     <td className="px-3 py-3 hidden lg:table-cell text-xs text-foreground font-mono">{log.afterValue || '—'}</td>

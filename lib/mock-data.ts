@@ -26,58 +26,56 @@ import type {
   AuditLogEntry,
   EcoProfile,
   InvoiceStatus,
-  Subscription,
-  PlanFeature,
 } from './types';
 
 export const reportTypeLabels: Record<ReportType, string> = {
-  overflowing_container: 'حاوية تفيض',
-  illegal_dumping: 'إلقاء غير قانوني',
-  missed_collection: 'جمع فائت',
-  damaged_container: 'حاوية تالفة',
-  waste_scattered: 'نفايات متناثرة',
-  large_waste: 'نفايات كبيرة',
-  hazardous_waste: 'نفايات خطرة',
-  bad_smell: 'رائحة كريهة',
-  other: 'أخرى',
+  overflowing_container: 'Overflowing Container',
+  illegal_dumping: 'Illegal Dumping',
+  missed_collection: 'Missed Collection',
+  damaged_container: 'Damaged Container',
+  waste_scattered: 'Waste Scattered',
+  large_waste: 'Large Waste',
+  hazardous_waste: 'Hazardous Waste',
+  bad_smell: 'Bad Smell',
+  other: 'Other',
 };
 
 export const statusLabels: Record<ReportStatus, string> = {
-  SUBMITTED: 'مُرسل',
-  RECEIVED: 'مستلم',
-  AI_REVIEW: 'مراجعة الذكاء',
-  VERIFIED: 'موثّق',
-  ASSIGNED: 'مُسند',
-  EN_ROUTE: 'في الطريق',
-  IN_PROGRESS: 'قيد التنفيذ',
-  RESOLVED: 'تم الحل',
-  REJECTED: 'مرفوض',
-  DUPLICATE: 'مكرر',
-  CLOSED: 'مغلق',
+  SUBMITTED: 'Submitted',
+  RECEIVED: 'Received',
+  AI_REVIEW: 'AI Review',
+  VERIFIED: 'Verified',
+  ASSIGNED: 'Assigned',
+  EN_ROUTE: 'En Route',
+  IN_PROGRESS: 'In Progress',
+  RESOLVED: 'Resolved',
+  REJECTED: 'Rejected',
+  DUPLICATE: 'Duplicate',
+  CLOSED: 'Closed',
 };
 
 export const priorityLabels: Record<Priority, string> = {
-  CRITICAL: 'حرج',
-  HIGH: 'عالي',
-  NORMAL: 'عادي',
-  LOW: 'منخفض',
+  CRITICAL: 'Critical',
+  HIGH: 'High',
+  NORMAL: 'Normal',
+  LOW: 'Low',
 };
 
 export const wasteTypeLabels: Record<WasteType, string> = {
-  GENERAL: 'عامة',
-  ORGANIC: 'عضوية',
-  PLASTIC: 'بلاستيك',
-  PAPER: 'ورق',
-  CARDBOARD: 'كرتون',
-  GLASS: 'زجاج',
-  METAL: 'معدن',
-  ELECTRONIC: 'إلكترونية',
-  CONSTRUCTION: 'إنشاءات',
-  MEDICAL: 'طبية',
-  HAZARDOUS: 'خطرة',
-  LARGE_WASTE: 'نفايات كبيرة',
-  USED_OIL: 'زيت مستعمل',
-  OTHER: 'أخرى',
+  GENERAL: 'General',
+  ORGANIC: 'Organic',
+  PLASTIC: 'Plastic',
+  PAPER: 'Paper',
+  CARDBOARD: 'Cardboard',
+  GLASS: 'Glass',
+  METAL: 'Metal',
+  ELECTRONIC: 'Electronic',
+  CONSTRUCTION: 'Construction',
+  MEDICAL: 'Medical',
+  HAZARDOUS: 'Hazardous',
+  LARGE_WASTE: 'Large Waste',
+  USED_OIL: 'Used Oil',
+  OTHER: 'Other',
 };
 
 export const priorityBadgeClass: Record<Priority, string> = {
@@ -125,7 +123,7 @@ export const slaStatusClass: Record<string, string> = {
 
 export const kpiData: KpiData[] = [
   {
-    label: 'النفايات المجموعة',
+    label: 'Waste Collected',
     value: '1,847 t',
     change: 12.4,
     trend: 'up',
@@ -133,7 +131,7 @@ export const kpiData: KpiData[] = [
     sparkline: [120, 145, 132, 168, 155, 180, 175, 190, 210, 205, 225, 240],
   },
   {
-    label: 'نسبة إعادة التدوير',
+    label: 'Recycling Rate',
     value: '68.2%',
     change: 5.1,
     trend: 'up',
@@ -141,7 +139,7 @@ export const kpiData: KpiData[] = [
     sparkline: [55, 58, 56, 60, 62, 61, 64, 65, 66, 67, 68, 68],
   },
   {
-    label: 'البلاغات النشطة',
+    label: 'Active Reports',
     value: '234',
     change: -8.3,
     trend: 'down',
@@ -149,7 +147,7 @@ export const kpiData: KpiData[] = [
     sparkline: [310, 295, 280, 270, 265, 260, 255, 250, 245, 240, 238, 234],
   },
   {
-    label: 'الالتزام بمستوى الخدمة',
+    label: 'SLA Compliance',
     value: '94.1%',
     change: 2.7,
     trend: 'up',
@@ -157,7 +155,7 @@ export const kpiData: KpiData[] = [
     sparkline: [88, 89, 90, 91, 90, 92, 92, 93, 93, 94, 94, 94],
   },
   {
-    label: 'الأسطول النشط',
+    label: 'Fleet Active',
     value: '28 / 30',
     change: 3.2,
     trend: 'up',
@@ -165,7 +163,7 @@ export const kpiData: KpiData[] = [
     sparkline: [24, 25, 26, 25, 27, 26, 28, 27, 28, 28, 28, 28],
   },
   {
-    label: 'متوسط الاستجابة',
+    label: 'Avg Response',
     value: '47 min',
     change: -15.2,
     trend: 'down',
@@ -175,44 +173,44 @@ export const kpiData: KpiData[] = [
 ];
 
 export const zones: ZoneData[] = [
-  { zone: 'المنطقة 1 — الوسط', reports: 42, wasteCollected: 320, recyclingRate: 72, slaCompliance: 96 },
-  { zone: 'المنطقة 2 — الشمال', reports: 58, wasteCollected: 410, recyclingRate: 65, slaCompliance: 92 },
-  { zone: 'المنطقة 3 — الشرق', reports: 31, wasteCollected: 280, recyclingRate: 70, slaCompliance: 95 },
-  { zone: 'المنطقة 4 — الجنوب', reports: 67, wasteCollected: 350, recyclingRate: 61, slaCompliance: 89 },
-  { zone: 'المنطقة 5 — الغرب', reports: 36, wasteCollected: 487, recyclingRate: 74, slaCompliance: 97 },
+  { zone: 'Zone 1 — Centre', reports: 42, wasteCollected: 320, recyclingRate: 72, slaCompliance: 96 },
+  { zone: 'Zone 2 — Nord', reports: 58, wasteCollected: 410, recyclingRate: 65, slaCompliance: 92 },
+  { zone: 'Zone 3 — Est', reports: 31, wasteCollected: 280, recyclingRate: 70, slaCompliance: 95 },
+  { zone: 'Zone 4 — Sud', reports: 67, wasteCollected: 350, recyclingRate: 61, slaCompliance: 89 },
+  { zone: 'Zone 5 — Ouest', reports: 36, wasteCollected: 487, recyclingRate: 74, slaCompliance: 97 },
 ];
 
 export const wasteByType: WasteByTypeData[] = [
-  { type: 'عضوية', tons: 580, color: 'hsl(var(--chart-1))' },
-  { type: 'بلاستيك', tons: 340, color: 'hsl(var(--chart-2))' },
-  { type: 'ورق', tons: 280, color: 'hsl(var(--chart-3))' },
-  { type: 'زجاج', tons: 210, color: 'hsl(var(--chart-4))' },
-  { type: 'معدن', tons: 165, color: 'hsl(var(--chart-5))' },
-  { type: 'أخرى', tons: 272, color: 'hsl(var(--muted-foreground))' },
+  { type: 'Organic', tons: 580, color: 'hsl(var(--chart-1))' },
+  { type: 'Plastic', tons: 340, color: 'hsl(var(--chart-2))' },
+  { type: 'Paper', tons: 280, color: 'hsl(var(--chart-3))' },
+  { type: 'Glass', tons: 210, color: 'hsl(var(--chart-4))' },
+  { type: 'Metal', tons: 165, color: 'hsl(var(--chart-5))' },
+  { type: 'Other', tons: 272, color: 'hsl(var(--muted-foreground))' },
 ];
 
 export const monthlyCollection: MonthlyCollectionData[] = [
-  { month: 'جانفي', collected: 1450, recycled: 920, landfilled: 530 },
-  { month: 'فيفري', collected: 1520, recycled: 980, landfilled: 540 },
-  { month: 'مارس', collected: 1610, recycled: 1050, landfilled: 560 },
-  { month: 'أفريل', collected: 1580, recycled: 1020, landfilled: 560 },
-  { month: 'ماي', collected: 1700, recycled: 1120, landfilled: 580 },
-  { month: 'جوان', collected: 1750, recycled: 1180, landfilled: 570 },
-  { month: 'جويلية', collected: 1820, recycled: 1240, landfilled: 580 },
-  { month: 'أوت', collected: 1847, recycled: 1260, landfilled: 587 },
+  { month: 'Jan', collected: 1450, recycled: 920, landfilled: 530 },
+  { month: 'Feb', collected: 1520, recycled: 980, landfilled: 540 },
+  { month: 'Mar', collected: 1610, recycled: 1050, landfilled: 560 },
+  { month: 'Apr', collected: 1580, recycled: 1020, landfilled: 560 },
+  { month: 'May', collected: 1700, recycled: 1120, landfilled: 580 },
+  { month: 'Jun', collected: 1750, recycled: 1180, landfilled: 570 },
+  { month: 'Jul', collected: 1820, recycled: 1240, landfilled: 580 },
+  { month: 'Aug', collected: 1847, recycled: 1260, landfilled: 587 },
 ];
 
 export const activityFeed: ActivityFeedItem[] = [
-  { id: '1', type: 'report', message: 'بلاغ جديد من مواطن: حاوية تفيض في شارع ديدوش مراد', time: 'قبل دقيقتين', priority: 'HIGH' },
-  { id: '2', type: 'workorder', message: 'أمر عمل #WO-2024-0847 مُسند إلى فريق ألفا', time: 'قبل 8 دقائق', priority: 'NORMAL' },
-  { id: '3', type: 'collection', message: 'الشاحنة TC-014 أكملت الجمع في المنطقة 3 — 1.2 طن', time: 'قبل 15 دقيقة' },
-  { id: '4', type: 'alert', message: 'تنبيه إنترنت الأشياء: الحاوية #CN-0421 مستوى الامتلاء 92%', time: 'قبل 22 دقيقة', priority: 'HIGH' },
-  { id: '5', type: 'vehicle', message: 'المركبة TC-009 دخلت الصيانة — تغيير الزيت مجدول', time: 'قبل 35 دقيقة' },
-  { id: '6', type: 'report', message: 'البلاغ #RPT-3210 حُلّ من فريق برافو — تقييم: 5/5', time: 'قبل 48 دقيقة' },
-  { id: '7', type: 'workorder', message: 'تحذير مستوى الخدمة: أمر عمل #WO-2024-0832 معرض للاختراق', time: 'قبل ساعة', priority: 'HIGH' },
-  { id: '8', type: 'invoice', message: 'فاتورة #INV-2024-0512 صادرة إلى فندق الأوراسي — 45,000 دج', time: 'قبل ساعة' },
-  { id: '9', type: 'collection', message: 'تذكرة ميزان مُنشأة: الوزن الصافي 8.4 طن', time: 'قبل ساعتين' },
-  { id: '10', type: 'report', message: 'الذكاء الاصطناعي صنّف 12 بلاغاً جديداً — 3 مُعلّمة كمكررة', time: 'قبل ساعتين' },
+  { id: '1', type: 'report', message: 'New citizen report: Overflowing container on Rue Didouche Mourad', time: '2 min ago', priority: 'HIGH' },
+  { id: '2', type: 'workorder', message: 'Work order #WO-2024-0847 assigned to Team Alpha', time: '8 min ago', priority: 'NORMAL' },
+  { id: '3', type: 'collection', message: 'Truck TC-014 completed collection at Zone 3 — 1.2 tons', time: '15 min ago' },
+  { id: '4', type: 'alert', message: 'IoT alert: Container #CN-0421 fill level at 92%', time: '22 min ago', priority: 'HIGH' },
+  { id: '5', type: 'vehicle', message: 'Vehicle TC-009 entered maintenance — Oil change scheduled', time: '35 min ago' },
+  { id: '6', type: 'report', message: 'Report #RPT-3210 resolved by Team Bravo — Rating: 5/5', time: '48 min ago' },
+  { id: '7', type: 'workorder', message: 'SLA warning: Work order #WO-2024-0832 at risk of breach', time: '1 hr ago', priority: 'HIGH' },
+  { id: '8', type: 'invoice', message: 'Invoice #INV-2024-0512 issued to Hotel El Aurassi — 45,000 DZD', time: '1 hr ago' },
+  { id: '9', type: 'collection', message: 'Weighbridge ticket generated: Net weight 8.4 tons', time: '2 hr ago' },
+  { id: '10', type: 'report', message: 'AI classified 12 new reports — 3 flagged as duplicate', time: '2 hr ago' },
 ];
 
 const reportTypes: ReportType[] = [
@@ -233,7 +231,7 @@ const streets = [
   'Boulevard Taleb Abderrahmane',
 ];
 
-const zonesList = ['المنطقة 1 — الوسط', 'المنطقة 2 — الشمال', 'المنطقة 3 — الشرق', 'المنطقة 4 — الجنوب', 'المنطقة 5 — الغرب'];
+const zonesList = ['Zone 1 — Centre', 'Zone 2 — Nord', 'Zone 3 — Est', 'Zone 4 — Sud', 'Zone 5 — Ouest'];
 
 const names = [
   'Yacine Belkacem', 'Amira Haddad', 'Karim Mansouri', 'Fatima Zohra Boumediene',
@@ -274,9 +272,9 @@ export const citizenReports: CitizenReport[] = Array.from({ length: 48 }, (_, i)
     zone,
     lat: 36.7538 + (rand() - 0.5) * 0.08,
     lng: 3.0588 + (rand() - 0.5) * 0.08,
-    description: `${reportTypeLabels[type]} في ${street}. المنطقة بحاجة إلى اهتمام فوري.`,
+    description: `${reportTypeLabels[type]} reported at ${street}. The area needs immediate attention.`,
     submittedAt,
-    assignedTeam: status !== 'SUBMITTED' && status !== 'AI_REVIEW' ? `فريق ${['ألفا', 'برافو', 'تشارلي', 'دلتا'][Math.floor(rand() * 4)]}` : undefined,
+    assignedTeam: status !== 'SUBMITTED' && status !== 'AI_REVIEW' ? `Team ${['Alpha', 'Bravo', 'Charlie', 'Delta'][Math.floor(rand() * 4)]}` : undefined,
     estimatedResponse: status !== 'RESOLVED' ? `${Math.floor(rand() * 4) + 1} hr` : undefined,
     resolvedAt: isResolved ? new Date(Date.now() - (hoursAgo - 2) * 3600000).toISOString() : undefined,
     rating: isResolved ? Math.floor(rand() * 2) + 4 : undefined,
@@ -312,8 +310,8 @@ export const workOrders: WorkOrder[] = Array.from({ length: 40 }, (_, i) => {
     priority,
     location: street,
     zone,
-    description: `${type.replace(/_/g, ' ')} — ${street}، ${zone}`,
-    assignedTeam: status !== 'OPEN' ? `فريق ${['ألفا', 'برافو', 'تشارلي', 'دلتا'][Math.floor(rand() * 4)]}` : undefined,
+    description: `${type.replace(/_/g, ' ')} — ${street}, ${zone}`,
+    assignedTeam: status !== 'OPEN' ? `Team ${['Alpha', 'Bravo', 'Charlie', 'Delta'][Math.floor(rand() * 4)]}` : undefined,
     assignedVehicle: status !== 'OPEN' ? `TC-${String(Math.floor(rand() * 30) + 1).padStart(3, '0')}` : undefined,
     driver: status !== 'OPEN' ? names[Math.floor(rand() * names.length)] : undefined,
     dueTime: new Date(Date.now() + dueIn * 3600000).toISOString(),
@@ -396,10 +394,10 @@ export function formatTimeAgo(iso: string): string {
   const date = new Date(iso);
   const diff = Date.now() - date.getTime();
   const hours = Math.floor(diff / 3600000);
-  if (hours < 1) return 'الآن';
-  if (hours < 24) return `قبل ${hours} ساعة`;
+  if (hours < 1) return 'Just now';
+  if (hours < 24) return `${hours}h ago`;
   const days = Math.floor(hours / 24);
-  return `قبل ${days} يوم`;
+  return `${days}d ago`;
 }
 
 // ==================== B2B DATA ====================
@@ -559,16 +557,16 @@ export const weighbridgeTransactions: WeighbridgeTransaction[] = Array.from({ le
 // ==================== AUDIT LOG ====================
 
 export const auditLogs: AuditLogEntry[] = [
-  { id: 'al1', userName: 'Yacine Belkacem', action: 'INVOICE_MODIFIED', entity: 'Invoice', entityId: 'INV-2024-0513', timestamp: new Date(Date.now() - 1800000).toISOString(), ip: '192.168.1.10', beforeValue: 'amount: 86000', afterValue: 'amount: 88000' },
-  { id: 'al2', userName: 'Amira Haddad', action: 'WORKORDER_REASSIGNED', entity: 'WorkOrder', entityId: 'WO-2024-0832', timestamp: new Date(Date.now() - 3600000).toISOString(), ip: '192.168.1.25', beforeValue: 'team: Team Alpha', afterValue: 'team: Team Charlie' },
-  { id: 'al3', userName: 'Fatima Zohra Boumediene', action: 'USER_PERMISSION_CHANGED', entity: 'User', entityId: 'u-0042', timestamp: new Date(Date.now() - 7200000).toISOString(), ip: '192.168.1.30', beforeValue: 'role: DRIVER', afterValue: 'role: SUPERVISOR' },
-  { id: 'al4', userName: 'Karim Mansouri', action: 'CONTRACT_MODIFIED', entity: 'Contract', entityId: 'CON-2024-003', timestamp: new Date(Date.now() - 10800000).toISOString(), ip: '192.168.1.15', beforeValue: 'monthlyPrice: 150000', afterValue: 'monthlyPrice: 155000' },
-  { id: 'al5', userName: 'Amira Haddad', action: 'REPORT_CLOSED', entity: 'CitizenReport', entityId: 'RPT-3210', timestamp: new Date(Date.now() - 14400000).toISOString(), ip: '192.168.1.25', beforeValue: 'status: IN_PROGRESS', afterValue: 'status: RESOLVED' },
-  { id: 'al6', userName: 'Wassila Toumi', action: 'PAYMENT_RECORDED', entity: 'Payment', entityId: 'PAY-2024-0891', timestamp: new Date(Date.now() - 18000000).toISOString(), ip: '192.168.1.40', afterValue: 'amount: 63070, method: Bank Transfer' },
-  { id: 'al7', userName: 'Yacine Belkacem', action: 'USER_CREATED', entity: 'User', entityId: 'u-0105', timestamp: new Date(Date.now() - 86400000).toISOString(), ip: '192.168.1.10', afterValue: 'name: Nabil Bouzid, role: MUNICIPALITY_MANAGER' },
-  { id: 'al8', userName: 'Karim Mansouri', action: 'VEHICLE_ASSIGNED', entity: 'Vehicle', entityId: 'TC-014', timestamp: new Date(Date.now() - 90000000).toISOString(), ip: '192.168.1.15', beforeValue: 'driver: Unassigned', afterValue: 'driver: Rachid Cherif' },
-  { id: 'al9', userName: 'Imene Ould Ali', action: 'SLA_CONFIG_CHANGED', entity: 'SLA', entityId: 'SLA-CRITICAL', timestamp: new Date(Date.now() - 172800000).toISOString(), ip: '192.168.1.35', beforeValue: 'response: 45min', afterValue: 'response: 30min' },
-  { id: 'al10', userName: 'Fatima Zohra Boumediene', action: 'ROUTE_OPTIMIZED', entity: 'Route', entityId: 'RT-2024-0402', timestamp: new Date(Date.now() - 259200000).toISOString(), ip: '192.168.1.30', beforeValue: 'distance: 38.5km', afterValue: 'distance: 31.2km' },
+  { id: 'al1', user: 'Yacine Belkacem', action: 'INVOICE_MODIFIED', entity: 'Invoice', entityId: 'INV-2024-0513', timestamp: new Date(Date.now() - 1800000).toISOString(), ip: '192.168.1.10', beforeValue: 'amount: 86000', afterValue: 'amount: 88000' },
+  { id: 'al2', user: 'Amira Haddad', action: 'WORKORDER_REASSIGNED', entity: 'WorkOrder', entityId: 'WO-2024-0832', timestamp: new Date(Date.now() - 3600000).toISOString(), ip: '192.168.1.25', beforeValue: 'team: Team Alpha', afterValue: 'team: Team Charlie' },
+  { id: 'al3', user: 'Fatima Zohra Boumediene', action: 'USER_PERMISSION_CHANGED', entity: 'User', entityId: 'u-0042', timestamp: new Date(Date.now() - 7200000).toISOString(), ip: '192.168.1.30', beforeValue: 'role: DRIVER', afterValue: 'role: SUPERVISOR' },
+  { id: 'al4', user: 'Karim Mansouri', action: 'CONTRACT_MODIFIED', entity: 'Contract', entityId: 'CON-2024-003', timestamp: new Date(Date.now() - 10800000).toISOString(), ip: '192.168.1.15', beforeValue: 'monthlyPrice: 150000', afterValue: 'monthlyPrice: 155000' },
+  { id: 'al5', user: 'Amira Haddad', action: 'REPORT_CLOSED', entity: 'CitizenReport', entityId: 'RPT-3210', timestamp: new Date(Date.now() - 14400000).toISOString(), ip: '192.168.1.25', beforeValue: 'status: IN_PROGRESS', afterValue: 'status: RESOLVED' },
+  { id: 'al6', user: 'Wassila Toumi', action: 'PAYMENT_RECORDED', entity: 'Payment', entityId: 'PAY-2024-0891', timestamp: new Date(Date.now() - 18000000).toISOString(), ip: '192.168.1.40', afterValue: 'amount: 63070, method: Bank Transfer' },
+  { id: 'al7', user: 'Yacine Belkacem', action: 'USER_CREATED', entity: 'User', entityId: 'u-0105', timestamp: new Date(Date.now() - 86400000).toISOString(), ip: '192.168.1.10', afterValue: 'name: Nabil Bouzid, role: MUNICIPALITY_MANAGER' },
+  { id: 'al8', user: 'Karim Mansouri', action: 'VEHICLE_ASSIGNED', entity: 'Vehicle', entityId: 'TC-014', timestamp: new Date(Date.now() - 90000000).toISOString(), ip: '192.168.1.15', beforeValue: 'driver: Unassigned', afterValue: 'driver: Rachid Cherif' },
+  { id: 'al9', user: 'Imene Ould Ali', action: 'SLA_CONFIG_CHANGED', entity: 'SLA', entityId: 'SLA-CRITICAL', timestamp: new Date(Date.now() - 172800000).toISOString(), ip: '192.168.1.35', beforeValue: 'response: 45min', afterValue: 'response: 30min' },
+  { id: 'al10', user: 'Fatima Zohra Boumediene', action: 'ROUTE_OPTIMIZED', entity: 'Route', entityId: 'RT-2024-0402', timestamp: new Date(Date.now() - 259200000).toISOString(), ip: '192.168.1.30', beforeValue: 'distance: 38.5km', afterValue: 'distance: 31.2km' },
 ];
 
 // ==================== ECO POINTS ====================
@@ -590,39 +588,4 @@ export const ecoLevels = [
   { name: 'Green Citizen', minPoints: 1000, maxPoints: 2000, color: 'text-success' },
   { name: 'Eco Champion', minPoints: 2000, maxPoints: 3000, color: 'text-primary' },
   { name: 'City Guardian', minPoints: 3000, maxPoints: 999999, color: 'text-accent' },
-];
-
-// ==================== SUBSCRIPTIONS ====================
-
-export const subscriptions: Subscription[] = [
-  { id: 'sub1', orgName: 'بلدية الجزائر الوسط', orgType: 'municipality', plan: 'enterprise', status: 'active', startDate: '2024-01-15', endDate: '2025-01-15', monthlyFee: 250000, includedUsers: 500, usedUsers: 236, includedZones: 20, usedZones: 5, apiCallsLimit: 1000000, apiCallsUsed: 412000, storageLimitGb: 500, storageUsedGb: 187, autoRenew: true, paymentMethod: 'تحويل بنكي', contactName: 'أميرة حداد', contactEmail: 'a.haddad@mairie-alger.dz', contactPhone: '+213 555 23 45 67' },
-  { id: 'sub2', orgName: 'بلدية بئر مراد رايس', orgType: 'municipality', plan: 'pro', status: 'active', startDate: '2024-03-01', endDate: '2025-03-01', monthlyFee: 120000, includedUsers: 100, usedUsers: 67, includedZones: 10, usedZones: 3, apiCallsLimit: 200000, apiCallsUsed: 89000, storageLimitGb: 100, storageUsedGb: 43, autoRenew: true, paymentMethod: 'تحويل بنكي', contactName: 'كريم منصوري', contactEmail: 'k.mansouri@bmr.dz', contactPhone: '+213 555 34 56 78' },
-  { id: 'sub3', orgName: 'فندق الأوراسي', orgType: 'business', plan: 'pro', status: 'active', startDate: '2024-02-10', endDate: '2025-02-10', monthlyFee: 120000, includedUsers: 50, usedUsers: 18, includedZones: 5, usedZones: 1, apiCallsLimit: 200000, apiCallsUsed: 34000, storageLimitGb: 100, storageUsedGb: 12, autoRenew: true, paymentMethod: 'بطاقة بنكية', contactName: 'عمر السعدي', contactEmail: 'o.saadi@elaurassi.dz', contactPhone: '+213 555 78 90 12' },
-  { id: 'sub4', orgName: 'كارفور الجزائر', orgType: 'business', plan: 'pro', status: 'active', startDate: '2024-04-01', endDate: '2025-04-01', monthlyFee: 120000, includedUsers: 50, usedUsers: 32, includedZones: 5, usedZones: 2, apiCallsLimit: 200000, apiCallsUsed: 56000, storageLimitGb: 100, storageUsedGb: 28, autoRenew: true, paymentMethod: 'تحويل بنكي', contactName: 'نبيل بوزيد', contactEmail: 'n.bouzid@carrefour.dz', contactPhone: '+213 555 12 34 50' },
-  { id: 'sub5', orgName: 'إيكو كوليكت SARL', orgType: 'business', plan: 'enterprise', status: 'active', startDate: '2024-01-01', endDate: '2025-01-01', monthlyFee: 250000, includedUsers: 200, usedUsers: 145, includedZones: 15, usedZones: 5, apiCallsLimit: 1000000, apiCallsUsed: 678000, storageLimitGb: 500, storageUsedGb: 234, autoRenew: true, paymentMethod: 'تحويل بنكي', contactName: 'رشيد الشريف', contactEmail: 'r.cherif@ecocollect.dz', contactPhone: '+213 555 56 78 90' },
-  { id: 'sub6', orgName: 'إعادة تدوير الجزائر', orgType: 'recycler', plan: 'pro', status: 'active', startDate: '2024-05-01', endDate: '2025-05-01', monthlyFee: 120000, includedUsers: 50, usedUsers: 24, includedZones: 10, usedZones: 2, apiCallsLimit: 200000, apiCallsUsed: 71000, storageLimitGb: 100, storageUsedGb: 38, autoRenew: true, paymentMethod: 'تحويل بنكي', contactName: 'ليلى خليفي', contactEmail: 'l.khelifi@recycle-alger.dz', contactPhone: '+213 555 89 01 23' },
-  { id: 'sub7', orgName: 'بلدية حسين داي', orgType: 'municipality', plan: 'basic', status: 'trial', startDate: '2024-08-15', endDate: '2024-09-15', monthlyFee: 45000, includedUsers: 25, usedUsers: 12, includedZones: 3, usedZones: 2, apiCallsLimit: 50000, apiCallsUsed: 18000, storageLimitGb: 20, storageUsedGb: 7, autoRenew: false, paymentMethod: 'تجريبي', contactName: 'سفيان مرابط', contactEmail: 's.merabet@hussein-dey.dz', contactPhone: '+213 555 90 12 34' },
-  { id: 'sub8', orgName: 'بلدية باب الوادي', orgType: 'municipality', plan: 'basic', status: 'active', startDate: '2024-06-01', endDate: '2025-06-01', monthlyFee: 45000, includedUsers: 25, usedUsers: 19, includedZones: 3, usedZones: 3, apiCallsLimit: 50000, apiCallsUsed: 42000, storageLimitGb: 20, storageUsedGb: 15, autoRenew: true, paymentMethod: 'تحويل بنكي', contactName: 'وسيلة تومي', contactEmail: 'w.toumi@bab-el-oued.dz', contactPhone: '+213 555 01 23 45' },
-  { id: 'sub9', orgName: 'مجموعة صيدال', orgType: 'business', plan: 'basic', status: 'expired', startDate: '2023-12-01', endDate: '2024-06-01', monthlyFee: 45000, includedUsers: 25, usedUsers: 0, includedZones: 3, usedZones: 0, apiCallsLimit: 50000, apiCallsUsed: 0, storageLimitGb: 20, storageUsedGb: 0, autoRenew: false, paymentMethod: 'تحويل بنكي', contactName: 'إيمان ولد علي', contactEmail: 'i.ouldali@saidal.dz', contactPhone: '+213 555 23 45 60' },
-  { id: 'sub10', orgName: 'بلدية الحراش', orgType: 'municipality', plan: 'pro', status: 'suspended', startDate: '2024-02-01', endDate: '2025-02-01', monthlyFee: 120000, includedUsers: 100, usedUsers: 0, includedZones: 10, usedZones: 0, apiCallsLimit: 200000, apiCallsUsed: 0, storageLimitGb: 100, storageUsedGb: 0, autoRenew: false, paymentMethod: 'تحويل بنكي', contactName: 'نبيل بوزيد', contactEmail: 'n.bouzid@el-harrach.dz', contactPhone: '+213 555 12 34 50' },
-  { id: 'sub11', orgName: 'سنتريبو الجزائر', orgType: 'recycler', plan: 'basic', status: 'pending', startDate: '2024-09-01', endDate: '2025-09-01', monthlyFee: 45000, includedUsers: 25, usedUsers: 0, includedZones: 3, usedZones: 0, apiCallsLimit: 50000, apiCallsUsed: 0, storageLimitGb: 20, storageUsedGb: 0, autoRenew: true, paymentMethod: 'بانتظار التفعيل', contactName: 'توفيق العربي', contactEmail: 't.larbi@centripo.dz', contactPhone: '+213 555 45 67 89' },
-];
-
-export const planFeatures: PlanFeature[] = [
-  { label: 'المستخدمون', basic: '25', pro: '100', enterprise: '500+' },
-  { label: 'المناطق المشمولة', basic: '3', pro: '10', enterprise: '20+' },
-  { label: 'بلاغات المواطنين', basic: true, pro: true, enterprise: true },
-  { label: 'أوامر العمل', basic: true, pro: true, enterprise: true },
-  { label: 'إدارة الأسطول', basic: true, pro: true, enterprise: true },
-  { label: 'خريطة الإرسال المباشرة', basic: false, pro: true, enterprise: true },
-  { label: 'حاويات إنترنت الأشياء', basic: false, pro: true, enterprise: true },
-  { label: 'مساعد الذكاء الاصطناعي', basic: false, pro: true, enterprise: true },
-  { label: 'الإحصائيات وESG', basic: 'أساسية', pro: 'متقدمة', enterprise: 'كاملة' },
-  { label: 'سوق إعادة التدوير', basic: false, pro: true, enterprise: true },
-  { label: 'نقاط المواطن البيئية', basic: false, pro: true, enterprise: true },
-  { label: 'صلاحيات متعددة المستأجرين', basic: false, pro: false, enterprise: true },
-  { label: 'سجلات التدقيق', basic: '30 يوماً', pro: '90 يوماً', enterprise: 'غير محدود' },
-  { label: 'واجهة برمجة التطبيقات', basic: '50k/شهر', pro: '200k/شهر', enterprise: '1M/شهر' },
-  { label: 'مساحة التخزين', basic: '20 جيجا', pro: '100 جيجا', enterprise: '500 جيجا+' },
-  { label: 'الدعم الفني', basic: 'بريد إلكتروني', pro: 'أولوية + هاتف', enterprise: 'مدير حساب مخصص' },
 ];

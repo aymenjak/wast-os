@@ -4,23 +4,19 @@ import { useState, useMemo } from 'react';
 import { PageHeader } from '@/components/dashboard/page-header';
 import { ProgressBar } from '@/components/dashboard/badges';
 import { cn } from '@/lib/utils';
-import { useCrud } from '@/hooks/use-crud';
-import { routeConfig } from '@/lib/table-configs';
-import type { Route } from '@/lib/types';
-import { Search, Navigation, Plus, CheckCircle2, Clock, AlertTriangle, MapPin, Truck, Weight, X } from 'lucide-react';
+import { routes } from '@/lib/mock-data';
+import { Search, Navigation, Plus, CheckCircle2, Clock, AlertTriangle, MapPin, Truck, Weight } from 'lucide-react';
 
 const statusConfig: Record<string, { label: string; color: string; icon: typeof CheckCircle2 }> = {
-  planned: { label: 'مخطط', color: 'bg-muted text-muted-foreground', icon: Clock },
-  active: { label: 'نشط', color: 'bg-primary/15 text-primary', icon: Navigation },
-  completed: { label: 'مكتمل', color: 'bg-success/15 text-success', icon: CheckCircle2 },
-  delayed: { label: 'متأخر', color: 'bg-destructive/15 text-destructive', icon: AlertTriangle },
+  planned: { label: 'Planned', color: 'bg-muted text-muted-foreground', icon: Clock },
+  active: { label: 'Active', color: 'bg-primary/15 text-primary', icon: Navigation },
+  completed: { label: 'Completed', color: 'bg-success/15 text-success', icon: CheckCircle2 },
+  delayed: { label: 'Delayed', color: 'bg-destructive/15 text-destructive', icon: AlertTriangle },
 };
 
 export default function RoutesPage() {
-  const { data: routes, loading, error } = useCrud<Route>(routeConfig);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
-  const [showPlan, setShowPlan] = useState(false);
 
   const filtered = useMemo(() =>
     routes.filter(r => {
@@ -28,31 +24,29 @@ export default function RoutesPage() {
       const matchesStatus = statusFilter === 'ALL' || r.status === statusFilter;
       return matchesSearch && matchesStatus;
     })
-  , [routes, search, statusFilter]);
+  , [search, statusFilter]);
 
   const stats = useMemo(() => ({
     total: routes.length,
     active: routes.filter(r => r.status === 'active').length,
     completed: routes.filter(r => r.status === 'completed').length,
     totalWeight: Math.round(routes.reduce((s, r) => s + r.collectedWeight, 0) * 10) / 10,
-  }), [routes]);
+  }), []);
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {loading && <div className="text-center py-12 text-muted-foreground text-sm">جارٍ التحميل...</div>}
-      {error && <div className="text-center py-12 text-destructive text-sm">خطأ: {error}</div>}
-      <PageHeader title="المسارات" description="تخطيط وتتبع مسارات الجمع عبر المناطق">
-        <button onClick={() => setShowPlan(true)} className="flex items-center gap-1.5 px-3 h-9 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">
-          <Plus className="w-4 h-4" /> تخطيط مسار
+      <PageHeader title="Routes" description="Plan and track collection routes across zones">
+        <button className="flex items-center gap-1.5 px-3 h-9 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">
+          <Plus className="w-4 h-4" /> Plan Route
         </button>
       </PageHeader>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: 'إجمالي المسارات', value: stats.total, icon: Navigation, color: 'text-foreground', bg: 'bg-card', border: 'border-border' },
-          { label: 'نشطة', value: stats.active, icon: Navigation, color: 'text-primary', bg: 'bg-primary/5', border: 'border-primary/20' },
-          { label: 'مكتملة', value: stats.completed, icon: CheckCircle2, color: 'text-success', bg: 'bg-success/5', border: 'border-success/20' },
-          { label: 'الوزن المجموع', value: `${stats.totalWeight}طن`, icon: Weight, color: 'text-info', bg: 'bg-info/5', border: 'border-info/20' },
+          { label: 'Total Routes', value: stats.total, icon: Navigation, color: 'text-foreground', bg: 'bg-card', border: 'border-border' },
+          { label: 'Active', value: stats.active, icon: Navigation, color: 'text-primary', bg: 'bg-primary/5', border: 'border-primary/20' },
+          { label: 'Completed', value: stats.completed, icon: CheckCircle2, color: 'text-success', bg: 'bg-success/5', border: 'border-success/20' },
+          { label: 'Collected Weight', value: `${stats.totalWeight}t`, icon: Weight, color: 'text-info', bg: 'bg-info/5', border: 'border-info/20' },
         ].map(s => {
           const Icon = s.icon;
           return (
@@ -69,15 +63,15 @@ export default function RoutesPage() {
 
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="ابحث برقم المسار أو السائق..." className="w-full h-9 pr-9 pl-4 text-sm bg-card rounded-lg border border-border focus:outline-none focus:border-primary/40 transition-colors" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by route ID or driver..." className="w-full h-9 pl-9 pr-4 text-sm bg-card rounded-lg border border-border focus:outline-none focus:border-primary/40 transition-colors" />
         </div>
         <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="h-9 px-3 text-sm bg-card rounded-lg border border-border focus:outline-none focus:border-primary/40 transition-colors cursor-pointer">
-          <option value="ALL">كل الحالات</option>
-          <option value="planned">مخطط</option>
-          <option value="active">نشط</option>
-          <option value="completed">مكتمل</option>
-          <option value="delayed">متأخر</option>
+          <option value="ALL">All Statuses</option>
+          <option value="planned">Planned</option>
+          <option value="active">Active</option>
+          <option value="completed">Completed</option>
+          <option value="delayed">Delayed</option>
         </select>
       </div>
 
@@ -86,14 +80,14 @@ export default function RoutesPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-muted/30">
-                <th className="text-left font-medium text-muted-foreground text-xs px-5 py-3">رقم المسار</th>
-                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3">السائق</th>
-                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3 hidden sm:table-cell">المركبة</th>
-                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3 hidden md:table-cell">المنطقة</th>
-                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3 hidden lg:table-cell">المحطات</th>
-                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3 hidden lg:table-cell">المسافة</th>
-                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3">التقدم</th>
-                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3">الحالة</th>
+                <th className="text-left font-medium text-muted-foreground text-xs px-5 py-3">Route ID</th>
+                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3">Driver</th>
+                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3 hidden sm:table-cell">Vehicle</th>
+                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3 hidden md:table-cell">Zone</th>
+                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3 hidden lg:table-cell">Stops</th>
+                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3 hidden lg:table-cell">Distance</th>
+                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3">Progress</th>
+                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3">Status</th>
               </tr>
             </thead>
             <tbody>
@@ -107,7 +101,7 @@ export default function RoutesPage() {
                     <td className="px-3 py-3 hidden sm:table-cell"><span className="flex items-center gap-1 text-muted-foreground"><Truck className="w-3.5 h-3.5" />{r.vehicle}</span></td>
                     <td className="px-3 py-3 hidden md:table-cell"><span className="flex items-center gap-1 text-muted-foreground"><MapPin className="w-3.5 h-3.5" />{r.zone}</span></td>
                     <td className="px-3 py-3 hidden lg:table-cell text-muted-foreground">{r.stops}</td>
-                    <td className="px-3 py-3 hidden lg:table-cell text-muted-foreground">{r.distance}كم</td>
+                    <td className="px-3 py-3 hidden lg:table-cell text-muted-foreground">{r.distance}km</td>
                     <td className="px-3 py-3 w-28">
                       <div className="flex items-center gap-2">
                         <ProgressBar value={r.progress} className="w-16" barClassName={r.status === 'completed' ? 'bg-success' : r.status === 'delayed' ? 'bg-destructive' : 'bg-primary'} />
@@ -122,54 +116,6 @@ export default function RoutesPage() {
           </table>
         </div>
       </div>
-
-      {showPlan && <PlanRouteModal onClose={() => setShowPlan(false)} />}
     </div>
-  );
-}
-
-function PlanRouteModal({ onClose }: { onClose: () => void }) {
-  return (
-    <>
-      <div className="fixed inset-0 bg-black/40 z-50 animate-fade-in" onClick={onClose} />
-      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-card rounded-xl border border-border shadow-xl z-50 animate-slide-up max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-5 border-b border-border sticky top-0 bg-card">
-          <h2 className="font-display text-lg font-semibold">تخطيط مسار جديد</h2>
-          <button onClick={onClose} className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-muted transition-colors"><X className="w-4 h-4" /></button>
-        </div>
-        <form onSubmit={(e) => { e.preventDefault(); onClose(); }} className="p-5 space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-medium text-muted-foreground mb-1.5">المنطقة</label>
-              <select className="w-full h-10 px-3 text-sm bg-background rounded-lg border border-border focus:outline-none focus:border-primary/40 transition-colors">
-                <option>المنطقة 1 — الوسط</option><option>المنطقة 2 — الشمال</option><option>المنطقة 3 — الشرق</option><option>المنطقة 4 — الجنوب</option><option>المنطقة 5 — الغرب</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-muted-foreground mb-1.5">السائق</label>
-              <input type="text" required placeholder="اسم السائق" className="w-full h-10 px-3 text-sm bg-background rounded-lg border border-border focus:outline-none focus:border-primary/40 transition-colors" />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-medium text-muted-foreground mb-1.5">المركبة</label>
-              <input type="text" required placeholder="رقم اللوحة" className="w-full h-10 px-3 text-sm bg-background rounded-lg border border-border focus:outline-none focus:border-primary/40 transition-colors" />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-muted-foreground mb-1.5">عدد المحطات</label>
-              <input type="number" required placeholder="15" className="w-full h-10 px-3 text-sm bg-background rounded-lg border border-border focus:outline-none focus:border-primary/40 transition-colors" />
-            </div>
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-muted-foreground mb-1.5">التاريخ المجدول</label>
-            <input type="date" required className="w-full h-10 px-3 text-sm bg-background rounded-lg border border-border focus:outline-none focus:border-primary/40 transition-colors" />
-          </div>
-          <div className="flex gap-2 pt-2">
-            <button type="button" onClick={onClose} className="flex-1 h-10 rounded-lg border border-border text-sm font-medium hover:bg-muted transition-colors">إلغاء</button>
-            <button type="submit" className="flex-1 h-10 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">إنشاء المسار</button>
-          </div>
-        </form>
-      </div>
-    </>
   );
 }

@@ -3,10 +3,8 @@
 import { PageHeader } from '@/components/dashboard/page-header';
 import { ProgressBar } from '@/components/dashboard/badges';
 import {
-  zoneConfig, wasteTypeConfig, monthlyConfig, kpiConfig,
-} from '@/lib/table-configs';
-import { useCrud } from '@/hooks/use-crud';
-import type { ZoneData, WasteByTypeData, MonthlyCollectionData, KpiData } from '@/lib/types';
+  zones, wasteByType, monthlyCollection, kpiData,
+} from '@/lib/mock-data';
 import { cn } from '@/lib/utils';
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
@@ -20,64 +18,56 @@ import {
 import type { LucideIcon } from 'lucide-react';
 
 const analyticsNav = [
-  { id: 'overview', label: 'نظرة عامة', icon: BarChart3 },
-  { id: 'operations', label: 'العمليات', icon: Truck },
-  { id: 'waste', label: 'النفايات', icon: Recycle },
-  { id: 'finance', label: 'المالية', icon: DollarSign },
-  { id: 'citizen', label: 'المواطن', icon: Users },
+  { id: 'overview', label: 'Overview', icon: BarChart3 },
+  { id: 'operations', label: 'Operations', icon: Truck },
+  { id: 'waste', label: 'Waste', icon: Recycle },
+  { id: 'finance', label: 'Finance', icon: DollarSign },
+  { id: 'citizen', label: 'Citizen', icon: Users },
   { id: 'esg', label: 'ESG', icon: Leaf },
 ];
 
 const radialData = [
-  { name: 'إعادة التدوير', value: 68, fill: 'hsl(var(--primary))' },
-  { name: 'الخدمة', value: 94, fill: 'hsl(var(--info))' },
-  { name: 'الكفاءة', value: 87, fill: 'hsl(var(--success))' },
+  { name: 'Recycling', value: 68, fill: 'hsl(var(--primary))' },
+  { name: 'SLA', value: 94, fill: 'hsl(var(--info))' },
+  { name: 'Efficiency', value: 87, fill: 'hsl(var(--success))' },
 ];
 
 const efficiencyData = [
-  { metric: 'كفاءة المسار', value: 87 },
-  { metric: 'نسبة الجمع', value: 92 },
-  { metric: 'استغلال الأسطول', value: 78 },
-  { metric: 'رضا المواطنين', value: 89 },
-  { metric: 'نسبة إعادة التدوير', value: 68 },
-  { metric: 'الالتزام بالخدمة', value: 94 },
+  { metric: 'Route Efficiency', value: 87 },
+  { metric: 'Collection Rate', value: 92 },
+  { metric: 'Fleet Utilization', value: 78 },
+  { metric: 'Citizen Satisfaction', value: 89 },
+  { metric: 'Recycling Rate', value: 68 },
+  { metric: 'SLA Compliance', value: 94 },
 ];
 
 const financeData = [
-  { month: 'جانفي', revenue: 4200, costs: 2800 },
-  { month: 'فيفري', revenue: 4500, costs: 2900 },
-  { month: 'مارس', revenue: 4800, costs: 3000 },
-  { month: 'أفريل', revenue: 4600, costs: 3100 },
-  { month: 'ماي', revenue: 5200, costs: 3200 },
-  { month: 'جوان', revenue: 5500, costs: 3300 },
-  { month: 'جويلية', revenue: 5800, costs: 3400 },
-  { month: 'أوت', revenue: 6100, costs: 3500 },
+  { month: 'Jan', revenue: 4200, costs: 2800 },
+  { month: 'Feb', revenue: 4500, costs: 2900 },
+  { month: 'Mar', revenue: 4800, costs: 3000 },
+  { month: 'Apr', revenue: 4600, costs: 3100 },
+  { month: 'May', revenue: 5200, costs: 3200 },
+  { month: 'Jun', revenue: 5500, costs: 3300 },
+  { month: 'Jul', revenue: 5800, costs: 3400 },
+  { month: 'Aug', revenue: 6100, costs: 3500 },
 ];
 
 const esgData = [
-  { label: 'إجمالي النفايات المُدارة', value: '1,847 طن', change: '+12.4%', positive: true },
-  { label: 'انبعاثات CO₂ الموفرة', value: '842 طن', change: '+18.1%', positive: true },
-  { label: 'المواد المسترجعة', value: '1,260 طن', change: '+7.8%', positive: true },
-  { label: 'تحويل عن المطمر', value: '68.2%', change: '+5.1%', positive: true },
+  { label: 'Total Waste Managed', value: '1,847 t', change: '+12.4%', positive: true },
+  { label: 'CO\u2082 Emissions Saved', value: '842 t', change: '+18.1%', positive: true },
+  { label: 'Materials Recovered', value: '1,260 t', change: '+7.8%', positive: true },
+  { label: 'Landfill Diversion', value: '68.2%', change: '+5.1%', positive: true },
 ];
 
 export default function AnalyticsPage() {
-  const { data: zones, loading: zoneLoading, error: zoneError } = useCrud<ZoneData>(zoneConfig);
-  const { data: wasteByType, loading: wasteLoading } = useCrud<WasteByTypeData>(wasteTypeConfig);
-  const { data: monthlyCollection, loading: monthlyLoading } = useCrud<MonthlyCollectionData>(monthlyConfig);
-  const { data: kpiData, loading: kpiLoading } = useCrud<KpiData>(kpiConfig);
-  const loading = zoneLoading || wasteLoading || monthlyLoading || kpiLoading;
-  const error = zoneError;
   return (
     <div className="space-y-6 animate-fade-in">
-      {loading && <div className="text-center py-12 text-muted-foreground text-sm">جارٍ التحميل...</div>}
-      {error && <div className="text-center py-12 text-destructive text-sm">خطأ: {error}</div>}
-      <PageHeader title="الإحصائيات" description="رؤى عميقة عبر العمليات والنفايات والمالية ومؤشرات ESG">
+      <PageHeader title="Analytics" description="Deep insights across operations, waste, finance, and ESG metrics">
         <button className="flex items-center gap-1.5 px-3 h-9 rounded-lg bg-card border border-border text-sm font-medium hover:bg-muted transition-colors">
-          <Download className="w-4 h-4" /> تصدير CSV
+          <Download className="w-4 h-4" /> Export CSV
         </button>
         <button className="flex items-center gap-1.5 px-3 h-9 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">
-          <Download className="w-4 h-4" /> تقرير PDF
+          <Download className="w-4 h-4" /> PDF Report
         </button>
       </PageHeader>
 
@@ -103,10 +93,10 @@ export default function AnalyticsPage() {
       {/* KPI row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: 'إجمالي الإيرادات', value: '6.1م دج', change: '+8.9%', positive: true, icon: DollarSign },
-          { label: 'المواطنون النشطون', value: '12,840', change: '+14.2%', positive: true, icon: Users },
-          { label: 'حجم الجمع', value: '1,847 طن', change: '+12.4%', positive: true, icon: Truck },
-          { label: 'نسبة إعادة التدوير', value: '68.2%', change: '+5.1%', positive: true, icon: Recycle },
+          { label: 'Total Revenue', value: '6.1M DZD', change: '+8.9%', positive: true, icon: DollarSign },
+          { label: 'Active Citizens', value: '12,840', change: '+14.2%', positive: true, icon: Users },
+          { label: 'Collection Volume', value: '1,847 t', change: '+12.4%', positive: true, icon: Truck },
+          { label: 'Recycling Rate', value: '68.2%', change: '+5.1%', positive: true, icon: Recycle },
         ].map((kpi) => {
           const Icon = kpi.icon;
           return (
@@ -135,12 +125,12 @@ export default function AnalyticsPage() {
         <div className="lg:col-span-2 bg-card rounded-xl border border-border p-5">
           <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
             <div>
-              <h3 className="font-display font-semibold text-foreground">الإيرادات مقابل التكاليف التشغيلية</h3>
-              <p className="text-xs text-muted-foreground">مقارنة شهرية (آلاف دج)</p>
+              <h3 className="font-display font-semibold text-foreground">Revenue vs Operational Costs</h3>
+              <p className="text-xs text-muted-foreground">Monthly comparison (thousands DZD)</p>
             </div>
             <div className="flex items-center gap-4 text-xs">
-              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-primary" />الإيرادات</span>
-              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-warning" />التكاليف</span>
+              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-primary" />Revenue</span>
+              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-warning" />Costs</span>
             </div>
           </div>
           <ResponsiveContainer width="100%" height={280}>
@@ -163,8 +153,8 @@ export default function AnalyticsPage() {
         </div>
 
         <div className="bg-card rounded-xl border border-border p-5">
-          <h3 className="font-display font-semibold text-foreground mb-1">مقاييس الأداء</h3>
-          <p className="text-xs text-muted-foreground mb-4">مؤشرات تشغيلية رئيسية</p>
+          <h3 className="font-display font-semibold text-foreground mb-1">Performance Gauges</h3>
+          <p className="text-xs text-muted-foreground mb-4">Key operational metrics</p>
           <ResponsiveContainer width="100%" height={180}>
             <RadialBarChart innerRadius="35%" outerRadius="90%" data={radialData} startAngle={90} endAngle={-270}>
               <RadialBar dataKey="value" cornerRadius={6} background={{ fill: 'hsl(var(--muted))' }} />
@@ -195,8 +185,8 @@ export default function AnalyticsPage() {
       {/* Waste composition + efficiency bars */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-card rounded-xl border border-border p-5">
-          <h3 className="font-display font-semibold text-foreground mb-1">تكوين النفايات عبر الزمن</h3>
-          <p className="text-xs text-muted-foreground mb-4">شهرياً: المجموع مقابل المعاد تدويره</p>
+          <h3 className="font-display font-semibold text-foreground mb-1">Waste Composition Over Time</h3>
+          <p className="text-xs text-muted-foreground mb-4">Monthly collected vs recycled</p>
           <ResponsiveContainer width="100%" height={240}>
             <AreaChart data={monthlyCollection} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
               <defs>
@@ -227,8 +217,8 @@ export default function AnalyticsPage() {
         </div>
 
         <div className="bg-card rounded-xl border border-border p-5">
-          <h3 className="font-display font-semibold text-foreground mb-1">الكفاءة التشغيلية</h3>
-          <p className="text-xs text-muted-foreground mb-4">مؤشرات الأداء عبر الأقسام</p>
+          <h3 className="font-display font-semibold text-foreground mb-1">Operational Efficiency</h3>
+          <p className="text-xs text-muted-foreground mb-4">Performance metrics across departments</p>
           <div className="space-y-4">
             {efficiencyData.map((item) => (
               <div key={item.metric}>
@@ -255,9 +245,9 @@ export default function AnalyticsPage() {
       <div className="bg-card rounded-xl border border-border p-5">
         <div className="flex items-center gap-2 mb-1">
           <Leaf className="w-5 h-5 text-success" />
-          <h3 className="font-display font-semibold text-foreground">ESG والأثر البيئي</h3>
+          <h3 className="font-display font-semibold text-foreground">ESG & Environmental Impact</h3>
         </div>
-        <p className="text-xs text-muted-foreground mb-4">مؤشرات البيئية والاجتماعية والحوكمة</p>
+        <p className="text-xs text-muted-foreground mb-4">Environmental, Social, and Governance metrics</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {esgData.map((item) => (
             <div key={item.label} className="rounded-lg border border-border p-4">
@@ -277,18 +267,18 @@ export default function AnalyticsPage() {
       {/* Zone comparison table */}
       <div className="bg-card rounded-xl border border-border overflow-hidden">
         <div className="p-5 border-b border-border">
-          <h3 className="font-display font-semibold text-foreground">مقارنة المناطق</h3>
-          <p className="text-xs text-muted-foreground">تفصيل الأداء حسب المنطقة</p>
+          <h3 className="font-display font-semibold text-foreground">Zone Comparison</h3>
+          <p className="text-xs text-muted-foreground">Performance breakdown by zone</p>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-muted/30">
-                <th className="text-left font-medium text-muted-foreground text-xs px-5 py-3">المنطقة</th>
-                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3">البلاغات</th>
-                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3">النفايات (طن)</th>
-                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3">إعادة التدوير</th>
-                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3">الخدمة</th>
+                <th className="text-left font-medium text-muted-foreground text-xs px-5 py-3">Zone</th>
+                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3">Reports</th>
+                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3">Waste (t)</th>
+                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3">Recycling</th>
+                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3">SLA</th>
               </tr>
             </thead>
             <tbody>

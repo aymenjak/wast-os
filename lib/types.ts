@@ -353,7 +353,7 @@ export interface WeighbridgeTransaction {
 
 export interface AuditLogEntry {
   id: string;
-  userName: string;
+  user: string;
   action: string;
   entity: string;
   entityId: string;
@@ -372,87 +372,4 @@ export interface EcoProfile {
   verifiedReports: number;
   recyclingActions: number;
   cleanups: number;
-}
-
-export interface TransferStation {
-  id: string;
-  name: string;
-  location: string;
-  zone: string;
-  lat: number;
-  lng: number;
-  incomingToday: number;
-  outgoingToday: number;
-  storageCurrent: number;
-  storageCapacity: number;
-  trucksProcessed: number;
-  avgWaitTime: string;
-  status: 'operational' | 'near_capacity' | 'offline';
-}
-
-export interface MaintenanceRecord {
-  id: string;
-  vehicle: string;
-  type: string;
-  status: 'in_progress' | 'scheduled' | 'completed';
-  assignedTo: string;
-  startDate: string;
-  estCompletion: string;
-  cost: number;
-  mileage: number;
-}
-
-export type SubscriptionPlan = 'basic' | 'pro' | 'enterprise';
-export type SubscriptionStatus = 'active' | 'trial' | 'expired' | 'suspended' | 'pending';
-
-export interface Subscription {
-  id: string;
-  orgName: string;
-  orgType: 'municipality' | 'business' | 'recycler';
-  plan: SubscriptionPlan;
-  status: SubscriptionStatus;
-  startDate: string;
-  endDate: string;
-  monthlyFee: number;
-  includedUsers: number;
-  usedUsers: number;
-  includedZones: number;
-  usedZones: number;
-  apiCallsLimit: number;
-  apiCallsUsed: number;
-  storageLimitGb: number;
-  storageUsedGb: number;
-  autoRenew: boolean;
-  paymentMethod: string;
-  contactName: string;
-  contactEmail: string;
-  contactPhone: string;
-}
-
-export interface PlanFeature {
-  label: string;
-  basic: boolean | string;
-  pro: boolean | string;
-  enterprise: boolean | string;
-}
-
-export type UserRole =
-  | 'SUPER_ADMIN' | 'PLATFORM_ADMIN' | 'MUNICIPALITY_ADMIN' | 'MUNICIPALITY_MANAGER'
-  | 'OPERATIONS_MANAGER' | 'DISPATCHER' | 'SUPERVISOR' | 'DRIVER' | 'FIELD_WORKER'
-  | 'B2B_ADMIN' | 'B2B_USER' | 'RECYCLER_ADMIN' | 'WEIGHBRIDGE_OPERATOR'
-  | 'ACCOUNTANT' | 'AUDITOR' | 'CITIZEN';
-
-export type UserStatus = 'active' | 'pending' | 'suspended';
-
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  role: UserRole;
-  organization: string;
-  zone: string;
-  status: UserStatus;
-  lastActive: string;
-  avatar: string;
 }

@@ -3,9 +3,7 @@
 import { PageHeader } from '@/components/dashboard/page-header';
 import { ProgressBar } from '@/components/dashboard/badges';
 import { cn } from '@/lib/utils';
-import { useCrud } from '@/hooks/use-crud';
-import { materialConfig } from '@/lib/table-configs';
-import type { MaterialInventory } from '@/lib/types';
+import { materialInventory } from '@/lib/mock-data';
 import { Package, Search, TrendingUp, TrendingDown, Plus } from 'lucide-react';
 import { useState, useMemo } from 'react';
 
@@ -16,12 +14,11 @@ const qualityColors: Record<string, string> = {
 };
 
 export default function MaterialsPage() {
-  const { data: materialInventory, loading, error } = useCrud<MaterialInventory>(materialConfig);
   const [search, setSearch] = useState('');
 
   const filtered = useMemo(() =>
     materialInventory.filter(m => m.material.toLowerCase().includes(search.toLowerCase()))
-  , [materialInventory, search]);
+  , [search]);
 
   const stats = {
     totalStock: materialInventory.reduce((s, m) => s + m.currentStock, 0),
@@ -32,20 +29,18 @@ export default function MaterialsPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {loading && <div className="text-center py-12 text-muted-foreground text-sm">جارٍ التحميل...</div>}
-      {error && <div className="text-center py-12 text-destructive text-sm">خطأ: {error}</div>}
-      <PageHeader title="المواد والمخزون" description="تتبع مخزون المواد المسترجعة وحركاتها وتقييمها">
+      <PageHeader title="Materials & Inventory" description="Track recovered material stock, movements, and valuation">
         <button className="flex items-center gap-1.5 px-3 h-9 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">
-          <Plus className="w-4 h-4" /> إضافة مخزون
+          <Plus className="w-4 h-4" /> Add Stock
         </button>
       </PageHeader>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: 'إجمالي المخزون', value: `${stats.totalStock}طن`, icon: Package, color: 'text-foreground', bg: 'bg-card', border: 'border-border' },
-          { label: 'قيمة المخزون', value: `${(stats.totalValue / 1000000).toFixed(1)}م دج`, icon: TrendingUp, color: 'text-success', bg: 'bg-success/5', border: 'border-success/20' },
-          { label: 'وارد اليوم', value: `${stats.incoming}طن`, icon: TrendingDown, color: 'text-info', bg: 'bg-info/5', border: 'border-info/20' },
-          { label: 'مبيع اليوم', value: `${stats.sold}طن`, icon: TrendingUp, color: 'text-primary', bg: 'bg-primary/5', border: 'border-primary/20' },
+          { label: 'Total Stock', value: `${stats.totalStock}t`, icon: Package, color: 'text-foreground', bg: 'bg-card', border: 'border-border' },
+          { label: 'Inventory Value', value: `${(stats.totalValue / 1000000).toFixed(1)}M DZD`, icon: TrendingUp, color: 'text-success', bg: 'bg-success/5', border: 'border-success/20' },
+          { label: 'Incoming Today', value: `${stats.incoming}t`, icon: TrendingDown, color: 'text-info', bg: 'bg-info/5', border: 'border-info/20' },
+          { label: 'Sold Today', value: `${stats.sold}t`, icon: TrendingUp, color: 'text-primary', bg: 'bg-primary/5', border: 'border-primary/20' },
         ].map(s => {
           const Icon = s.icon;
           return (
@@ -61,7 +56,7 @@ export default function MaterialsPage() {
       </div>
 
       <div className="relative">
-        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <input
           type="text"
           value={search}
@@ -78,16 +73,16 @@ export default function MaterialsPage() {
             <div key={m.id} className="bg-card rounded-xl border border-border p-4 hover:shadow-md transition-all">
               <div className="flex items-start justify-between mb-3">
                 <div className="font-display font-semibold text-foreground text-sm">{m.material}</div>
-                <span className={cn('text-[10px] px-1.5 py-0.5 rounded font-medium', qualityColors[m.quality])}>درجة {m.quality}</span>
+                <span className={cn('text-[10px] px-1.5 py-0.5 rounded font-medium', qualityColors[m.quality])}>Grade {m.quality}</span>
               </div>
               <div className="text-3xl font-display font-bold text-foreground">{m.currentStock}<span className="text-sm text-muted-foreground font-normal ml-1">{m.unit}</span></div>
               <div className="mt-2">
                 <ProgressBar value={stockPct} barClassName="bg-primary" />
               </div>
               <div className="grid grid-cols-3 gap-2 mt-3 text-xs">
-                <div><span className="text-muted-foreground">وارد:</span> <span className="font-medium text-info">{m.incoming}</span></div>
-                <div><span className="text-muted-foreground">مبيع:</span> <span className="font-medium text-success">{m.sold}</span></div>
-                <div><span className="text-muted-foreground">السعر:</span> <span className="font-medium">{(m.pricePerTon / 1000).toFixed(0)}ك</span></div>
+                <div><span className="text-muted-foreground">In:</span> <span className="font-medium text-info">{m.incoming}</span></div>
+                <div><span className="text-muted-foreground">Sold:</span> <span className="font-medium text-success">{m.sold}</span></div>
+                <div><span className="text-muted-foreground">Price:</span> <span className="font-medium">{(m.pricePerTon / 1000).toFixed(0)}k</span></div>
               </div>
             </div>
           );

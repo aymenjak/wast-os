@@ -3,16 +3,13 @@
 import { useState, useMemo } from 'react';
 import { PageHeader } from '@/components/dashboard/page-header';
 import { cn } from '@/lib/utils';
-import { useCrud } from '@/hooks/use-crud';
-import { invoiceConfig } from '@/lib/table-configs';
-import { invoiceStatusBadgeClass } from '@/lib/mock-data';
+import { invoices, invoiceStatusBadgeClass } from '@/lib/mock-data';
 import { Search, Download, Plus, FileText, CheckCircle2, AlertCircle, Clock } from 'lucide-react';
-import type { Invoice, InvoiceStatus } from '@/lib/types';
+import type { InvoiceStatus } from '@/lib/types';
 
 const statusOptions: (InvoiceStatus | 'ALL')[] = ['ALL', 'DRAFT', 'ISSUED', 'SENT', 'PARTIALLY_PAID', 'PAID', 'OVERDUE', 'CANCELLED'];
 
 export default function InvoicesPage() {
-  const { data: invoices, loading, error } = useCrud<Invoice>(invoiceConfig);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<InvoiceStatus | 'ALL'>('ALL');
 
@@ -22,34 +19,32 @@ export default function InvoicesPage() {
       const matchesStatus = statusFilter === 'ALL' || inv.status === statusFilter;
       return matchesSearch && matchesStatus;
     })
-  , [invoices, search, statusFilter]);
+  , [search, statusFilter]);
 
   const stats = useMemo(() => ({
     total: invoices.length,
     paid: invoices.filter(i => i.status === 'PAID').length,
     overdue: invoices.filter(i => i.status === 'OVERDUE').length,
     totalOutstanding: invoices.filter(i => i.status !== 'PAID' && i.status !== 'CANCELLED').reduce((s, i) => s + i.total, 0),
-  }), [invoices]);
+  }), []);
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {loading && <div className="text-center py-12 text-muted-foreground text-sm">جارٍ التحميل...</div>}
-      {error && <div className="text-center py-12 text-destructive text-sm">خطأ: {error}</div>}
-      <PageHeader title="الفواتير" description="إدارة الفوترة لعملاء الأعمال">
+      <PageHeader title="Invoices" description="Manage billing and invoicing for B2B customers">
         <button className="flex items-center gap-1.5 px-3 h-9 rounded-lg bg-card border border-border text-sm font-medium hover:bg-muted transition-colors">
-          <Download className="w-4 h-4" /> تصدير
+          <Download className="w-4 h-4" /> Export
         </button>
         <button className="flex items-center gap-1.5 px-3 h-9 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">
-          <Plus className="w-4 h-4" /> إنشاء فاتورة
+          <Plus className="w-4 h-4" /> Create Invoice
         </button>
       </PageHeader>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: 'إجمالي الفواتير', value: stats.total, icon: FileText, color: 'text-foreground', bg: 'bg-card', border: 'border-border' },
-          { label: 'مدفوعة', value: stats.paid, icon: CheckCircle2, color: 'text-success', bg: 'bg-success/5', border: 'border-success/20' },
-          { label: 'متأخرة', value: stats.overdue, icon: AlertCircle, color: 'text-destructive', bg: 'bg-destructive/5', border: 'border-destructive/20' },
-          { label: 'المستحقات', value: `${(stats.totalOutstanding / 1000).toFixed(0)}ك دج`, icon: Clock, color: 'text-warning', bg: 'bg-warning/5', border: 'border-warning/20' },
+          { label: 'Total Invoices', value: stats.total, icon: FileText, color: 'text-foreground', bg: 'bg-card', border: 'border-border' },
+          { label: 'Paid', value: stats.paid, icon: CheckCircle2, color: 'text-success', bg: 'bg-success/5', border: 'border-success/20' },
+          { label: 'Overdue', value: stats.overdue, icon: AlertCircle, color: 'text-destructive', bg: 'bg-destructive/5', border: 'border-destructive/20' },
+          { label: 'Outstanding', value: `${(stats.totalOutstanding / 1000).toFixed(0)}k DZD`, icon: Clock, color: 'text-warning', bg: 'bg-warning/5', border: 'border-warning/20' },
         ].map(s => {
           const Icon = s.icon;
           return (
@@ -66,7 +61,7 @@ export default function InvoicesPage() {
 
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input
             type="text"
             value={search}
@@ -80,7 +75,7 @@ export default function InvoicesPage() {
           onChange={e => setStatusFilter(e.target.value as InvoiceStatus | 'ALL')}
           className="h-9 px-3 text-sm bg-card rounded-lg border border-border focus:outline-none focus:border-primary/40 transition-colors cursor-pointer"
         >
-          {statusOptions.map(s => <option key={s} value={s}>{s === 'ALL' ? 'كل الحالات' : s.replace(/_/g, ' ')}</option>)}
+          {statusOptions.map(s => <option key={s} value={s}>{s === 'ALL' ? 'All Statuses' : s.replace(/_/g, ' ')}</option>)}
         </select>
       </div>
 
@@ -89,14 +84,14 @@ export default function InvoicesPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-muted/30">
-                <th className="text-left font-medium text-muted-foreground text-xs px-5 py-3">رقم الفاتورة</th>
-                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3">العميل</th>
-                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3 hidden md:table-cell">العناصر</th>
-                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3">المبلغ</th>
-                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3">الضريبة</th>
-                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3">الإجمالي</th>
-                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3">الحالة</th>
-                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3 hidden sm:table-cell">تاريخ الاستحقاق</th>
+                <th className="text-left font-medium text-muted-foreground text-xs px-5 py-3">Invoice ID</th>
+                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3">Customer</th>
+                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3 hidden md:table-cell">Items</th>
+                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3">Amount</th>
+                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3">Tax</th>
+                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3">Total</th>
+                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3">Status</th>
+                <th className="text-left font-medium text-muted-foreground text-xs px-3 py-3 hidden sm:table-cell">Due Date</th>
               </tr>
             </thead>
             <tbody>
@@ -104,7 +99,7 @@ export default function InvoicesPage() {
                 <tr key={inv.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
                   <td className="px-5 py-3 font-mono text-xs text-foreground whitespace-nowrap">{inv.invoiceId}</td>
                   <td className="px-3 py-3 font-medium text-foreground whitespace-nowrap">{inv.customer}</td>
-                  <td className="px-3 py-3 hidden md:table-cell text-xs text-muted-foreground">{inv.items.length} عناصر</td>
+                  <td className="px-3 py-3 hidden md:table-cell text-xs text-muted-foreground">{inv.items.length} items</td>
                   <td className="px-3 py-3 text-foreground whitespace-nowrap">{inv.amount.toLocaleString()}</td>
                   <td className="px-3 py-3 text-muted-foreground whitespace-nowrap">{inv.tax.toLocaleString()}</td>
                   <td className="px-3 py-3 font-semibold text-foreground whitespace-nowrap">{inv.total.toLocaleString()}</td>

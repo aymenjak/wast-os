@@ -2,95 +2,56 @@
 
 import { useState, useMemo } from 'react';
 import { PageHeader } from '@/components/dashboard/page-header';
-import { useCrud } from '@/hooks/use-crud';
-import { vehicleConfig, containerConfig, reportConfig } from '@/lib/table-configs';
+import { vehicles, containers, citizenReports } from '@/lib/mock-data';
 import { cn } from '@/lib/utils';
-import { CityMap, type MapEntity } from '@/components/dashboard/city-map';
 import {
-  Truck, Trash2, AlertTriangle, Layers, Navigation,
+  Truck, Trash2, MapPin, AlertTriangle, Filter,
+  Navigation, Layers, Maximize2, Crosshair, Eye,
 } from 'lucide-react';
 import type { Vehicle, Container, CitizenReport } from '@/lib/types';
 
 type LayerType = 'trucks' | 'containers' | 'reports';
+type MapEntity = { type: LayerType; data: Vehicle | Container | CitizenReport; x: number; y: number };
 
 export default function DispatchPage() {
-  const { data: vehicles, loading: vehLoading, error: vehError } = useCrud<Vehicle>(vehicleConfig);
-  const { data: containers, loading: contLoading, error: contError } = useCrud<Container>(containerConfig);
-  const { data: citizenReports, loading: repLoading, error: repError } = useCrud<CitizenReport>(reportConfig);
-  const loading = vehLoading || contLoading || repLoading;
-  const error = vehError || contError || repError;
   const [activeLayers, setActiveLayers] = useState<Record<LayerType, boolean>>({
     trucks: true,
     containers: true,
     reports: true,
   });
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selected, setSelected] = useState<MapEntity | null>(null);
+
+  // Normalize lat/lng to percentage positions on the map canvas
+  const normalizePos = (lat: number, lng: number) => {
+    const latMin = 36.71, latMax = 36.80;
+    const lngMin = 3.01, lngMax = 3.11;
+    const x = ((lng - lngMin) / (lngMax - lngMin)) * 100;
+    const y = ((latMax - lat) / (latMax - latMin)) * 100;
+    return { x: Math.max(2, Math.min(96, x)), y: Math.max(5, Math.min(92, y)) };
+  };
 
   const entities: MapEntity[] = useMemo(() => {
     const result: MapEntity[] = [];
     if (activeLayers.trucks) {
       vehicles.filter(v => v.status === 'ON_ROUTE' || v.status === 'LOADING').forEach(v => {
-        result.push({
-          id: v.id,
-          lat: v.lat,
-          lng: v.lng,
-          type: 'truck',
-          label: v.plate,
-          details: [
-            { label: 'السائق', value: v.driver },
-            { label: 'النوع', value: v.type },
-            { label: 'المنطقة', value: v.zone },
-            { label: 'الحالة', value: v.status.replace(/_/g, ' ') },
-            { label: 'السرعة', value: `${v.speed} كم/س` },
-            { label: 'الوقود', value: `${v.fuel}%` },
-            { label: 'المحطة التالية', value: v.nextStop },
-            { label: 'الوصول المتوقع', value: v.eta },
-          ],
-        });
+        const pos = normalizePos(v.lat, v.lng);
+        result.push({ type: 'trucks', data: v, x: pos.x, y: pos.y });
       });
     }
     if (activeLayers.containers) {
       containers.forEach(c => {
-        result.push({
-          id: c.id,
-          lat: c.lat,
-          lng: c.lng,
-          type: 'container',
-          label: c.containerId,
-          details: [
-            { label: 'النوع', value: c.type },
-            { label: 'النفايات', value: c.wasteType },
-            { label: 'الموقع', value: c.location },
-            { label: 'Zone', value: c.zone },
-            { label: 'الامتلاء', value: `${c.fillLevel}%` },
-            { label: 'الحالة', value: c.status },
-            { label: 'المستشعر', value: c.hasSensor ? 'نشط' : 'لا يوجد' },
-          ],
-        });
+        const pos = normalizePos(c.lat, c.lng);
+        result.push({ type: 'containers', data: c, x: pos.x, y: pos.y });
       });
     }
     if (activeLayers.reports) {
       citizenReports.filter(r => !['RESOLVED', 'CLOSED', 'REJECTED'].includes(r.status)).forEach(r => {
-        result.push({
-          id: r.id,
-          lat: r.lat,
-          lng: r.lng,
-          type: 'report',
-          label: r.reportId,
-          details: [
-            { label: 'النوع', value: r.type.replace(/_/g, ' ') },
-            { label: 'المواطن', value: r.citizenName },
-            { label: 'الموقع', value: r.location },
-            { label: 'Zone', value: r.zone },
-            { label: 'الأولوية', value: r.priority },
-            { label: 'الحالة', value: r.status.replace(/_/g, ' ') },
-            ...(r.assignedTeam ? [{ label: 'الفريق', value: r.assignedTeam }] : []),
-          ],
-        });
+        const pos = normalizePos(r.lat, r.lng);
+        result.push({ type: 'reports', data: r, x: pos.x, y: pos.y });
       });
     }
     return result;
-  }, [activeLayers, vehicles, containers, citizenReports]);
+  }, [activeLayers]);
 
   const counts = {
     trucks: vehicles.filter(v => v.status === 'ON_ROUTE' || v.status === 'LOADING').length,
@@ -99,30 +60,26 @@ export default function DispatchPage() {
   };
 
   const layerConfig: { key: LayerType; label: string; icon: typeof Truck; color: string; count: number }[] = [
-    { key: 'trucks', label: 'الشاحنات', icon: Truck, color: 'bg-primary', count: counts.trucks },
-    { key: 'containers', label: 'الحاويات', icon: Trash2, color: 'bg-info', count: counts.containers },
-    { key: 'reports', label: 'البلاغات', icon: AlertTriangle, color: 'bg-destructive', count: counts.reports },
+    { key: 'trucks', label: 'Trucks', icon: Truck, color: 'bg-primary', count: counts.trucks },
+    { key: 'containers', label: 'Containers', icon: Trash2, color: 'bg-info', count: counts.containers },
+    { key: 'reports', label: 'Reports', icon: AlertTriangle, color: 'bg-destructive', count: counts.reports },
   ];
-
-  const selectedEntity = entities.find(e => e.id === selectedId);
 
   return (
     <div className="space-y-4 animate-fade-in">
-      {loading && <div className="text-center py-12 text-muted-foreground text-sm">جارٍ التحميل...</div>}
-      {error && <div className="text-center py-12 text-destructive text-sm">خطأ: {error}</div>}
-      <PageHeader title="خريطة الإرسال المباشرة" description="مواقع لحظية للأسطول والحاويات والبلاغات عبر المدينة">
+      <PageHeader title="Live Dispatch Map" description="Real-time fleet, container, and report locations across the city">
         <div className="flex items-center gap-2 px-3 h-9 rounded-lg bg-success/10 text-success text-sm font-medium">
           <span className="relative w-2 h-2 rounded-full bg-success">
             <span className="absolute inset-0 rounded-full bg-success animate-ping opacity-75" />
           </span>
-          تتبع مباشر
+          Live Tracking
         </div>
       </PageHeader>
 
       {/* Layer toggles */}
       <div className="flex flex-wrap items-center gap-2">
         <span className="flex items-center gap-1 text-xs font-medium text-muted-foreground mr-2">
-          <Layers className="w-4 h-4" /> الطبقات:
+          <Layers className="w-4 h-4" /> Layers:
         </span>
         {layerConfig.map((layer) => {
           const Icon = layer.icon;
@@ -150,75 +107,197 @@ export default function DispatchPage() {
         })}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-        {/* Map */}
-        <div className="lg:col-span-3">
-          <CityMap
-            entities={entities}
-            center={[36.7538, 3.0588]}
-            zoom={12}
-            height="calc(100vh - 280px)"
-            selectedId={selectedId}
-            onSelect={setSelectedId}
-          />
+      {/* Map canvas */}
+      <div className="relative bg-card rounded-xl border border-border overflow-hidden" style={{ height: 'calc(100vh - 280px)', minHeight: '400px' }}>
+        {/* Grid background */}
+        <div className="absolute inset-0 bg-grid opacity-50" />
+
+        {/* Map roads simulation */}
+        <svg className="absolute inset-0 w-full h-full opacity-20" preserveAspectRatio="none">
+          <defs>
+            <pattern id="roads" x="0" y="0" width="20%" height="25%" patternUnits="userSpaceOnUse">
+              <path d="M 0 50 Q 50 30 100 50 Q 50 70 0 50" fill="none" stroke="hsl(var(--muted-foreground))" strokeWidth="0.5" />
+              <line x1="50" y1="0" x2="50" y2="100" stroke="hsl(var(--muted-foreground))" strokeWidth="0.3" strokeDasharray="2 4" />
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#roads)" />
+        </svg>
+
+        {/* Zone labels */}
+        {[
+          { label: 'Zone 1 — Centre', x: 50, y: 40 },
+          { label: 'Zone 2 — Nord', x: 30, y: 15 },
+          { label: 'Zone 3 — Est', x: 75, y: 35 },
+          { label: 'Zone 4 — Sud', x: 55, y: 72 },
+          { label: 'Zone 5 — Ouest', x: 20, y: 55 },
+        ].map((z) => (
+          <div
+            key={z.label}
+            className="absolute text-[10px] font-medium text-muted-foreground/60 pointer-events-none"
+            style={{ left: `${z.x}%`, top: `${z.y}%`, transform: 'translate(-50%, -50%)' }}
+          >
+            {z.label}
+          </div>
+        ))}
+
+        {/* Entities */}
+        {entities.map((entity, i) => {
+          const isSelected = selected?.type === entity.type && (selected.data as { id: string }).id === (entity.data as { id: string }).id;
+          let marker: React.ReactNode;
+
+          if (entity.type === 'trucks') {
+            const v = entity.data as Vehicle;
+            marker = (
+              <div className={cn(
+                'relative flex items-center justify-center w-7 h-7 rounded-full transition-all',
+                isSelected ? 'bg-primary ring-2 ring-primary/30 ring-offset-2 ring-offset-card scale-110' : 'bg-primary hover:scale-110'
+              )}>
+                {v.status === 'ON_ROUTE' && (
+                  <span className="absolute inset-0 rounded-full bg-primary animate-ping opacity-30" />
+                )}
+                <Truck className="w-3.5 h-3.5 text-white relative z-10" />
+              </div>
+            );
+          } else if (entity.type === 'containers') {
+            const c = entity.data as Container;
+            const color = c.fillLevel >= 90 ? 'bg-destructive' : c.fillLevel >= 70 ? 'bg-warning' : 'bg-info';
+            marker = (
+              <div className={cn(
+                'relative flex items-center justify-center w-5 h-5 rounded transition-all',
+                isSelected ? 'ring-2 ring-offset-2 ring-offset-card scale-125' : 'hover:scale-110',
+                color,
+                isSelected && c.fillLevel >= 90 ? 'ring-destructive' : isSelected && c.fillLevel >= 70 ? 'ring-warning' : 'ring-info'
+              )}>
+                <Trash2 className="w-3 h-3 text-white" />
+              </div>
+            );
+          } else {
+            marker = (
+              <div className={cn(
+                'relative flex items-center justify-center w-5 h-5 rounded-full transition-all',
+                isSelected ? 'bg-destructive ring-2 ring-destructive/30 ring-offset-2 ring-offset-card scale-125' : 'bg-destructive hover:scale-110'
+              )}>
+                <AlertTriangle className="w-3 h-3 text-white" />
+                <span className="absolute inset-0 rounded-full bg-destructive animate-ping opacity-30" />
+              </div>
+            );
+          }
+
+          return (
+            <button
+              key={`${entity.type}-${(entity.data as { id: string }).id}-${i}`}
+              className="absolute z-10 group"
+              style={{ left: `${entity.x}%`, top: `${entity.y}%`, transform: 'translate(-50%, -50%)' }}
+              onClick={() => setSelected(entity)}
+            >
+              {marker}
+            </button>
+          );
+        })}
+
+        {/* Map controls */}
+        <div className="absolute top-4 right-4 flex flex-col gap-1.5 z-20">
+          <button className="flex items-center justify-center w-9 h-9 rounded-lg bg-card border border-border shadow-sm hover:bg-muted transition-colors">
+            <Maximize2 className="w-4 h-4 text-muted-foreground" />
+          </button>
+          <button className="flex items-center justify-center w-9 h-9 rounded-lg bg-card border border-border shadow-sm hover:bg-muted transition-colors">
+            <Crosshair className="w-4 h-4 text-muted-foreground" />
+          </button>
         </div>
 
-        {/* Side panel */}
-        <div className="space-y-3">
-          {/* Legend */}
-          <div className="bg-card rounded-xl border border-border p-4">
-            <div className="text-xs font-medium text-muted-foreground mb-2">وسيلة الإيضاح</div>
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-2 text-xs">
-                <span className="w-3 h-3 rounded-full bg-primary" /> شاحنة (في الطريق)
-              </div>
-              <div className="flex items-center gap-2 text-xs">
-                <span className="w-3 h-3 rounded-full bg-info" /> حاوية
-              </div>
-              <div className="flex items-center gap-2 text-xs">
-                <span className="w-3 h-3 rounded-full bg-destructive" /> بلاغ نشط
-              </div>
-              <div className="flex items-center gap-2 text-xs">
-                <span className="w-3 h-3 rounded-full bg-success" /> محطة تحويل
-              </div>
+        {/* Legend */}
+        <div className="absolute bottom-4 left-4 bg-card/90 backdrop-blur-sm rounded-lg border border-border p-3 z-20">
+          <div className="text-xs font-medium text-muted-foreground mb-2">Legend</div>
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2 text-xs">
+              <span className="w-3 h-3 rounded-full bg-primary" /> Truck (on route)
             </div>
-          </div>
-
-          {/* Selected entity */}
-          {selectedEntity ? (
-            <div className="bg-card rounded-xl border border-border p-4 animate-slide-up">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-sm font-medium capitalize">{selectedEntity.type}</span>
-                <button onClick={() => setSelectedId(null)} className="text-muted-foreground hover:text-foreground text-xs">إغلاق</button>
-              </div>
-              <div className="font-mono text-xs text-muted-foreground mb-3">{selectedEntity.label}</div>
-              <div className="space-y-2 text-xs">
-                {selectedEntity.details?.map((d, i) => (
-                  <div key={i} className="flex items-center justify-between">
-                    <span className="text-muted-foreground">{d.label}</span>
-                    <span className="font-medium text-foreground">{d.value}</span>
-                  </div>
-                ))}
-              </div>
+            <div className="flex items-center gap-2 text-xs">
+              <span className="w-3 h-3 rounded bg-info" /> Container (normal)
             </div>
-          ) : (
-            <div className="bg-card rounded-xl border border-border p-4 text-center">
-              <Navigation className="w-8 h-8 text-muted-foreground mx-auto mb-2 opacity-40" />
-              <p className="text-xs text-muted-foreground">انقر على علامة على الخريطة لعرض التفاصيل</p>
+            <div className="flex items-center gap-2 text-xs">
+              <span className="w-3 h-3 rounded bg-warning" /> Container (high fill)
             </div>
-          )}
-
-          {/* Quick links */}
-          <div className="bg-card rounded-xl border border-border p-4">
-            <div className="text-xs font-medium text-muted-foreground mb-2">روابط سريعة</div>
-            <div className="space-y-1.5">
-              <a href="/dashboard/fleet" className="block text-xs text-primary hover:underline">إدارة الأسطول ←</a>
-              <a href="/dashboard/containers" className="block text-xs text-primary hover:underline">حالة الحاويات ←</a>
-              <a href="/dashboard/reports" className="block text-xs text-primary hover:underline">بلاغات المواطنين ←</a>
+            <div className="flex items-center gap-2 text-xs">
+              <span className="w-3 h-3 rounded bg-destructive" /> Container full / Report
             </div>
           </div>
         </div>
+
+        {/* Selected entity info panel */}
+        {selected && (
+          <div className="absolute top-4 left-4 w-72 bg-card rounded-xl border border-border shadow-lg z-20 animate-slide-up">
+            <div className="p-4 border-b border-border">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {selected.type === 'trucks' && <Truck className="w-4 h-4 text-primary" />}
+                  {selected.type === 'containers' && <Trash2 className="w-4 h-4 text-info" />}
+                  {selected.type === 'reports' && <AlertTriangle className="w-4 h-4 text-destructive" />}
+                  <span className="text-sm font-medium capitalize">{selected.type.replace(/_/g, ' ')}</span>
+                </div>
+                <button onClick={() => setSelected(null)} className="text-muted-foreground hover:text-foreground text-xs">Close</button>
+              </div>
+            </div>
+            <div className="p-4 space-y-2 text-xs">
+              {selected.type === 'trucks' && (() => {
+                const v = selected.data as Vehicle;
+                return (
+                  <>
+                    <InfoRow label="Plate" value={v.plate} />
+                    <InfoRow label="Type" value={v.type} />
+                    <InfoRow label="Driver" value={v.driver} />
+                    <InfoRow label="Zone" value={v.zone} />
+                    <InfoRow label="Status" value={v.status.replace(/_/g, ' ')} />
+                    <InfoRow label="Speed" value={`${v.speed} km/h`} />
+                    <InfoRow label="Next Stop" value={v.nextStop} />
+                    <InfoRow label="ETA" value={v.eta} />
+                    <InfoRow label="Fuel" value={`${v.fuel}%`} />
+                  </>
+                );
+              })()}
+              {selected.type === 'containers' && (() => {
+                const c = selected.data as Container;
+                return (
+                  <>
+                    <InfoRow label="ID" value={c.containerId} />
+                    <InfoRow label="Type" value={c.type} />
+                    <InfoRow label="Waste Type" value={c.wasteType} />
+                    <InfoRow label="Location" value={c.location} />
+                    <InfoRow label="Zone" value={c.zone} />
+                    <InfoRow label="Fill Level" value={`${c.fillLevel}%`} />
+                    <InfoRow label="Status" value={c.status} />
+                    <InfoRow label="Sensor" value={c.hasSensor ? 'Active' : 'None'} />
+                  </>
+                );
+              })()}
+              {selected.type === 'reports' && (() => {
+                const r = selected.data as CitizenReport;
+                return (
+                  <>
+                    <InfoRow label="Report ID" value={r.reportId} />
+                    <InfoRow label="Type" value={r.type.replace(/_/g, ' ')} />
+                    <InfoRow label="Citizen" value={r.citizenName} />
+                    <InfoRow label="Location" value={r.location} />
+                    <InfoRow label="Zone" value={r.zone} />
+                    <InfoRow label="Priority" value={r.priority} />
+                    <InfoRow label="Status" value={r.status.replace(/_/g, ' ')} />
+                    {r.assignedTeam && <InfoRow label="Team" value={r.assignedTeam} />}
+                  </>
+                );
+              })()}
+            </div>
+          </div>
+        )}
       </div>
+    </div>
+  );
+}
+
+function InfoRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="font-medium text-foreground">{value}</span>
     </div>
   );
 }

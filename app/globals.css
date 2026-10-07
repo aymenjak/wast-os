@@ -85,14 +85,6 @@
     @apply bg-background text-foreground;
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
   }
-  /* RTL: flip inputs, textareas, selects for proper cursor placement */
-  input, textarea, select {
-    text-align: right;
-  }
-  /* RTL: ensure number/date inputs align right */
-  input[type="number"], input[type="date"], input[type="email"], input[type="password"], input[type="text"], input[type="tel"] {
-    text-align: right;
-  }
 }
 
 @layer utilities {
@@ -134,17 +126,6 @@
     background: currentColor;
     animation: pulse-ring 2s ease-out infinite;
   }
-  /* RTL utilities for fixing left/right positioning */
-  .rtl-left-3 { left: auto; right: 0.75rem; }
-  .rtl-right-3 { right: auto; left: 0.75rem; }
-  .rtl-left-0 { left: auto; right: 0; }
-  .rtl-right-0 { right: auto; left: 0; }
-  .rtl-ml-1 { margin-left: 0; margin-right: 0.25rem; }
-  .rtl-mr-1 { margin-right: 0; margin-left: 0.25rem; }
-  .rtl-pl-64 { padding-left: 0; padding-right: 16rem; }
-  .rtl-border-l { border-left: none; border-right: 1px solid hsl(var(--border)); }
-  .rtl-border-r { border-right: none; border-left: 1px solid hsl(var(--border)); }
-  .leaflet-container { direction: ltr; }
 }
 
 @keyframes fade-in {

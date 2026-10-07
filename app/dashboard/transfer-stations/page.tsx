@@ -3,47 +3,30 @@
 import { PageHeader } from '@/components/dashboard/page-header';
 import { ProgressBar } from '@/components/dashboard/badges';
 import { cn } from '@/lib/utils';
-import { useCrud } from '@/hooks/use-crud';
-import { transferStationConfig } from '@/lib/table-configs';
-import type { TransferStation } from '@/lib/types';
-import { CityMap, type MapEntity } from '@/components/dashboard/city-map';
 import { ArrowRightLeft, MapPin, Truck, Weight, Clock, TrendingUp } from 'lucide-react';
 
+const stations = [
+  { id: 'ts1', name: 'Transfer Station Est', location: 'Rouiba Industrial Zone', zone: 'Zone 3 — Est', incomingToday: 42, outgoingToday: 38, storageCurrent: 85, storageCapacity: 200, trucksProcessed: 14, avgWaitTime: '12 min', status: 'operational' },
+  { id: 'ts2', name: 'Transfer Station Oued Smar', location: 'Oued Smar', zone: 'Zone 5 — Ouest', incomingToday: 56, outgoingToday: 48, storageCurrent: 120, storageCapacity: 250, trucksProcessed: 18, avgWaitTime: '18 min', status: 'operational' },
+  { id: 'ts3', name: 'Transfer Station Centre', location: 'Hussein Dey', zone: 'Zone 1 — Centre', incomingToday: 38, outgoingToday: 35, storageCurrent: 68, storageCapacity: 150, trucksProcessed: 12, avgWaitTime: '8 min', status: 'operational' },
+  { id: 'ts4', name: 'Transfer Station Sud', location: 'Birkhadem', zone: 'Zone 4 — Sud', incomingToday: 29, outgoingToday: 22, storageCurrent: 142, storageCapacity: 180, trucksProcessed: 9, avgWaitTime: '25 min', status: 'near_capacity' },
+];
+
 export default function TransferStationsPage() {
-  const { data: stations, loading, error } = useCrud<TransferStation>(transferStationConfig);
   const totalIncoming = stations.reduce((s, st) => s + st.incomingToday, 0);
   const totalOutgoing = stations.reduce((s, st) => s + st.outgoingToday, 0);
   const totalTrucks = stations.reduce((s, st) => s + st.trucksProcessed, 0);
 
-  const mapEntities: MapEntity[] = stations.map(st => ({
-    id: st.id,
-    lat: st.lat,
-    lng: st.lng,
-    type: 'station' as const,
-    label: st.name,
-    details: [
-      { label: 'الموقع', value: st.location },
-      { label: 'المنطقة', value: st.zone },
-      { label: 'التخزين', value: `${st.storageCurrent}طن / ${st.storageCapacity}طن` },
-      { label: 'وارد', value: `${st.incomingToday}طن` },
-      { label: 'صادر', value: `${st.outgoingToday}طن` },
-      { label: 'الشاحنات', value: String(st.trucksProcessed) },
-      { label: 'متوسط الانتظار', value: st.avgWaitTime },
-    ],
-  }));
-
   return (
     <div className="space-y-6 animate-fade-in">
-      {loading && <div className="text-center py-12 text-muted-foreground text-sm">جارٍ التحميل...</div>}
-      {error && <div className="text-center py-12 text-destructive text-sm">خطأ: {error}</div>}
-      <PageHeader title="محطات التحويل" description="مراقبة تدفق النفايات عبر محطات التحويل" />
+      <PageHeader title="Transfer Stations" description="Monitor waste flow through transfer stations" />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: 'إجمالي المحطات', value: stations.length, icon: ArrowRightLeft, color: 'text-foreground', bg: 'bg-card', border: 'border-border' },
-          { label: 'وارد اليوم', value: `${totalIncoming}طن`, icon: TrendingUp, color: 'text-info', bg: 'bg-info/5', border: 'border-info/20' },
-          { label: 'صادر اليوم', value: `${totalOutgoing}طن`, icon: ArrowRightLeft, color: 'text-success', bg: 'bg-success/5', border: 'border-success/20' },
-          { label: 'الشاحنات المعالجة', value: totalTrucks, icon: Truck, color: 'text-primary', bg: 'bg-primary/5', border: 'border-primary/20' },
+          { label: 'Total Stations', value: stations.length, icon: ArrowRightLeft, color: 'text-foreground', bg: 'bg-card', border: 'border-border' },
+          { label: 'Incoming Today', value: `${totalIncoming}t`, icon: TrendingUp, color: 'text-info', bg: 'bg-info/5', border: 'border-info/20' },
+          { label: 'Outgoing Today', value: `${totalOutgoing}t`, icon: ArrowRightLeft, color: 'text-success', bg: 'bg-success/5', border: 'border-success/20' },
+          { label: 'Trucks Processed', value: totalTrucks, icon: Truck, color: 'text-primary', bg: 'bg-primary/5', border: 'border-primary/20' },
         ].map(s => {
           const Icon = s.icon;
           return (
@@ -57,8 +40,6 @@ export default function TransferStationsPage() {
           );
         })}
       </div>
-
-      <CityMap entities={mapEntities} center={[36.7380, 3.0800]} zoom={11} height="350px" />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {stations.map(st => {
@@ -77,14 +58,14 @@ export default function TransferStationsPage() {
                   </div>
                 </div>
                 <span className={cn('text-[10px] px-2 py-0.5 rounded font-medium', isNearCapacity ? 'bg-warning/15 text-warning' : 'bg-success/15 text-success')}>
-                  {isNearCapacity ? 'قرب الامتلاء' : 'تشغيلي'}
+                  {isNearCapacity ? 'Near Capacity' : 'Operational'}
                 </span>
               </div>
 
               <div className="mb-3">
                 <div className="flex items-center justify-between text-sm mb-1.5">
-                  <span className="text-muted-foreground">مستوى التخزين</span>
-                  <span className="font-medium text-foreground">{st.storageCurrent}طن / {st.storageCapacity}طن</span>
+                  <span className="text-muted-foreground">Storage Fill</span>
+                  <span className="font-medium text-foreground">{st.storageCurrent}t / {st.storageCapacity}t</span>
                 </div>
                 <ProgressBar value={fillPct} barClassName={isNearCapacity ? 'bg-warning' : 'bg-primary'} />
               </div>
@@ -92,23 +73,23 @@ export default function TransferStationsPage() {
               <div className="grid grid-cols-4 gap-2 text-center">
                 <div className="rounded-lg bg-info/5 p-2">
                   <Weight className="w-4 h-4 text-info mx-auto mb-1" />
-                  <div className="text-sm font-semibold text-foreground">{st.incomingToday}طن</div>
-                  <div className="text-[10px] text-muted-foreground">وارد</div>
+                  <div className="text-sm font-semibold text-foreground">{st.incomingToday}t</div>
+                  <div className="text-[10px] text-muted-foreground">Incoming</div>
                 </div>
                 <div className="rounded-lg bg-success/5 p-2">
                   <ArrowRightLeft className="w-4 h-4 text-success mx-auto mb-1" />
-                  <div className="text-sm font-semibold text-foreground">{st.outgoingToday}طن</div>
-                  <div className="text-[10px] text-muted-foreground">صادر</div>
+                  <div className="text-sm font-semibold text-foreground">{st.outgoingToday}t</div>
+                  <div className="text-[10px] text-muted-foreground">Outgoing</div>
                 </div>
                 <div className="rounded-lg bg-primary/5 p-2">
                   <Truck className="w-4 h-4 text-primary mx-auto mb-1" />
                   <div className="text-sm font-semibold text-foreground">{st.trucksProcessed}</div>
-                  <div className="text-[10px] text-muted-foreground">الشاحنات</div>
+                  <div className="text-[10px] text-muted-foreground">Trucks</div>
                 </div>
                 <div className="rounded-lg bg-muted/30 p-2">
                   <Clock className="w-4 h-4 text-muted-foreground mx-auto mb-1" />
                   <div className="text-sm font-semibold text-foreground">{st.avgWaitTime}</div>
-                  <div className="text-[10px] text-muted-foreground">متوسط الانتظار</div>
+                  <div className="text-[10px] text-muted-foreground">Avg Wait</div>
                 </div>
               </div>
             </div>

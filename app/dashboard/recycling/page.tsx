@@ -2,32 +2,27 @@
 
 import { PageHeader } from '@/components/dashboard/page-header';
 import { cn } from '@/lib/utils';
-import { useCrud } from '@/hooks/use-crud';
-import { recyclerConfig } from '@/lib/table-configs';
-import type { RecyclerCenter } from '@/lib/types';
+import { recyclerCenters } from '@/lib/mock-data';
 import { Recycle, MapPin, Package, TrendingUp, Percent } from 'lucide-react';
 
 export default function RecyclingPage() {
-  const { data: recyclerCenters, loading, error } = useCrud<RecyclerCenter>(recyclerConfig);
   const stats = {
     totalCapacity: recyclerCenters.reduce((s, c) => s + c.capacity, 0),
     totalIncoming: recyclerCenters.reduce((s, c) => s + c.incomingToday, 0),
     totalRecovered: recyclerCenters.reduce((s, c) => s + c.recoveredToday, 0),
-    avgEfficiency: recyclerCenters.length > 0 ? Math.round(recyclerCenters.reduce((s, c) => s + c.efficiency, 0) / recyclerCenters.length) : 0,
+    avgEfficiency: Math.round(recyclerCenters.reduce((s, c) => s + c.efficiency, 0) / recyclerCenters.length),
   };
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {loading && <div className="text-center py-12 text-muted-foreground text-sm">جارٍ التحميل...</div>}
-      {error && <div className="text-center py-12 text-destructive text-sm">خطأ: {error}</div>}
-      <PageHeader title="مراكز إعادة التدوير" description="مراقبة النفايات الواردة والمعالجة واسترجاع المواد" />
+      <PageHeader title="Recycling Centers" description="Monitor incoming waste, processing, and material recovery" />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: 'إجمالي السعة', value: `${stats.totalCapacity}طن`, icon: Package, color: 'text-foreground', bg: 'bg-card', border: 'border-border' },
-          { label: 'وارد اليوم', value: `${stats.totalIncoming}طن`, icon: Recycle, color: 'text-info', bg: 'bg-info/5', border: 'border-info/20' },
-          { label: 'مسترجع اليوم', value: `${stats.totalRecovered}طن`, icon: TrendingUp, color: 'text-success', bg: 'bg-success/5', border: 'border-success/20' },
-          { label: 'متوسط الكفاءة', value: `${stats.avgEfficiency}%`, icon: Percent, color: 'text-primary', bg: 'bg-primary/5', border: 'border-primary/20' },
+          { label: 'Total Capacity', value: `${stats.totalCapacity}t`, icon: Package, color: 'text-foreground', bg: 'bg-card', border: 'border-border' },
+          { label: 'Incoming Today', value: `${stats.totalIncoming}t`, icon: Recycle, color: 'text-info', bg: 'bg-info/5', border: 'border-info/20' },
+          { label: 'Recovered Today', value: `${stats.totalRecovered}t`, icon: TrendingUp, color: 'text-success', bg: 'bg-success/5', border: 'border-success/20' },
+          { label: 'Avg Efficiency', value: `${stats.avgEfficiency}%`, icon: Percent, color: 'text-primary', bg: 'bg-primary/5', border: 'border-primary/20' },
         ].map(s => {
           const Icon = s.icon;
           return (
@@ -60,25 +55,25 @@ export default function RecyclingPage() {
 
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div className="rounded-lg bg-muted/30 p-3">
-                <div className="text-xs text-muted-foreground">وارد</div>
-                <div className="font-semibold text-foreground">{c.incomingToday}طن</div>
+                <div className="text-xs text-muted-foreground">Incoming</div>
+                <div className="font-semibold text-foreground">{c.incomingToday}t</div>
               </div>
               <div className="rounded-lg bg-muted/30 p-3">
-                <div className="text-xs text-muted-foreground">معالج</div>
-                <div className="font-semibold text-foreground">{c.processedToday}طن</div>
+                <div className="text-xs text-muted-foreground">Processed</div>
+                <div className="font-semibold text-foreground">{c.processedToday}t</div>
               </div>
               <div className="rounded-lg bg-success/5 p-3">
-                <div className="text-xs text-muted-foreground">مسترجع</div>
-                <div className="font-semibold text-success">{c.recoveredToday}طن</div>
+                <div className="text-xs text-muted-foreground">Recovered</div>
+                <div className="font-semibold text-success">{c.recoveredToday}t</div>
               </div>
               <div className="rounded-lg bg-destructive/5 p-3">
-                <div className="text-xs text-muted-foreground">مرفوض</div>
-                <div className="font-semibold text-destructive">{c.rejectsToday}طن</div>
+                <div className="text-xs text-muted-foreground">Rejects</div>
+                <div className="font-semibold text-destructive">{c.rejectsToday}t</div>
               </div>
             </div>
 
             <div className="mt-4 pt-3 border-t border-border/50">
-              <div className="text-xs text-muted-foreground mb-1.5">المواد المعالجة</div>
+              <div className="text-xs text-muted-foreground mb-1.5">Materials handled</div>
               <div className="flex flex-wrap gap-1">
                 {c.materials.map(m => (
                   <span key={m} className="text-[10px] px-2 py-0.5 rounded bg-primary/10 text-primary font-medium">{m}</span>
