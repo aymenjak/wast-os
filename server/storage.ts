@@ -27,7 +27,7 @@ class LocalDiskStorage implements StorageProvider {
 
 let provider: StorageProvider | null = null;
 export function storage(): StorageProvider {
-  provider ??= new LocalDiskStorage(path.resolve(process.env.UPLOAD_DIR ?? "./.data/uploads"));
+  provider ??= new LocalDiskStorage(path.resolve(/*turbopackIgnore: true*/ process.env.UPLOAD_DIR ?? "./.data/uploads"));
   return provider;
 }
 

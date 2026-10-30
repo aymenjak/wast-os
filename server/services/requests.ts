@@ -47,7 +47,8 @@ export async function createRequest(ctx: OrgContext, input: unknown) {
   requirePermission(ctx, portal ? "portal.access" : "requests.write");
   const raw = parse(requestSchema, portal ? { ...(input as object), customerId: ctx.customerId ?? "" } : input);
   if (portal && !ctx.customerId) throw new ForbiddenError();
-  const today = new Date().toISOString().slice(0, 10);
+  // "Today" is evaluated in the organization's timezone, not the server's.
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: ctx.org.timezone, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
   if (raw.preferredDate < today) throw new DomainError("errors.validation", { fields: { preferredDate: "past" } });
 
   return prisma.$transaction(async (tx) => {

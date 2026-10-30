@@ -1,0 +1,176 @@
+"use server";
+import type { ActionState } from "@/lib/actions/state";
+import { orgAction } from "@/server/action";
+import * as customers from "@/server/services/customers";
+import * as contracts from "@/server/services/contracts";
+import * as requests from "@/server/services/requests";
+import * as wo from "@/server/services/work-orders";
+import * as fleet from "@/server/services/fleet";
+import * as invoices from "@/server/services/invoices";
+import * as accounts from "@/server/services/accounts";
+import { DomainError } from "@/server/domain/errors";
+import type { WorkOrderAction } from "@/server/domain/work-order-machine";
+import type { ContractStatus, VehicleStatus } from "@/lib/generated/prisma/enums";
+
+const s = (v: unknown) => (typeof v === "string" ? v : "");
+
+// ── Customers ──
+export async function createCustomerAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, async (ctx, input) => `/app/customers/${(await customers.createCustomer(ctx, input)).id}`);
+}
+export async function updateCustomerAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, (ctx, input) => customers.updateCustomer(ctx, s(input.customerId), input), { revalidate: [`/app/customers/${s(fd.get("customerId"))}`] });
+}
+export async function addContactAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, async (ctx, input) => void (await customers.addContact(ctx, s(input.customerId), input)), { revalidate: [`/app/customers/${s(fd.get("customerId"))}`] });
+}
+export async function addLocationAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, async (ctx, input) => void (await customers.addServiceLocation(ctx, s(input.customerId), input)), { revalidate: [`/app/customers/${s(fd.get("customerId"))}`] });
+}
+export async function addNoteAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, async (ctx, input) => void (await customers.addCustomerNote(ctx, s(input.customerId), input)), { revalidate: [`/app/customers/${s(fd.get("customerId"))}`] });
+}
+
+// ── Contracts ──
+export async function createContractAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, async (ctx, input) => {
+    const count = Number(input.lineCount ?? 0);
+    const lines = Array.from({ length: Math.min(Math.max(count, 0), 50) }, (_, i) => ({
+      serviceLocationId: input[`lines.${i}.serviceLocationId`],
+      wasteCategoryId: input[`lines.${i}.wasteCategoryId`],
+      frequency: input[`lines.${i}.frequency`],
+      billingUnit: input[`lines.${i}.billingUnit`],
+      unitPrice: input[`lines.${i}.unitPrice`],
+      estimatedQuantity: input[`lines.${i}.estimatedQuantity`],
+      weekdays: [],
+    })).filter((l) => l.serviceLocationId);
+    const c = await contracts.createContract(ctx, { ...input, lines });
+    return `/app/contracts/${c.id}`;
+  });
+}
+export async function setContractStatusAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, (ctx, input) => contracts.setContractStatus(ctx, s(input.contractId), s(input.to) as ContractStatus), { revalidate: [`/app/contracts/${s(fd.get("contractId"))}`] });
+}
+
+// ── Requests ──
+export async function createRequestAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, async (ctx, input) => {
+    await requests.createRequest(ctx, input);
+    return ctx.role === "CUSTOMER_PORTAL" ? "/portal" : "/app/requests";
+  });
+}
+export async function validateRequestAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, async (ctx, input) => void (await requests.validateRequest(ctx, s(input.requestId))), { revalidate: ["/app/requests", "/app/dispatch"] });
+}
+export async function rejectRequestAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, (ctx, input) => requests.rejectRequest(ctx, s(input.requestId), input), { revalidate: ["/app/requests"] });
+}
+
+// ── Work orders ──
+export async function assignWorkOrderAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, async (ctx, input) => void (await wo.assignWorkOrder(ctx, s(input.workOrderId), input)), {
+    revalidate: ["/app/dispatch", `/app/work-orders/${s(fd.get("workOrderId"))}`],
+  });
+}
+const EXECUTABLE = new Set<WorkOrderAction>(["unassign", "start", "complete", "fail", "cancel", "reschedule", "resolveDispute", "redo"]);
+export async function workOrderTransitionAction(_: ActionState, fd: FormData) {
+  return orgAction(
+    fd,
+    async (ctx, input) => {
+      const action = s(input.action) as WorkOrderAction;
+      if (!EXECUTABLE.has(action)) throw new DomainError("errors.invalidTransition");
+      await wo.transitionWorkOrder(ctx, s(input.workOrderId), action as Exclude<WorkOrderAction, "assign" | "dispute">, input);
+    },
+    { revalidate: [`/app/work-orders/${s(fd.get("workOrderId"))}`, "/app/work-orders", "/app/dispatch"] },
+  );
+}
+export async function uploadEvidenceAction(_: ActionState, fd: FormData) {
+  const file = fd.get("file");
+  return orgAction(
+    fd,
+    async (ctx, input) => {
+      if (!(file instanceof File) || file.size === 0) throw new DomainError("errors.upload.empty");
+      const kind = s(input.kind);
+      if (!["BEFORE", "AFTER", "DOCUMENT"].includes(kind)) throw new DomainError("errors.validation");
+      await wo.addEvidence(ctx, s(input.workOrderId), kind as "BEFORE" | "AFTER" | "DOCUMENT", { name: file.name, bytes: new Uint8Array(await file.arrayBuffer()) });
+    },
+    { revalidate: [`/app/work-orders/${s(fd.get("workOrderId"))}`] },
+  );
+}
+export async function addWeightAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, async (ctx, input) => void (await wo.addWeightTicket(ctx, s(input.workOrderId), input)), { revalidate: [`/app/work-orders/${s(fd.get("workOrderId"))}`] });
+}
+export async function customerFeedbackAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, (ctx, input) => wo.customerFeedback(ctx, s(input.workOrderId), input), { revalidate: ["/portal"] });
+}
+
+// ── Fleet ──
+export async function createVehicleAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, async (ctx, input) => void (await fleet.createVehicle(ctx, input)), { revalidate: ["/app/fleet"] });
+}
+export async function setVehicleStatusAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, (ctx, input) => fleet.setVehicleStatus(ctx, s(input.vehicleId), s(input.status) as VehicleStatus), { revalidate: ["/app/fleet", `/app/fleet/${s(fd.get("vehicleId"))}`] });
+}
+export async function addMaintenanceAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, async (ctx, input) => void (await fleet.addMaintenance(ctx, s(input.vehicleId), input)), { revalidate: [`/app/fleet/${s(fd.get("vehicleId"))}`] });
+}
+export async function createTeamAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, async (ctx, input) => void (await fleet.createTeam(ctx, input)), { revalidate: ["/app/fleet"] });
+}
+export async function addTeamMemberAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, (ctx, input) => fleet.addTeamMember(ctx, s(input.teamId), s(input.membershipId)), { revalidate: ["/app/fleet"] });
+}
+export async function removeTeamMemberAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, (ctx, input) => fleet.removeTeamMember(ctx, s(input.teamId), s(input.membershipId)), { revalidate: ["/app/fleet"] });
+}
+
+// ── Invoices & payments ──
+export async function createDraftInvoiceAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, async (ctx, input) => {
+    const inv = await invoices.createDraftInvoice(ctx, { ...input, workOrderIds: input.workOrderIds ?? [] });
+    return `/app/invoices/${inv.id}`;
+  });
+}
+export async function addInvoiceLineAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, (ctx, input) => invoices.addManualLine(ctx, s(input.invoiceId), input), { revalidate: [`/app/invoices/${s(fd.get("invoiceId"))}`] });
+}
+export async function removeInvoiceLineAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, (ctx, input) => invoices.removeLine(ctx, s(input.invoiceId), s(input.lineId)), { revalidate: [`/app/invoices/${s(fd.get("invoiceId"))}`] });
+}
+export async function issueInvoiceAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, async (ctx, input) => void (await invoices.issueInvoice(ctx, s(input.invoiceId), input)), { revalidate: [`/app/invoices/${s(fd.get("invoiceId"))}`, "/app/invoices"] });
+}
+export async function voidInvoiceAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, (ctx, input) => invoices.voidInvoice(ctx, s(input.invoiceId), input), { revalidate: [`/app/invoices/${s(fd.get("invoiceId"))}`, "/app/invoices"] });
+}
+export async function recordPaymentAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, async (ctx, input) => void (await invoices.recordPayment(ctx, s(input.invoiceId), input)), { revalidate: [`/app/invoices/${s(fd.get("invoiceId"))}`, "/app/invoices"] });
+}
+export async function reversePaymentAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, (ctx, input) => invoices.reverseRecordedPayment(ctx, s(input.paymentId), input), { revalidate: [`/app/invoices/${s(fd.get("invoiceId"))}`] });
+}
+
+// ── Team & settings ──
+export async function inviteMemberAction(_: ActionState, fd: FormData) {
+  return orgAction(
+    fd,
+    async (ctx, input, locale) => {
+      const { token } = await accounts.inviteMember(ctx, input);
+      const base = process.env.APP_URL ?? "";
+      return { data: { inviteUrl: `${base}/${locale}/invite/${token}` } };
+    },
+    { revalidate: ["/app/team"] },
+  );
+}
+export async function revokeInvitationAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, (ctx, input) => accounts.revokeInvitation(ctx, s(input.invitationId)), { revalidate: ["/app/team"] });
+}
+export async function changeRoleAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, (ctx, input) => accounts.changeMemberRole(ctx, input), { revalidate: ["/app/team"] });
+}
+export async function setMemberStatusAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, (ctx, input) => accounts.setMemberStatus(ctx, s(input.membershipId), s(input.status) === "ACTIVE" ? "ACTIVE" : "SUSPENDED"), { revalidate: ["/app/team"] });
+}
+export async function updateSettingsAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, async (ctx, input) => void (await accounts.updateOrganizationSettings(ctx, input)), { revalidate: ["/app/settings"] });
+}

@@ -5,7 +5,11 @@
  */
 const buckets = new Map<string, { count: number; resetAt: number }>();
 
-export function rateLimit(key: string, limit: number, windowMs: number): { ok: boolean; retryAfterMs: number } {
+// E2E suites run many sign-ups from one IP; they may raise limits outside production only.
+const SCALE = process.env.NODE_ENV !== "production" || process.env.NEXVO_E2E === "1" ? Number(process.env.RATE_LIMIT_SCALE ?? 1) || 1 : 1;
+
+export function rateLimit(key: string, baseLimit: number, windowMs: number): { ok: boolean; retryAfterMs: number } {
+  const limit = baseLimit * SCALE;
   const now = Date.now();
   const bucket = buckets.get(key);
   if (!bucket || bucket.resetAt <= now) {

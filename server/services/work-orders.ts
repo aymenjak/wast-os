@@ -258,10 +258,29 @@ export async function dispatchBoard(ctx: OrgContext, date: string) {
     prisma.vehicle.findMany({ where: { organizationId: ctx.org.id, status: { in: ["AVAILABLE", "IN_SERVICE"] } }, orderBy: { plateNumber: "asc" } }),
   ]);
   const backlog = await prisma.workOrder.findMany({
-    where: { organizationId: ctx.org.id, status: "PLANNED", scheduledDate: { lt: dateOnly(date) } },
+    where: { organizationId: ctx.org.id, status: { in: ["PLANNED", "ASSIGNED", "IN_PROGRESS"] }, scheduledDate: { lt: dateOnly(date) } },
     include: { customer: { select: { name: true } }, civicReport: { select: { trackingCode: true } } },
     orderBy: { scheduledDate: "asc" },
     take: 50,
   });
   return { orders, teams, vehicles, backlog };
+}
+
+/**
+ * Authorizes an evidence download. The file must belong to the caller's organization AND the caller
+ * must be able to see the parent record (team scoping for field workers, customer scoping for portal).
+ */
+export async function getEvidenceForDownload(ctx: OrgContext, evidenceId: string) {
+  const ev = await prisma.evidenceFile.findFirst({ where: { id: evidenceId, organizationId: ctx.org.id } });
+  if (!ev) throw new NotFoundError("EvidenceFile");
+  if (ev.workOrderId) {
+    assertCanRead(ctx);
+    const visible = await prisma.workOrder.findFirst({ where: { ...(await visibilityFilter(ctx)), id: ev.workOrderId }, select: { id: true } });
+    if (!visible) throw new NotFoundError("EvidenceFile");
+  } else if (ev.civicReportId) {
+    requirePermission(ctx, "civic.read");
+  } else if (ev.contractId) {
+    requirePermission(ctx, "contracts.read");
+  } else throw new NotFoundError("EvidenceFile");
+  return ev;
 }

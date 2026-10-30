@@ -42,8 +42,11 @@ export async function addMember(owner: OrgContext, role: OrgRole, customerId?: s
   return (await loadContext(res.user.id, owner.org.id))!;
 }
 
+/** A calendar day in the organizations' default timezone (Africa/Algiers), offset by N days. */
 export function isoDay(offsetDays = 0) {
-  return new Date(Date.now() + offsetDays * 86400_000).toISOString().slice(0, 10);
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Algiers", year: "numeric", month: "2-digit", day: "2-digit" }).format(
+    new Date(Date.now() + offsetDays * 86400_000),
+  );
 }
 
 /** Minimal valid JPEG with an EXIF APP1 segment containing a fake GPS marker. */

@@ -1,0 +1,72 @@
+import Link from "next/link";
+import { notFound, redirect } from "next/navigation";
+import { LogOut } from "lucide-react";
+import { getDictionary } from "@/lib/i18n";
+import { isLocale, type Locale } from "@/lib/i18n/config";
+import { currentSession, requireOrg } from "@/server/auth/session";
+import { listUserOrganizations } from "@/server/services/accounts";
+import { buildNav } from "@/server/navigation";
+import { SidebarNav, MobileNav } from "@/components/app-nav";
+import { Logo } from "@/components/ui/misc";
+import { LanguageSwitcher } from "@/components/language-switcher";
+import { logoutAction, switchOrgAction } from "@/app/actions/public";
+
+export const dynamic = "force-dynamic";
+export const metadata = { robots: { index: false } };
+
+export default async function AppLayout({ children, params }: { children: React.ReactNode; params: Promise<{ locale: string }> }) {
+  const { locale: raw } = await params;
+  if (!isLocale(raw)) notFound();
+  const locale: Locale = raw;
+  const ctx = await requireOrg(locale);
+  if (ctx.role === "CUSTOMER_PORTAL") redirect(`/${locale}/portal`);
+  const d = getDictionary(locale);
+  const session = await currentSession();
+  const orgs = session ? await listUserOrganizations(session.user.id) : [];
+  const nav = buildNav(ctx, d, locale);
+
+  return (
+    <div className="min-h-dvh lg:grid lg:grid-cols-[240px_1fr]">
+      <aside className="sticky top-0 hidden h-dvh flex-col border-e border-ink-200 bg-white lg:flex">
+        <div className="flex h-14 items-center border-b border-ink-100 px-5">
+          <Link href={`/${locale}/app`} aria-label="NEXVO"><Logo /></Link>
+        </div>
+        <div className="flex-1 overflow-y-auto"><SidebarNav sections={nav} /></div>
+        <div className="border-t border-ink-100 px-5 py-3 text-xs text-ink-500">
+          <div className="truncate font-medium text-ink-800">{ctx.org.name}</div>
+          <div>{d.enums.OrgRole[ctx.role]}</div>
+        </div>
+      </aside>
+      <div className="min-w-0">
+        <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-ink-200 bg-white/95 px-4 backdrop-blur sm:px-6">
+          <MobileNav sections={nav} />
+          <div className="lg:hidden"><Logo withWordmark={false} /></div>
+          {orgs.length > 1 ? (
+            <form action={switchOrgAction} className="flex items-center gap-2">
+              <input type="hidden" name="locale" value={locale} />
+              <label htmlFor="org-switch" className="sr-only">{d.nav.switchOrg}</label>
+              <select id="org-switch" name="organizationId" defaultValue={ctx.org.id} className="h-8 max-w-48 rounded-md border border-ink-200 bg-white px-2 text-sm">
+                {orgs.map((m) => <option key={m.organizationId} value={m.organizationId}>{m.organization.name}</option>)}
+              </select>
+              <button type="submit" className="text-xs font-medium text-brand-700 hover:underline">{d.common.apply}</button>
+            </form>
+          ) : (
+            <span className="truncate text-sm font-medium text-ink-800 lg:hidden">{ctx.org.name}</span>
+          )}
+          <div className="ms-auto flex items-center gap-4">
+            <LanguageSwitcher className="hidden sm:flex" />
+            <span className="hidden text-sm text-ink-700 md:inline">{ctx.userName}</span>
+            <form action={logoutAction}>
+              <input type="hidden" name="locale" value={locale} />
+              <button type="submit" className="inline-flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm text-ink-700 hover:bg-ink-100">
+                <LogOut aria-hidden className="size-4 rtl:rotate-180" />
+                <span className="hidden sm:inline">{d.common.signOut}</span>
+              </button>
+            </form>
+          </div>
+        </header>
+        <main id="main" className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:py-8">{children}</main>
+      </div>
+    </div>
+  );
+}
