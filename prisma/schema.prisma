@@ -1,0 +1,982 @@
+// NEXVO data model.
+// Conventions:
+// - Every tenant-owned row carries `organizationId`; services always filter on it.
+// - Money is DECIMAL(14,2) in the database and integer minor units (centimes) in domain code.
+// - Timestamps are stored in UTC (timestamptz) and rendered in the organization's timezone.
+// - Geographic points are stored as lat/lng decimals; a trigger keeps a PostGIS
+//   `geography(Point,4326)` column in sync for spatial queries (see migrations).
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ───────────────────────────── Identity & tenancy ─────────────────────────────
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique @db.Citext
+  name         String
+  passwordHash String
+  locale       String    @default("fr")
+  createdAt    DateTime  @default(now()) @db.Timestamptz(3)
+  disabledAt   DateTime? @db.Timestamptz(3)
+
+  sessions    Session[]
+  memberships Membership[]
+}
+
+model Session {
+  id                   String   @id @default(cuid())
+  tokenHash            String   @unique
+  userId               String
+  activeOrganizationId String?
+  expiresAt            DateTime @db.Timestamptz(3)
+  createdAt            DateTime @default(now()) @db.Timestamptz(3)
+  lastSeenAt           DateTime @default(now()) @db.Timestamptz(3)
+  userAgent            String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+enum OrganizationKind {
+  SERVICE_PROVIDER
+  MUNICIPALITY
+}
+
+enum VerificationStatus {
+  UNVERIFIED
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+model Organization {
+  id                 String             @id @default(cuid())
+  slug               String             @unique
+  name               String
+  kind               OrganizationKind   @default(SERVICE_PROVIDER)
+  legalName          String?
+  taxId              String? // NIF
+  statisticalId      String? // NIS
+  tradeRegister      String? // RC
+  address            String?
+  wilaya             String?
+  commune            String?
+  phone              String?
+  email              String?
+  verificationStatus VerificationStatus @default(UNVERIFIED)
+  country            String             @default("DZ")
+  currency           String             @default("DZD")
+  timezone           String             @default("Africa/Algiers")
+  defaultLocale      String             @default("fr")
+  /// Default VAT rate in basis points (1900 = 19%). Configurable per organization.
+  defaultTaxRateBps  Int                @default(1900)
+  invoicePrefix      String             @default("INV")
+  /// Municipalities only: target hours between verification and resolution.
+  civicSlaHours      Int                @default(72)
+  createdAt          DateTime           @default(now()) @db.Timestamptz(3)
+
+  memberships        Membership[]
+  invitations        Invitation[]
+  subscription       Subscription?
+  branches           Branch[]
+  serviceZones       ServiceZone[]
+  customers          Customer[]
+  contacts           CustomerContact[]
+  locations          ServiceLocation[]
+  customerNotes      CustomerNote[]
+  wasteCategories    WasteCategory[]
+  contracts          Contract[]
+  contractLines      ContractServiceLine[]
+  collectionRequests CollectionRequest[]
+  teams              Team[]
+  vehicles           Vehicle[]
+  vehicleLogs        VehicleMaintenance[]
+  workOrders         WorkOrder[]
+  weightTickets      WeightTicket[]
+  evidence           EvidenceFile[]
+  invoices           Invoice[]
+  invoiceLines       InvoiceLine[]
+  payments           Payment[]
+  counters           Counter[]
+  auditEvents        AuditEvent[]
+  notifications      Notification[]
+  civicReports       CivicReport[]
+}
+
+enum OrgRole {
+  OWNER
+  ADMIN
+  DISPATCHER
+  FIELD_WORKER
+  FINANCE
+  VIEWER
+  CIVIC_REVIEWER
+  CUSTOMER_PORTAL
+}
+
+enum MembershipStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+model Membership {
+  id             String           @id @default(cuid())
+  organizationId String
+  userId         String
+  role           OrgRole
+  status         MembershipStatus @default(ACTIVE)
+  /// Set only for CUSTOMER_PORTAL members: the customer whose records they may see.
+  customerId     String?
+  createdAt      DateTime         @default(now()) @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  customer     Customer?    @relation(fields: [customerId], references: [id])
+  teams        TeamMember[]
+
+  @@unique([organizationId, userId])
+  @@index([userId])
+}
+
+model Invitation {
+  id             String    @id @default(cuid())
+  organizationId String
+  email          String    @db.Citext
+  role           OrgRole
+  customerId     String?
+  tokenHash      String    @unique
+  invitedById    String
+  expiresAt      DateTime  @db.Timestamptz(3)
+  acceptedAt     DateTime? @db.Timestamptz(3)
+  revokedAt      DateTime? @db.Timestamptz(3)
+  createdAt      DateTime  @default(now()) @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, email])
+}
+
+// ───────────────────────────── Commercial plans ─────────────────────────────
+
+model Plan {
+  code             String  @id
+  name             String
+  /// Hypothesis price, monthly, in DZD. See PRICING-ASSUMPTIONS.md.
+  priceMonthly     Decimal @db.Decimal(14, 2)
+  priceYearly      Decimal @db.Decimal(14, 2)
+  maxUsers         Int
+  maxVehicles      Int
+  maxCustomers     Int
+  customerPortal   Boolean @default(false)
+  advancedReports  Boolean @default(false)
+  isPublic         Boolean @default(true)
+  sortOrder        Int     @default(0)
+
+  subscriptions Subscription[]
+}
+
+enum SubscriptionStatus {
+  TRIAL
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+}
+
+model Subscription {
+  id               String             @id @default(cuid())
+  organizationId   String             @unique
+  planCode         String
+  status           SubscriptionStatus @default(TRIAL)
+  currentPeriodEnd DateTime           @db.Timestamptz(3)
+  createdAt        DateTime           @default(now()) @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  plan         Plan         @relation(fields: [planCode], references: [code])
+}
+
+// ───────────────────────────── Geography ─────────────────────────────
+
+model Branch {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  wilaya         String?
+  commune        String?
+  address        String?
+  createdAt      DateTime @default(now()) @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, name])
+}
+
+model ServiceZone {
+  id             String   @id @default(cuid())
+  organizationId String
+  code           String
+  name           String
+  wilaya         String?
+  commune        String?
+  createdAt      DateTime @default(now()) @db.Timestamptz(3)
+
+  organization Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  locations    ServiceLocation[]
+  civicReports CivicReport[]
+
+  @@unique([organizationId, code])
+}
+
+// ───────────────────────────── Customers ─────────────────────────────
+
+enum CustomerKind {
+  BUSINESS
+  INSTITUTION
+  RESIDENTIAL
+}
+
+enum CustomerStatus {
+  ACTIVE
+  INACTIVE
+}
+
+model Customer {
+  id             String         @id @default(cuid())
+  organizationId String
+  code           String
+  name           String
+  kind           CustomerKind   @default(BUSINESS)
+  taxId          String?
+  email          String?
+  phone          String?
+  billingAddress String?
+  status         CustomerStatus @default(ACTIVE)
+  /// Customer-specific service conditions (access hours, PPE, gate codes...).
+  serviceConditions String?
+  createdAt      DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime       @updatedAt @db.Timestamptz(3)
+
+  organization Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  contacts     CustomerContact[]
+  locations    ServiceLocation[]
+  notes        CustomerNote[]
+  contracts    Contract[]
+  requests     CollectionRequest[]
+  workOrders   WorkOrder[]
+  invoices     Invoice[]
+  portalUsers  Membership[]
+
+  @@unique([organizationId, code])
+  @@unique([organizationId, id])
+  @@index([organizationId, name])
+}
+
+model CustomerContact {
+  id             String   @id @default(cuid())
+  organizationId String
+  customerId     String
+  name           String
+  jobTitle       String?
+  email          String?
+  phone          String?
+  isPrimary      Boolean  @default(false)
+  createdAt      DateTime @default(now()) @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customer     Customer     @relation(fields: [organizationId, customerId], references: [organizationId, id], onDelete: Cascade)
+
+  @@index([organizationId, customerId])
+}
+
+model ServiceLocation {
+  id             String                                  @id @default(cuid())
+  organizationId String
+  customerId     String
+  label          String
+  addressLine    String
+  commune        String?
+  wilaya         String?
+  latitude       Decimal?                                @db.Decimal(9, 6)
+  longitude      Decimal?                                @db.Decimal(9, 6)
+  /// Maintained by trigger from latitude/longitude. Do not write directly.
+  geog           Unsupported("geography(Point, 4326)")?
+  accessNotes    String?
+  serviceZoneId  String?
+  active         Boolean                                 @default(true)
+  createdAt      DateTime                                @default(now()) @db.Timestamptz(3)
+
+  organization  Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customer      Customer              @relation(fields: [organizationId, customerId], references: [organizationId, id], onDelete: Cascade)
+  serviceZone   ServiceZone?          @relation(fields: [serviceZoneId], references: [id])
+  contractLines ContractServiceLine[]
+  requests      CollectionRequest[]
+  workOrders    WorkOrder[]
+
+  @@unique([organizationId, id])
+  @@index([organizationId, customerId])
+  @@index([geog], type: Gist)
+}
+
+model CustomerNote {
+  id             String   @id @default(cuid())
+  organizationId String
+  customerId     String
+  authorId       String
+  body           String
+  createdAt      DateTime @default(now()) @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customer     Customer     @relation(fields: [organizationId, customerId], references: [organizationId, id], onDelete: Cascade)
+
+  @@index([organizationId, customerId, createdAt])
+}
+
+// ───────────────────────────── Waste taxonomy ─────────────────────────────
+
+model WasteCategory {
+  id             String   @id @default(cuid())
+  organizationId String
+  code           String
+  nameEn         String
+  nameFr         String
+  nameAr         String
+  /// Hazardous/special streams require separate regulatory handling (Law 01-19 as amended).
+  hazardous      Boolean  @default(false)
+  active         Boolean  @default(true)
+
+  organization  Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  contractLines ContractServiceLine[]
+  requests      CollectionRequest[]
+  workOrders    WorkOrder[]
+
+  @@unique([organizationId, code])
+  @@unique([organizationId, id])
+}
+
+// ───────────────────────────── Contracts ─────────────────────────────
+
+enum ContractStatus {
+  DRAFT
+  ACTIVE
+  SUSPENDED
+  EXPIRED
+  TERMINATED
+}
+
+enum BillingUnit {
+  PER_COLLECTION
+  PER_TONNE
+  PER_MONTH
+}
+
+enum Frequency {
+  ON_DEMAND
+  DAILY
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+}
+
+model Contract {
+  id                 String         @id @default(cuid())
+  organizationId     String
+  customerId         String
+  reference          String
+  title              String
+  status             ContractStatus @default(DRAFT)
+  startDate          DateTime       @db.Date
+  endDate            DateTime?      @db.Date
+  renewalNoticeDays  Int            @default(30)
+  autoRenew          Boolean        @default(false)
+  serviceScope       String?
+  slaResponseHours   Int?
+  createdById        String
+  createdAt          DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt          DateTime       @updatedAt @db.Timestamptz(3)
+
+  organization Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customer     Customer              @relation(fields: [organizationId, customerId], references: [organizationId, id])
+  lines        ContractServiceLine[]
+  requests     CollectionRequest[]
+  workOrders   WorkOrder[]
+  invoices     Invoice[]
+  documents    EvidenceFile[]
+
+  @@unique([organizationId, reference])
+  @@unique([organizationId, id])
+  @@index([organizationId, status, endDate])
+}
+
+model ContractServiceLine {
+  id                String      @id @default(cuid())
+  organizationId    String
+  contractId        String
+  serviceLocationId String
+  wasteCategoryId   String
+  frequency         Frequency   @default(WEEKLY)
+  /// ISO weekdays (1=Mon..7=Sun) for recurring schedules.
+  weekdays          Int[]
+  billingUnit       BillingUnit @default(PER_COLLECTION)
+  unitPrice         Decimal     @db.Decimal(14, 2)
+  estimatedQuantity Decimal?    @db.Decimal(12, 3)
+
+  organization    Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  contract        Contract        @relation(fields: [organizationId, contractId], references: [organizationId, id], onDelete: Cascade)
+  serviceLocation ServiceLocation @relation(fields: [organizationId, serviceLocationId], references: [organizationId, id])
+  wasteCategory   WasteCategory   @relation(fields: [organizationId, wasteCategoryId], references: [organizationId, id])
+
+  @@index([organizationId, contractId])
+}
+
+// ───────────────────────────── Operations ─────────────────────────────
+
+enum Priority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum QuantityUnit {
+  KG
+  TONNE
+  CUBIC_METRE
+  CONTAINER
+  BAG
+}
+
+enum TimeWindow {
+  ANY
+  MORNING
+  AFTERNOON
+  EVENING
+}
+
+enum RequestStatus {
+  SUBMITTED
+  VALIDATED
+  REJECTED
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+}
+
+enum RequestSource {
+  STAFF
+  PORTAL
+}
+
+model CollectionRequest {
+  id                String        @id @default(cuid())
+  organizationId    String
+  number            String
+  customerId        String
+  serviceLocationId String
+  contractId        String?
+  wasteCategoryId   String
+  estimatedQuantity Decimal?      @db.Decimal(12, 3)
+  quantityUnit      QuantityUnit  @default(CONTAINER)
+  preferredDate     DateTime      @db.Date
+  preferredWindow   TimeWindow    @default(ANY)
+  priority          Priority      @default(NORMAL)
+  notes             String?
+  status            RequestStatus @default(SUBMITTED)
+  source            RequestSource @default(STAFF)
+  rejectionReason   String?
+  createdById       String
+  createdAt         DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime      @updatedAt @db.Timestamptz(3)
+
+  organization    Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customer        Customer        @relation(fields: [organizationId, customerId], references: [organizationId, id])
+  serviceLocation ServiceLocation @relation(fields: [organizationId, serviceLocationId], references: [organizationId, id])
+  contract        Contract?       @relation(fields: [organizationId, contractId], references: [organizationId, id])
+  wasteCategory   WasteCategory   @relation(fields: [organizationId, wasteCategoryId], references: [organizationId, id])
+  workOrder       WorkOrder?
+
+  @@unique([organizationId, number])
+  @@unique([organizationId, id])
+  @@index([organizationId, status, preferredDate])
+}
+
+model Team {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now()) @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  members      TeamMember[]
+  workOrders   WorkOrder[]
+
+  @@unique([organizationId, name])
+  @@unique([organizationId, id])
+}
+
+model TeamMember {
+  teamId       String
+  membershipId String
+
+  team       Team       @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  membership Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+
+  @@id([teamId, membershipId])
+}
+
+enum VehicleType {
+  COMPACTOR
+  TIPPER
+  SKIP_LOADER
+  HOOK_LIFT
+  VAN
+  OTHER
+}
+
+enum VehicleStatus {
+  AVAILABLE
+  IN_SERVICE
+  MAINTENANCE
+  RETIRED
+}
+
+model Vehicle {
+  id             String        @id @default(cuid())
+  organizationId String
+  plateNumber    String
+  label          String
+  type           VehicleType   @default(COMPACTOR)
+  capacityKg     Int?
+  status         VehicleStatus @default(AVAILABLE)
+  restrictions   String?
+  odometerKm     Int?
+  createdAt      DateTime      @default(now()) @db.Timestamptz(3)
+
+  organization Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  maintenance  VehicleMaintenance[]
+  workOrders   WorkOrder[]
+
+  @@unique([organizationId, plateNumber])
+  @@unique([organizationId, id])
+}
+
+enum MaintenanceKind {
+  MAINTENANCE
+  INSPECTION
+  REPAIR
+}
+
+model VehicleMaintenance {
+  id             String          @id @default(cuid())
+  organizationId String
+  vehicleId      String
+  kind           MaintenanceKind
+  performedAt    DateTime        @db.Date
+  description    String
+  cost           Decimal?        @db.Decimal(14, 2)
+  odometerKm     Int?
+  nextDueAt      DateTime?       @db.Date
+  recordedById   String
+  createdAt      DateTime        @default(now()) @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  vehicle      Vehicle      @relation(fields: [organizationId, vehicleId], references: [organizationId, id], onDelete: Cascade)
+
+  @@index([organizationId, vehicleId, performedAt])
+}
+
+enum WorkOrderKind {
+  COLLECTION
+  CIVIC_INTERVENTION
+}
+
+enum WorkOrderStatus {
+  PLANNED
+  ASSIGNED
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  CANCELLED
+  DISPUTED
+}
+
+enum FailureReason {
+  NO_ACCESS
+  CUSTOMER_ABSENT
+  WASTE_NOT_READY
+  WRONG_WASTE_TYPE
+  VEHICLE_BREAKDOWN
+  UNSAFE_CONDITIONS
+  OTHER
+}
+
+model WorkOrder {
+  id                  String          @id @default(cuid())
+  organizationId      String
+  number              String
+  kind                WorkOrderKind   @default(COLLECTION)
+  collectionRequestId String?         @unique
+  civicReportId       String?         @unique
+  customerId          String?
+  serviceLocationId   String?
+  contractId          String?
+  wasteCategoryId     String?
+  teamId              String?
+  vehicleId           String?
+  status              WorkOrderStatus @default(PLANNED)
+  priority            Priority        @default(NORMAL)
+  scheduledDate       DateTime        @db.Date
+  actualStart         DateTime?       @db.Timestamptz(3)
+  actualEnd           DateTime?       @db.Timestamptz(3)
+  instructions        String?
+  completionNotes     String?
+  failureReason       FailureReason?
+  failureNotes        String?
+  customerConfirmedAt DateTime?       @db.Timestamptz(3)
+  disputeReason       String?
+  createdById         String
+  createdAt           DateTime        @default(now()) @db.Timestamptz(3)
+  updatedAt           DateTime        @updatedAt @db.Timestamptz(3)
+
+  organization      Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  collectionRequest CollectionRequest? @relation(fields: [organizationId, collectionRequestId], references: [organizationId, id])
+  civicReport       CivicReport?       @relation(fields: [civicReportId], references: [id])
+  customer          Customer?          @relation(fields: [organizationId, customerId], references: [organizationId, id])
+  serviceLocation   ServiceLocation?   @relation(fields: [organizationId, serviceLocationId], references: [organizationId, id])
+  contract          Contract?          @relation(fields: [organizationId, contractId], references: [organizationId, id])
+  wasteCategory     WasteCategory?     @relation(fields: [organizationId, wasteCategoryId], references: [organizationId, id])
+  team              Team?              @relation(fields: [organizationId, teamId], references: [organizationId, id])
+  vehicle           Vehicle?           @relation(fields: [organizationId, vehicleId], references: [organizationId, id])
+  weightTickets     WeightTicket[]
+  evidence          EvidenceFile[]
+  invoiceLine       InvoiceLine?
+
+  @@unique([organizationId, number])
+  @@unique([organizationId, id])
+  @@unique([organizationId, collectionRequestId])
+  @@index([organizationId, status, scheduledDate])
+  @@index([organizationId, teamId, scheduledDate])
+}
+
+model WeightTicket {
+  id             String   @id @default(cuid())
+  organizationId String
+  workOrderId    String
+  ticketNumber   String?
+  grossKg        Decimal  @db.Decimal(12, 2)
+  tareKg         Decimal  @db.Decimal(12, 2)
+  netKg          Decimal  @db.Decimal(12, 2)
+  facility       String?
+  weighedAt      DateTime @db.Timestamptz(3)
+  recordedById   String
+  createdAt      DateTime @default(now()) @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  workOrder    WorkOrder    @relation(fields: [organizationId, workOrderId], references: [organizationId, id], onDelete: Cascade)
+
+  @@index([organizationId, workOrderId])
+}
+
+enum EvidenceKind {
+  BEFORE
+  AFTER
+  DOCUMENT
+  REPORT_PHOTO
+}
+
+model EvidenceFile {
+  id             String       @id @default(cuid())
+  organizationId String
+  kind           EvidenceKind
+  workOrderId    String?
+  civicReportId  String?
+  contractId     String?
+  storageKey     String       @unique
+  originalName   String
+  mimeType       String
+  sizeBytes      Int
+  sha256         String
+  uploadedById   String?
+  createdAt      DateTime     @default(now()) @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  workOrder    WorkOrder?   @relation(fields: [organizationId, workOrderId], references: [organizationId, id], onDelete: Cascade)
+  civicReport  CivicReport? @relation(fields: [civicReportId], references: [id], onDelete: Cascade)
+  contract     Contract?    @relation(fields: [organizationId, contractId], references: [organizationId, id], onDelete: Cascade)
+
+  @@index([organizationId, workOrderId])
+  @@index([civicReportId])
+}
+
+// ───────────────────────────── Billing ─────────────────────────────
+
+enum InvoiceStatus {
+  DRAFT
+  ISSUED
+  PARTIALLY_PAID
+  PAID
+  VOID
+}
+
+model Invoice {
+  id               String        @id @default(cuid())
+  organizationId   String
+  /// Assigned sequentially at issue time; null while DRAFT.
+  number           String?
+  customerId       String
+  contractId       String?
+  status           InvoiceStatus @default(DRAFT)
+  currency         String        @default("DZD")
+  issueDate        DateTime?     @db.Date
+  dueDate          DateTime?     @db.Date
+  subtotal         Decimal       @default(0) @db.Decimal(14, 2)
+  taxTotal         Decimal       @default(0) @db.Decimal(14, 2)
+  total            Decimal       @default(0) @db.Decimal(14, 2)
+  amountPaid       Decimal       @default(0) @db.Decimal(14, 2)
+  notes            String?
+  /// Snapshot of customer billing identity at issue time.
+  billToName       String?
+  billToTaxId      String?
+  billToAddress    String?
+  voidReason       String?
+  createdById      String
+  issuedById       String?
+  createdAt        DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt        DateTime      @updatedAt @db.Timestamptz(3)
+
+  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customer     Customer      @relation(fields: [organizationId, customerId], references: [organizationId, id])
+  contract     Contract?     @relation(fields: [organizationId, contractId], references: [organizationId, id])
+  lines        InvoiceLine[]
+  payments     Payment[]
+
+  @@unique([organizationId, number])
+  @@unique([organizationId, id])
+  @@index([organizationId, status, dueDate])
+}
+
+model InvoiceLine {
+  id             String  @id @default(cuid())
+  organizationId String
+  invoiceId      String
+  description    String
+  quantity       Decimal @db.Decimal(12, 3)
+  unitPrice      Decimal @db.Decimal(14, 2)
+  taxRateBps     Int
+  lineSubtotal   Decimal @db.Decimal(14, 2)
+  lineTax        Decimal @db.Decimal(14, 2)
+  lineTotal      Decimal @db.Decimal(14, 2)
+  /// A work order can be billed at most once (unique).
+  workOrderId    String? @unique
+  position       Int     @default(0)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  invoice      Invoice      @relation(fields: [organizationId, invoiceId], references: [organizationId, id], onDelete: Cascade)
+  workOrder    WorkOrder?   @relation(fields: [organizationId, workOrderId], references: [organizationId, id])
+
+  @@unique([organizationId, workOrderId])
+  @@index([organizationId, invoiceId])
+}
+
+enum PaymentMethod {
+  CASH
+  BANK_TRANSFER
+  CHEQUE
+  CARD_ONLINE
+  OTHER
+}
+
+enum PaymentSource {
+  MANUAL
+  WEBHOOK
+}
+
+enum PaymentStatus {
+  RECORDED
+  REVERSED
+}
+
+model Payment {
+  id             String        @id @default(cuid())
+  organizationId String
+  invoiceId      String
+  amount         Decimal       @db.Decimal(14, 2)
+  method         PaymentMethod
+  reference      String?
+  receivedAt     DateTime      @db.Timestamptz(3)
+  source         PaymentSource @default(MANUAL)
+  status         PaymentStatus @default(RECORDED)
+  /// Retries with the same key never create a second payment.
+  idempotencyKey String
+  recordedById   String?
+  createdAt      DateTime      @default(now()) @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  invoice      Invoice      @relation(fields: [organizationId, invoiceId], references: [organizationId, id])
+
+  @@unique([organizationId, idempotencyKey])
+  @@index([organizationId, invoiceId])
+}
+
+model PaymentWebhookEvent {
+  id              String    @id @default(cuid())
+  provider        String
+  externalEventId String
+  payload         Json
+  receivedAt      DateTime  @default(now()) @db.Timestamptz(3)
+  processedAt     DateTime? @db.Timestamptz(3)
+  outcome         String?
+
+  @@unique([provider, externalEventId])
+}
+
+// ───────────────────────────── Platform ─────────────────────────────
+
+/// Per-organization sequences for human-readable numbers (REQ-, WO-, INV-).
+model Counter {
+  organizationId String
+  name           String
+  value          Int    @default(0)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@id([organizationId, name])
+}
+
+enum ActorType {
+  USER
+  SYSTEM
+  CITIZEN
+}
+
+model AuditEvent {
+  id             String    @id @default(cuid())
+  organizationId String?
+  actorType      ActorType
+  actorUserId    String?
+  action         String
+  entityType     String
+  entityId       String
+  data           Json?
+  createdAt      DateTime  @default(now()) @db.Timestamptz(3)
+
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, entityType, entityId])
+  @@index([organizationId, createdAt])
+}
+
+enum NotificationChannel {
+  IN_APP
+  EMAIL
+  SMS
+}
+
+/// Outbox: rows are created inside business transactions and delivered by a worker.
+model Notification {
+  id             String              @id @default(cuid())
+  organizationId String?
+  userId         String?
+  recipient      String?
+  channel        NotificationChannel @default(IN_APP)
+  type           String
+  payload        Json
+  readAt         DateTime?           @db.Timestamptz(3)
+  sentAt         DateTime?           @db.Timestamptz(3)
+  createdAt      DateTime            @default(now()) @db.Timestamptz(3)
+
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+  @@index([channel, sentAt])
+}
+
+// ───────────────────────────── NEXVO Civic ─────────────────────────────
+
+enum CivicCategory {
+  ILLEGAL_DUMPING
+  OVERFLOWING_BIN
+  MISSED_COLLECTION
+  SANITATION
+  OTHER
+}
+
+enum CivicReportStatus {
+  SUBMITTED
+  UNDER_REVIEW
+  VERIFIED
+  ASSIGNED
+  IN_PROGRESS
+  RESOLVED
+  CONFIRMED
+  REJECTED
+  DUPLICATE
+  DISPUTED
+  REOPENED
+  CANCELLED
+}
+
+model CivicReport {
+  id                 String                                  @id @default(cuid())
+  /// The municipality organization responsible for the report.
+  organizationId     String
+  trackingCode       String                                  @unique
+  /// Client-generated id so a retried submission never creates a second report.
+  clientSubmissionId String                                  @unique
+  category           CivicCategory
+  description        String
+  latitude           Decimal                                 @db.Decimal(9, 6)
+  longitude          Decimal                                 @db.Decimal(9, 6)
+  geog               Unsupported("geography(Point, 4326)")?
+  addressHint        String?
+  serviceZoneId      String?
+  status             CivicReportStatus                       @default(SUBMITTED)
+  priority           Priority                                @default(NORMAL)
+  /// Optional; personal data, never exposed on public endpoints.
+  reporterName       String?
+  reporterContact    String?
+  duplicateOfId      String?
+  rejectionReason    String?
+  disputeReason      String?
+  reopenCount        Int                                     @default(0)
+  verifiedAt         DateTime?                               @db.Timestamptz(3)
+  slaDueAt           DateTime?                               @db.Timestamptz(3)
+  resolvedAt         DateTime?                               @db.Timestamptz(3)
+  closedAt           DateTime?                               @db.Timestamptz(3)
+  createdAt          DateTime                                @default(now()) @db.Timestamptz(3)
+  updatedAt          DateTime                                @updatedAt @db.Timestamptz(3)
+
+  organization Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  serviceZone  ServiceZone?       @relation(fields: [serviceZoneId], references: [id])
+  duplicateOf  CivicReport?       @relation("Duplicates", fields: [duplicateOfId], references: [id])
+  duplicates   CivicReport[]      @relation("Duplicates")
+  events       CivicReportEvent[]
+  evidence     EvidenceFile[]
+  workOrder    WorkOrder?
+
+  @@index([organizationId, status, createdAt])
+  @@index([geog], type: Gist)
+}
+
+model CivicReportEvent {
+  id          String             @id @default(cuid())
+  reportId    String
+  fromStatus  CivicReportStatus?
+  toStatus    CivicReportStatus
+  actorType   ActorType
+  actorUserId String?
+  /// Public note shown on the citizen tracking page.
+  publicNote  String?
+  createdAt   DateTime           @default(now()) @db.Timestamptz(3)
+
+  report CivicReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@index([reportId, createdAt])
+}
