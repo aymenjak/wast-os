@@ -72,7 +72,7 @@ test.describe.serial("tables, certificate, remote support", () => {
     await page.locator('textarea[name="body"]').fill("The October invoice is not in the list (synthetic).");
     await page.getByRole("button", { name: "Send" }).click();
     await page.waitForURL(/\/app\/support\/c/);
-    await expect(page.getByText(subject)).toBeVisible();
+    await expect(page.getByRole("heading", { name: subject })).toBeVisible();
     await page.goto("/en/app/support");
     await page.locator('input[name="reason"]').fill("Look at invoice list");
     await page.getByRole("button", { name: "Allow access" }).click();

@@ -39,6 +39,8 @@
 
 `platform-console.test.ts` (16): tenant users and support agents refused everywhere; admins refused on plans/staff; disabled owner loses access; tenant search (name, member email, filters); detail exposes counts not records; subscription change audited in the tenant log; invalid plan refused; municipality verification; list-price revenue from ACTIVE only; suspension blocks live sessions, keeps data, refuses double suspension, reversible, audited; suspended municipality refuses citizen reports; plan update audited, negative price refused; role grant/removal, not self, unknown email, last owner protected; DB CHECK on role/flag; disable ends sessions and login, enable, unlock; admins cannot disable owners or themselves; global audit. E2E `platform-owner.spec` (5): 404 for tenant users, owner lands on console, changes plan, suspends, member sees the suspension message and is blocked, reactivation restores access.
 
+Flaky test found and fixed: `platform.spec` matched the ticket title with `getByText`, which also hit Next.js's route announcer on some runs; it now targets the heading. One full run had 1 failure from this before the fix (that commit was pushed before the failure was noticed); the next full run was 33/33.
+
 ## Earlier results (2026-10-31, payments, remote support, AI, tables, documents, hardening)
 
 | Suite | Result |
