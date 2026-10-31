@@ -676,6 +676,7 @@ const en = {
     container: { codeTaken: "A container with this code already exists." },
     ai: { disabled: "AI assistance is not configured.", refusal: "The AI declined this request.", failed: "The AI service is unavailable. Try again later." },
     support: { closed: "This request is closed.", noGrant: "The customer has not granted support access.", readOnly: "Support view is read-only." },
+    email: { invoiceNotIssued: "Only issued invoices can be emailed.", noRecipient: "No email address for this customer." },
     iot: { serialExists: "A device with this serial number already exists." },
     mfa: { invalidCode: "Wrong or expired code.", challengeExpired: "This sign-in attempt expired. Sign in again.", alreadyEnabled: "Two-step verification is already on.", notStarted: "Start the setup first.", notEnabled: "Two-step verification is off.", requiredForStaff: "Platform staff must use two-step verification." },
     config: { encryptionKey: "Server encryption key is not configured (APP_ENCRYPTION_KEY)." },
@@ -890,6 +891,7 @@ const en = {
     voidReason: "Reason", void: "Cancel invoice",
   },
   iot: {
+    minutesAgo: "{n} min ago", integrations: "LoRaWAN network servers", integrationsLead: "Connect ChirpStack or The Things Stack once; their devices are matched by DevEUI (use the DevEUI as the device serial number). The device codec must output fillPct/batteryPct/temperatureC, or lat/lng for trackers.", provider: "Network server", addIntegration: "Add integration", chirpstackHow: "ChirpStack: Application → Integrations → HTTP. Payload encoding: JSON. Event endpoint URL: the URL above. Headers: the Authorization header above.", ttnHow: "The Things Stack: Application → Integrations → Webhooks → Custom webhook. Format: JSON. Base URL: the URL above. Additional headers: Authorization as above. Enabled event: Uplink message.",
     title: "Sensors & trackers", lead: "Fill-level sensors on bins and GPS trackers on vehicles send data here. Alerts open automatically; collections stay your decision.",
     alerts: "Open alerts", alertsLead: "Fill alerts close by themselves when the bin is emptied.", noAlerts: "No open alert.", alert: "Alert", device: "Device", container: "Container", vehicle: "Vehicle", since: "Since",
     alertKinds: { FILL_HIGH: "Bin almost full", BATTERY_LOW: "Low battery", FIRE_RISK: "Possible fire (high temperature)" },
@@ -902,6 +904,15 @@ const en = {
     keyOnce: "Device key — copy it into the device now. It will not be shown again.", howTo: "The device (or your LoRaWAN/cellular gateway) sends JSON over HTTPS:",
     fill: "Fill level", temperature: "Temperature", lastPosition: "Last position", openMap: "Open map",
     readings: "Sensor readings (14 days)", threshold: "Alert threshold: {pct} %", vehiclesTracked: "Vehicles with GPS",
+  },
+  email: {
+    sendInvoice: "Send by email", to: "Recipient", message: "Message (optional)", send: "Send invoice",
+    noCustomerEmail: "This customer has no email address; enter one.",
+    queued: "Queued for {to}.", queuedNoSmtp: "Queued for {to}. Email delivery is not configured yet (SMTP), so it will be sent once it is.",
+    platformInvoiceSubject: "NEXVO invoice {number}", platformInvoiceIntro: "Your NEXVO subscription invoice is available.",
+    reminderSubject: "Reminder: NEXVO invoice {number} is overdue", reminderIntro: "This invoice is past its due date. Please pay it to keep access to your workspace.",
+    viewInvoice: "View invoice", footer: "You receive this email as an owner or administrator of a NEXVO workspace.",
+    customerInvoiceSubject: "Invoice {number} from {org}", customerInvoiceIntro: "Please find below your invoice from {org}.", footerCustomer: "Sent by {org} using NEXVO.",
   },
   certificate: {
     title: "Collection certificate",

@@ -97,6 +97,9 @@ Each source ID (S-xx) is referenced from `RESEARCH-DOSSIER.md` and `DECISIONS.md
 | S-80 | Trail of Bits skills repository (security skills, CC BY-SA) | https://github.com/trailofbits/skills | A (primary repository) |
 | S-81 | OWASP CSV Injection | https://owasp.org/www-community/attacks/CSV_Injection | A |
 | S-82 | Next.js 16 Content Security Policy guide (bundled docs) | `node_modules/next/dist/docs` | A |
+| S-83 | ChirpStack v4 source: `api/proto/integration/integration.proto` (UplinkEvent, DeviceInfo), `chirpstack/src/integration/http.rs` (`?event=` query, custom headers, JSON/protobuf), `api/rust/build.rs` (pbjson → camelCase JSON). Fetched from the `master` branch on 2026-10-31; the docs site (chirpstack.io) was not reachable from this environment | https://github.com/chirpstack/chirpstack | A (primary source code) |
+| S-84 | The Things Stack v3 source: `api/ttn/lorawan/v3/messages.proto` (ApplicationUp, ApplicationUplink), `identifiers.proto` (dev_eui hex marshaller), `applicationserver_web.proto` (webhook `headers`, `format`), `pkg/jsonpb` (`UseProtoNames: true`). Branch `v3.x`, commit 6d0ecc48 (2026-10-29); docs site not reachable from this environment | https://github.com/TheThingsNetwork/lorawan-stack | A (primary source code) |
+| S-85 | Nodemailer 10.3.1 (MIT-0) — SMTP transport | https://www.npmjs.com/package/nodemailer | A |
 
 ## Sources not yet consulted (open items)
 

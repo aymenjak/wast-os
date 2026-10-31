@@ -28,7 +28,20 @@
 | M Command palette search | integration (tenant + permission scoping, accent-insensitive, LIKE wildcards literal); e2e (Ctrl+K → result → navigate) |
 | J ar/fr/en desktop & mobile | e2e `i18n-a11y` (lang/dir, translated H1, axe WCAG 2.2 AA serious/critical = 0 on 6 public pages × 3 locales with reduced motion, no overflow at 360 px); screenshots in `docs/screenshots` reviewed |
 
-## Recorded results (2026-10-31, 2FA, subscription billing, per-organization payments, IoT)
+## Recorded results (2026-10-31, LoRaWAN, live vehicle map, email)
+
+| Suite | Result |
+|-------|--------|
+| `npx vitest run` | **20 files, 199 tests passed** |
+| `npx playwright test` | **39 passed** (3.4 min) |
+| `npx tsc --noEmit` / `npx next build` | 0 errors / success |
+| `npm audit --omit=dev` | 0 vulnerabilities (nodemailer 10.3.1) |
+
+`lorawan-email-map.test.ts` (10): DevEUI normalisation and codec field mapping; provider-specific, revocable integration keys; ChirpStack v4 uplink (camelCase, `?event=up`, other events ignored, idempotent); TTN v3 uplink (snake_case, hex DevEUI) for a fill sensor (alert opened) and a GPS tracker; unknown device / missing fields / non-uplink handled; same DevEUI in another tenant untouched; live positions tenant-scoped, 24 h window, portal refused; invoice email escaped (no `<script>`/`<img>`), drafts/other tenants/roles refused, audited; outbox retries with backoff, no double send under 3 concurrent workers, failed after 5 attempts, waits without SMTP and is delivered later; billing emails owners/admins + organization address in its language (RTL for Arabic). E2E: real HTTP TTN webhook (401 without/with wrong-provider key, 202 unknown device, 200 ingested, fill alert closes at 35 %); invoice "Send by email" queues and audits.
+
+Test-setup change: Vitest aliases the `server-only` guard to an empty module (`tests/helpers/server-only.ts`).
+
+## Earlier results (2026-10-31, 2FA, subscription billing, per-organization payments, IoT)
 
 | Suite | Result |
 |-------|--------|

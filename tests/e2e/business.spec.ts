@@ -139,6 +139,12 @@ test.describe.serial("NEXVO Business end-to-end", () => {
     await expect(page.getByTestId("invoice-balance")).toContainText("0.00");
     const rows = await sql<{ n: string }>(`SELECT count(*)::text AS n FROM "Payment"`);
     expect(rows[0]?.n).toBe("2");
+    // Email the invoice: queued in the outbox (no SMTP in the test environment), audited.
+    await page.locator('input[name="to"]').fill("accounts@client.example");
+    await page.getByRole("button", { name: "Send invoice" }).click();
+    await expect(page.getByText(/Queued for accounts@client\.example/)).toBeVisible();
+    const mail = await sql<{ n: string }>(`SELECT count(*)::text AS n FROM "Notification" WHERE "recipient" = 'accounts@client.example' AND "type" = 'invoice.sent'`);
+    expect(mail[0]?.n).toBe("1");
   });
 
   test("F: another tenant cannot reach these records", async ({ page }) => {

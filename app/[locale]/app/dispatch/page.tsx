@@ -12,6 +12,7 @@ import { buttonClass } from "@/components/ui/button";
 import { AssignForm } from "./assign-form";
 import { GenerateSchedule } from "./generate-schedule";
 import { OpsMap } from "./ops-map";
+import { vehiclePositions } from "@/server/services/iot";
 
 function shift(day: string, n: number) {
   return new Date(new Date(`${day}T00:00:00Z`).getTime() + n * 86400_000).toISOString().slice(0, 10);
@@ -38,6 +39,7 @@ export default async function DispatchPage({ params, searchParams }: { params: P
   });
   const mapRoutes = v.teamRoutes.map((r) => ({ id: r.team.id, color: r.color, points: r.orders.map(stopOf).filter((s) => s.lat != null).map((s) => [s.lat!, s.lng!] as [number, number]) }));
 
+  const liveVehicles = ctx.permissions.has("fleet.read") ? await vehiclePositions(ctx) : [];
   return (
     <>
       <PageHeader
@@ -68,7 +70,7 @@ export default async function DispatchPage({ params, searchParams }: { params: P
             ))}
           </ul>
         </div>
-        {mapPoints.length ? <OpsMap points={mapPoints} routes={mapRoutes} /> : <EmptyState title={d.schedule.noLocated} />}
+        {mapPoints.length || liveVehicles.length ? <OpsMap points={mapPoints} routes={mapRoutes} initialVehicles={liveVehicles} locale={locale} /> : <EmptyState title={d.schedule.noLocated} />}
       </section>
 
       {v.teams.length === 0 ? <Card className="mb-6"><EmptyState title={d.dispatch.noTeams} /></Card> : null}

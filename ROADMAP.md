@@ -22,7 +22,7 @@ Redesign ("Kerbside"), recurring schedules, container tracking, ops map, route s
 
 Overview dashboard rebuilt with validated charts; server-side tables (search, sort, filters, pagination, Excel/CSV) on customers, work orders, invoices, containers; receivables aging; monthly collection certificate (staff and portal); online payment adapter (Chargily, test mode); remote support (tickets, customer-granted read-only access, staff console, audit); optional AI suggestions (civic triage, operations brief); shared rate limiter, login lockout, nonce CSP.
 
-Platform owner console (organizations, subscriptions, verification, suspension, plans, staff, accounts, audit). Two-step verification (mandatory for staff). Automatic NEXVO subscription billing (off by default). Per-organization Chargily accounts. IoT: fill sensors, GPS trackers, alerts, fill forecast.
+Platform owner console (organizations, subscriptions, verification, suspension, plans, staff, accounts, audit). Two-step verification (mandatory for staff). Automatic NEXVO subscription billing (off by default). Per-organization Chargily accounts. IoT: fill sensors, GPS trackers, alerts, fill forecast. LoRaWAN (ChirpStack v4, TTN v3). Live vehicles on the dispatch map. Invoice emails (outbox + SMTP).
 
 ## Next milestone (M2): pilot-ready hardening — acceptance tests
 
@@ -39,7 +39,8 @@ Platform owner console (organizations, subscriptions, verification, suspension, 
 ## Later
 
 - Platform: accountant review of NEXVO invoice layout, email delivery of invoices and dunning reminders, CSV export of tenants, passkeys.
-- IoT: LoRaWAN (ChirpStack/TTN) payload adapters, vehicles on the live ops map, GPS retention job, route replay, automatic collection proposals from forecasts (human-approved).
+- IoT: GPS retention job, route replay, automatic collection proposals from forecasts (human-approved), MQTT for non-LoRa gateways.
+- Email: invitations and password reset through the outbox, PDF attachment once the invoice layout is validated.
 - Contractor assignment: municipality → provider tenant work orders with SLA reporting.
 - Quotations and credit notes; live online payments (after merchant onboarding and owner approval).
 - Offline-tolerant field app (PWA queue).

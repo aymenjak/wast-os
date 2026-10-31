@@ -25,13 +25,18 @@
 | `ANTHROPIC_API_KEY` | optional | enables AI suggestions (civic triage, operations brief). Data sent is described in PRIVACY-AND-COMPLIANCE.md §6; **owner approval required before enabling for customers** |
 | **Never set in production:** `NEXVO_FAST_HASH`, `NEXVO_E2E`, `RATE_LIMIT_SCALE` | | test-only switches (`RATE_LIMIT_SCALE` is ignored unless `APP_URL` is localhost) |
 
-Daily jobs (cron or the hosting scheduler):
+Jobs (cron or the hosting scheduler):
 
 ```bash
-npm run billing:run      # NEXVO subscription invoices, dunning; idempotent
+npm run billing:run      # daily: NEXVO subscription invoices, dunning; idempotent; also flushes the outbox
+npm run outbox:work      # every minute: delivers queued emails (no-op without SMTP_URL)
 ```
 
-IoT: devices post to `${APP_URL}/api/iot/v1/ingest` with their device key (see the IoT page for a curl example). LoRaWAN network servers (e.g. ChirpStack, The Things Stack) need a small payload-formatter or HTTP integration that maps their uplink to this JSON; none is bundled yet.
+Email: set `SMTP_URL` (e.g. `smtps://user:password@smtp.provider.dz:465`) and `MAIL_FROM` (e.g. `NEXVO <factures@your-domain.dz>`), with SPF/DKIM for that domain. Without `SMTP_URL` emails stay queued and are sent once it is configured. **Turning on email = external communication: owner approval required** (AGENTS rule 8).
+
+LoRaWAN: in the IoT page, add an integration (ChirpStack or The Things Stack) to get a URL and an `Authorization` header; register each device with its DevEUI as serial number. ChirpStack: Application → Integrations → HTTP, encoding JSON. TTN: Application → Integrations → Webhooks → Custom, format JSON, enable "Uplink message". The device codec / payload formatter must output `fillPct` (or `fill_level`), `batteryPct`, `temperatureC`, or `lat`/`lng` for trackers.
+
+IoT: direct devices post to `${APP_URL}/api/iot/v1/ingest` with their device key; LoRaWAN network servers post to `${APP_URL}/api/iot/v1/lorawan/{chirpstack|ttn}` (see above).
 
 Lost 2FA device for a staff member: `npm run platform:reset-2fa -- <email>` (or an admin in /platform/staff).
 

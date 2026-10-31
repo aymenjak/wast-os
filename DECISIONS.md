@@ -45,3 +45,6 @@ Format: decision · reason · evidence (S = source, T = test, A = assumption) ·
 | D-39 | 2026-10-31 | Invoice layout for NEXVO's own invoices marked "to be validated by an accountant" | Algerian invoicing requirements not yet reviewed | — | Open |
 | D-40 | 2026-10-31 | IoT over HTTPS JSON with per-device keys; no MQTT broker or LoRaWAN server bundled | Simplest secure path; gateways can forward HTTP | T iot | Active |
 | D-41 | 2026-10-31 | Fill forecast = transparent linear trend since last emptying, not an LLM; AI brief receives only IoT counts | Explainable, cheap, testable; data minimisation | unit fill-forecast | Active |
+| D-42 | 2026-10-31 | LoRaWAN via ChirpStack v4 HTTP integration and TTN v3 webhooks, one key per integration, devices matched by DevEUI | Formats verified in each project's source (docs sites unreachable here); one integration serves many devices | S-83, S-84, T lorawan | Done |
+| D-43 | 2026-10-31 | Live vehicle map by 30-second polling of the latest fix, not WebSockets/SSE | Simple, works behind any proxy, enough for collection rounds | T positions | Done |
+| D-44 | 2026-10-31 | Email through an outbox + SMTP (nodemailer); off until SMTP_URL is set; invoice content in the email body, no PDF attachment yet | Reliable (transactional), provider-agnostic; PDF waits for the validated legal layout | T email | Done (off by default) |

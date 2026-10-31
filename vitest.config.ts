@@ -6,7 +6,7 @@ config();
 const testDb = process.env.TEST_DATABASE_URL;
 
 export default defineConfig({
-  resolve: { alias: { "@": path.resolve(__dirname) } },
+  resolve: { alias: { "@": path.resolve(__dirname), "server-only": path.resolve(__dirname, "tests/helpers/server-only.ts") } },
   test: {
     include: ["tests/unit/**/*.test.ts", "tests/integration/**/*.test.ts"],
     globalSetup: ["tests/helpers/global-setup.ts"],

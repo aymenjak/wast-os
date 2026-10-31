@@ -7,6 +7,8 @@ import { dateOnly, isoDate, optionalText, parse, requiredText } from "../validat
 import { requirePlatform } from "./platform";
 import { chargilyCheckout, eventSchema, platformChargily, verifyChargilySignature } from "../payments/chargily";
 import { fromMinor, toMinor } from "@/lib/money";
+import { billingRecipients, enqueueEmail, processOutbox } from "./mailer";
+import { platformInvoiceEmail } from "../email/templates";
 import type { Prisma } from "@/lib/generated/prisma/client";
 import type { BillingCycle } from "@/lib/generated/prisma/enums";
 
@@ -101,12 +103,21 @@ async function issueInvoice(sub: { organizationId: string; planCode: string; bil
         },
       });
       await audit(tx, { organizationId: org.id, actorType: "SYSTEM", action: "platform.invoice_issued", entityType: "PlatformInvoice", entityId: inv.id, data: { number: inv.number, total: inv.total.toString() } });
+      await emailInvoice(tx, inv, false);
       return inv;
     });
   } catch (e) {
     if (typeof e === "object" && e !== null && "code" in e && (e as { code: string }).code === "P2002") return null; // already issued for this period
     throw e;
   }
+}
+
+/** Queues the invoice (or a reminder) to the organization's owners/admins and contact address. */
+async function emailInvoice(tx: Tx, inv: { id: string; organizationId: string; number: string; total: Prisma.Decimal; dueDate: Date; periodStart: Date; periodEnd: Date }, reminder: boolean) {
+  const r = await billingRecipients(tx, inv.organizationId);
+  const link = `${process.env.APP_URL ?? ""}/${r.locale}/app/billing/${inv.id}`;
+  const m = platformInvoiceEmail(r.locale, inv, link, reminder);
+  for (const to of r.to) await enqueueEmail(tx, { organizationId: inv.organizationId, to, type: reminder ? "platform.invoice_reminder" : "platform.invoice_issued", ...m });
 }
 
 /** Brings PAST_DUE / billing suspension back in line with what is actually overdue. */
@@ -120,6 +131,7 @@ async function reconcile(tx: Tx, organizationId: string, today: Date, s: Awaited
   if (sub && overdue.length && sub.status === "ACTIVE") {
     await tx.subscription.update({ where: { organizationId }, data: { status: "PAST_DUE" } });
     await audit(tx, { organizationId, actorType: "SYSTEM", action: "platform.subscription_past_due", entityType: "Organization", entityId: organizationId, data: { invoice: overdue[0]!.number } });
+    await emailInvoice(tx, overdue[0]!, true);
     out.pastDue = true;
   }
   if (sub && !overdue.length && sub.status === "PAST_DUE") {
@@ -170,6 +182,7 @@ export async function runBilling(opts: { today?: string } = {}): Promise<Billing
     result.suspended += Number(r.suspended);
     result.reactivated += Number(r.reactivated);
   }
+  await processOutbox().catch((e) => console.error("[billing] outbox", e));
   return result;
 }
 

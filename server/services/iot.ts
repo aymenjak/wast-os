@@ -28,7 +28,8 @@ const MAX_BATCH = 100;
 const deviceSchema = z.object({
   kind: z.enum(["FILL_SENSOR", "GPS_TRACKER"]),
   name: requiredText(80),
-  serial: requiredText(80),
+  // LoRaWAN devices: the serial is the DevEUI, normalised to 16 upper-case hex digits.
+  serial: requiredText(80).transform((v) => (isEui(v) ? normalizeEui(v) : v)),
   containerId: z.string().max(64).optional().transform((v) => v || undefined),
   vehicleId: z.string().max(64).optional().transform((v) => v || undefined),
 });
@@ -222,4 +223,141 @@ export async function iotKpis(ctx: OrgContext) {
     binsFullWithin48h: forecasts.filter((f) => (f.lastFillPct ?? 0) >= f.fillThresholdPct || (f.forecast?.thresholdAt && f.forecast.thresholdAt.getTime() <= in48h)).length,
     forecasts,
   };
+}
+
+// ── LoRaWAN network servers (ChirpStack v4, The Things Stack v3) ──
+//
+// Payload shapes verified against the projects' own source (2026-10-31):
+//  - ChirpStack v4 `chirpstack/src/integration/http.rs`: POST to the configured URL with query `?event=up|join|ack|…`,
+//    configurable extra headers, JSON when "JSON" encoding is selected (else protobuf). Uplink JSON (pbjson, camelCase,
+//    `api/proto/integration/integration.proto` UplinkEvent): `time`, `deviceInfo.devEui`, `deviceInfo.deviceName`, `object` (codec output), `data`.
+//  - The Things Stack v3 `api/ttn/lorawan/v3/messages.proto` ApplicationUp, JSON with proto names (`UseProtoNames: true`):
+//    `end_device_ids.dev_eui` (hex), `end_device_ids.device_id`, `received_at`, `uplink_message.decoded_payload`,
+//    `uplink_message.received_at`; webhooks support custom `headers` (applicationserver_web.proto).
+// The device's payload formatter/codec must output fill/battery/temperature or position fields (see FIELD_ALIASES).
+
+export function isEui(v: string) {
+  return /^[0-9a-fA-F]{16}$/.test(v.replace(/[\s:-]/g, ""));
+}
+export function normalizeEui(v: string) {
+  return v.replace(/[\s:-]/g, "").toUpperCase();
+}
+
+const FIELD_ALIASES = {
+  fillPct: ["fillPct", "fill_pct", "fillLevel", "fill_level", "fill"],
+  batteryPct: ["batteryPct", "battery_pct", "battery", "batteryLevel", "battery_level"],
+  temperatureC: ["temperatureC", "temperature_c", "temperature", "temp"],
+  lat: ["lat", "latitude"],
+  lng: ["lng", "lon", "longitude"],
+  speedKmh: ["speedKmh", "speed_kmh", "speed"],
+  heading: ["heading", "course"],
+} as const;
+
+/** Picks known fields from a decoded payload (codec output). Unknown fields are ignored. */
+export function mapDecoded(obj: unknown) {
+  const o = (obj && typeof obj === "object" ? obj : {}) as Record<string, unknown>;
+  const pick = (names: readonly string[]) => {
+    for (const n of names) {
+      const v = o[n];
+      if (typeof v === "number" && Number.isFinite(v)) return v;
+      if (typeof v === "string" && v.trim() !== "" && Number.isFinite(Number(v))) return Number(v);
+    }
+    return undefined;
+  };
+  const out = Object.fromEntries(Object.entries(FIELD_ALIASES).map(([k, names]) => [k, pick(names)])) as Record<keyof typeof FIELD_ALIASES, number | undefined>;
+  return out;
+}
+
+export async function registerIntegration(ctx: OrgContext, input: unknown) {
+  requirePermission(ctx, "fleet.write");
+  const data = parse(z.object({ provider: z.enum(["CHIRPSTACK", "TTN"]), name: requiredText(80) }), input);
+  const key = `nxi_${randomBytes(32).toString("base64url")}`;
+  const integration = await prisma.$transaction(async (tx) => {
+    const i = await tx.iotIntegration.create({ data: { organizationId: ctx.org.id, provider: data.provider, name: data.name, keyHash: hashToken(key), keyPrefix: key.slice(0, 10), createdById: ctx.userId } });
+    await audit(tx, { organizationId: ctx.org.id, actorUserId: ctx.userId, action: "iot.integration_created", entityType: "IotIntegration", entityId: i.id, data: { provider: i.provider } });
+    return i;
+  });
+  return { integration, key };
+}
+
+export async function revokeIntegration(ctx: OrgContext, id: string) {
+  requirePermission(ctx, "fleet.write");
+  const r = await prisma.iotIntegration.updateMany({ where: { id, organizationId: ctx.org.id, revokedAt: null }, data: { revokedAt: new Date() } });
+  if (r.count === 0) throw new NotFoundError("IotIntegration");
+  await audit(prisma, { organizationId: ctx.org.id, actorUserId: ctx.userId, action: "iot.integration_revoked", entityType: "IotIntegration", entityId: id });
+}
+
+export async function listIntegrations(ctx: OrgContext) {
+  requirePermission(ctx, "fleet.read");
+  return prisma.iotIntegration.findMany({ where: { organizationId: ctx.org.id }, orderBy: { createdAt: "desc" } });
+}
+
+export async function authenticateIntegration(bearer: string | null, provider: "CHIRPSTACK" | "TTN") {
+  const key = bearer?.match(/^Bearer\s+(nxi_[A-Za-z0-9_-]{43})$/)?.[1];
+  if (!key) return null;
+  const i = await prisma.iotIntegration.findUnique({ where: { keyHash: hashToken(key) }, include: { organization: { select: { suspendedAt: true } } } });
+  if (!i || i.revokedAt || i.organization.suspendedAt || i.provider !== provider) return null;
+  return i;
+}
+
+const chirpstackUp = z.object({
+  time: z.string().optional(),
+  deviceInfo: z.object({ devEui: z.string(), deviceName: z.string().optional() }).passthrough(),
+  object: z.record(z.string(), z.unknown()).optional(),
+}).passthrough();
+
+const ttnUp = z.object({
+  end_device_ids: z.object({ dev_eui: z.string().optional(), device_id: z.string() }).passthrough(),
+  received_at: z.string().optional(),
+  uplink_message: z.object({ decoded_payload: z.record(z.string(), z.unknown()).optional(), received_at: z.string().optional() }).passthrough().optional(),
+}).passthrough();
+
+export type LoraResult = { outcome: "ignored_event" | "unknown_device" | "no_decoded_fields" | "ingested"; detail?: Awaited<ReturnType<typeof ingest>> };
+
+/**
+ * Translates one network-server uplink into our ingest format. Devices are matched inside the integration's
+ * organization only, by DevEUI (= device serial).
+ */
+export async function ingestLorawan(integration: NonNullable<Awaited<ReturnType<typeof authenticateIntegration>>>, body: unknown, event: string | null): Promise<LoraResult> {
+  await prisma.iotIntegration.update({ where: { id: integration.id }, data: { lastEventAt: new Date() } });
+  let eui: string | undefined, at: string | undefined, decoded: unknown;
+  if (integration.provider === "CHIRPSTACK") {
+    if (event !== "up") return { outcome: "ignored_event" };
+    const u = chirpstackUp.parse(body);
+    eui = u.deviceInfo.devEui; at = u.time; decoded = u.object;
+  } else {
+    const u = ttnUp.parse(body);
+    if (!u.uplink_message) return { outcome: "ignored_event" };
+    eui = u.end_device_ids.dev_eui; at = u.uplink_message.received_at ?? u.received_at; decoded = u.uplink_message.decoded_payload;
+  }
+  if (!eui || !isEui(eui)) return { outcome: "unknown_device" };
+  const device = await prisma.iotDevice.findFirst({
+    where: { organizationId: integration.organizationId, serial: normalizeEui(eui), revokedAt: null },
+    include: { organization: { select: { suspendedAt: true } } },
+  });
+  if (!device) return { outcome: "unknown_device" };
+  const f = mapDecoded(decoded);
+  const when = at && !Number.isNaN(Date.parse(at)) ? new Date(at).toISOString() : new Date().toISOString();
+  if (device.kind === "FILL_SENSOR") {
+    if (f.fillPct === undefined && f.batteryPct === undefined && f.temperatureC === undefined) return { outcome: "no_decoded_fields" };
+    const clampPct = (v: number | undefined) => (v === undefined ? undefined : Math.round(Math.min(100, Math.max(0, v))));
+    return { outcome: "ingested", detail: await ingest(device, { readings: [{ measuredAt: when, fillPct: clampPct(f.fillPct), batteryPct: clampPct(f.batteryPct), temperatureC: f.temperatureC }] }) };
+  }
+  if (f.lat === undefined || f.lng === undefined) return { outcome: "no_decoded_fields" };
+  return {
+    outcome: "ingested",
+    detail: await ingest(device, { positions: [{ recordedAt: when, lat: f.lat, lng: f.lng, speedKmh: f.speedKmh === undefined ? undefined : Math.round(f.speedKmh), heading: f.heading === undefined ? undefined : Math.round(f.heading) % 360 }] }),
+  };
+}
+
+/** Latest GPS fixes for the live map (last 24 h), tenant-scoped. */
+export async function vehiclePositions(ctx: OrgContext) {
+  requirePermission(ctx, "fleet.read");
+  const since = new Date(Date.now() - 24 * 3600_000);
+  const rows = await prisma.vehicle.findMany({
+    where: { organizationId: ctx.org.id, lastPositionAt: { gte: since }, lastLatitude: { not: null }, lastLongitude: { not: null } },
+    select: { id: true, plateNumber: true, label: true, lastLatitude: true, lastLongitude: true, lastPositionAt: true, lastSpeedKmh: true },
+    orderBy: { plateNumber: "asc" },
+  });
+  return rows.map((v) => ({ id: v.id, plate: v.plateNumber, label: v.label, lat: Number(v.lastLatitude), lng: Number(v.lastLongitude), at: v.lastPositionAt!.toISOString(), speedKmh: v.lastSpeedKmh }));
 }

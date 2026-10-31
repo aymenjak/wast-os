@@ -1,21 +1,22 @@
 import Link from "next/link";
 import type { Locale } from "@/lib/i18n/config";
 import { appPage } from "@/server/page";
-import { fillForecasts, iotOverview } from "@/server/services/iot";
+import { fillForecasts, iotOverview, listIntegrations } from "@/server/services/iot";
+import { IntegrationForm } from "./integrations";
 import { formatDateTime } from "@/lib/i18n/format";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState, PageHeader, Table, Td, Th } from "@/components/ui/misc";
 import { Meter } from "@/components/charts/charts";
 import { InlineAction } from "@/components/inline-action";
-import { resolveAlertAction, revokeDeviceAction } from "@/app/actions/business";
+import { resolveAlertAction, revokeDeviceAction, revokeIntegrationAction } from "@/app/actions/business";
 import { DeviceForm } from "./forms";
 
 const SILENT_MS = 24 * 3600_000;
 
 export default async function IotPage({ params }: { params: Promise<{ locale: Locale }> }) {
   const { locale, ctx, d } = await appPage(params);
-  const [o, forecasts] = await Promise.all([iotOverview(ctx), fillForecasts(ctx)]);
+  const [o, forecasts, integrations] = await Promise.all([iotOverview(ctx), fillForecasts(ctx), listIntegrations(ctx)]);
   const canWrite = ctx.permissions.has("fleet.write");
   const now = Date.now();
   const when = (x: Date | null | undefined) => (x ? formatDateTime(x, locale, ctx.org.timezone) : "—");
@@ -98,6 +99,25 @@ export default async function IotPage({ params }: { params: Promise<{ locale: Lo
           </Card>
         ) : null}
       </div>
+      <Card className="mt-6">
+        <CardHeader title={d.iot.integrations} description={d.iot.integrationsLead} />
+        {integrations.length ? (
+          <Table>
+            <thead><tr><Th>{d.common.name}</Th><Th>{d.iot.provider}</Th><Th>{d.iot.lastSeen}</Th><Th /></tr></thead>
+            <tbody>
+              {integrations.map((x) => (
+                <tr key={x.id}>
+                  <Td>{x.name}<div className="num text-xs text-ink-600">{x.keyPrefix}…</div></Td>
+                  <Td>{x.provider === "CHIRPSTACK" ? "ChirpStack v4" : "The Things Stack"}</Td>
+                  <Td className="text-xs">{x.revokedAt ? <Badge tone="neutral">{d.iot.revoked}</Badge> : when(x.lastEventAt)}</Td>
+                  <Td className="text-end">{canWrite && !x.revokedAt ? <InlineAction action={revokeIntegrationAction} hidden={{ integrationId: x.id }} label={d.iot.revoke} variant="danger" size="sm" /> : null}</Td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        ) : null}
+        {canWrite ? <CardBody className="border-t border-ink-100"><IntegrationForm base={process.env.APP_URL ?? ""} /></CardBody> : null}
+      </Card>
     </>
   );
 }

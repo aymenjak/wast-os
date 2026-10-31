@@ -13,6 +13,7 @@ import { Disclosure, InlineAction } from "@/components/inline-action";
 import { removeInvoiceLineAction } from "@/app/actions/business";
 import { IssueForm, LineForm, PaymentForm, PrintButton, ReverseForm, VoidForm } from "./forms";
 import { PayOnline } from "@/components/pay-online";
+import { SendInvoiceEmail } from "@/components/send-invoice-email";
 import { orgChargilyStatus } from "@/server/payments/chargily";
 import { prisma } from "@/server/db";
 
@@ -126,6 +127,9 @@ export default async function InvoiceDetail({ params, searchParams }: { params: 
             </Card>
           ) : null}
           {open && canPay && (await orgChargilyStatus(ctx.org.id)).configured ? <PayOnline invoiceId={inv.id} /> : null}
+          {inv.status !== "DRAFT" && inv.status !== "VOID" && ctx.permissions.has("invoices.write") ? (
+            <Card><CardHeader title={d.email.sendInvoice} /><CardBody><SendInvoiceEmail invoiceId={inv.id} defaultTo={inv.customer.email} /></CardBody></Card>
+          ) : null}
           {checkouts.length ? (
             <Card>
               <CardHeader title={d.payOnline.history} />

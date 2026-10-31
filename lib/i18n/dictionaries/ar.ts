@@ -677,6 +677,7 @@ const ar: Dictionary = {
     container: { codeTaken: "توجد حاوية بهذا الرمز." },
     ai: { disabled: "المساعدة بالذكاء الاصطناعي غير مفعّلة.", refusal: "رفض الذكاء الاصطناعي هذا الطلب.", failed: "خدمة الذكاء الاصطناعي غير متاحة. أعد المحاولة لاحقًا." },
     support: { closed: "هذا الطلب مغلق.", noGrant: "لم يمنح الزبون إذن الوصول للدعم.", readOnly: "عرض الدعم للقراءة فقط." },
+    email: { invoiceNotIssued: "لا تُرسل إلا الفواتير الصادرة.", noRecipient: "لا يوجد بريد إلكتروني لهذا الزبون." },
     iot: { serialExists: "يوجد جهاز بهذا الرقم التسلسلي مسبقًا." },
     mfa: { invalidCode: "الرمز خاطئ أو منتهي الصلاحية.", challengeExpired: "انتهت محاولة الدخول هذه. سجّل الدخول من جديد.", alreadyEnabled: "التحقق بخطوتين مفعّل مسبقًا.", notStarted: "ابدأ الإعداد أولًا.", notEnabled: "التحقق بخطوتين غير مفعّل.", requiredForStaff: "يجب على فريق المنصة استعمال التحقق بخطوتين." },
     config: { encryptionKey: "مفتاح التشفير في الخادم غير مُعدّ (APP_ENCRYPTION_KEY)." },
@@ -891,6 +892,7 @@ const ar: Dictionary = {
     voidReason: "السبب", void: "إلغاء الفاتورة",
   },
   iot: {
+    minutesAgo: "منذ {n} د", integrations: "خوادم شبكات LoRaWAN", integrationsLead: "اربط ChirpStack أو The Things Stack مرة واحدة؛ يتم التعرف على أجهزتها بالـ DevEUI (استعمل الـ DevEUI كرقم تسلسلي للجهاز). يجب أن يُخرج مُفكّك الحمولة fillPct/batteryPct/temperatureC، أو lat/lng لأجهزة التتبع.", provider: "خادم الشبكة", addIntegration: "إضافة الربط", chirpstackHow: "في ChirpStack: Application ← Integrations ← HTTP. الترميز: JSON. رابط الاستقبال: الرابط أعلاه. الترويسات: ترويسة Authorization أعلاه.", ttnHow: "في The Things Stack: Application ← Integrations ← Webhooks ← Custom webhook. الصيغة: JSON. الرابط الأساسي: الرابط أعلاه. ترويسات إضافية: Authorization كما أعلاه. الحدث: Uplink message.",
     title: "المستشعرات وأجهزة التتبع", lead: "مستشعرات امتلاء الحاويات وأجهزة GPS في المركبات ترسل بياناتها إلى هنا. التنبيهات تُفتح تلقائيًا، وقرار الجمع يبقى لك.",
     alerts: "تنبيهات مفتوحة", alertsLead: "تُغلق تنبيهات الامتلاء تلقائيًا عند تفريغ الحاوية.", noAlerts: "لا توجد تنبيهات مفتوحة.", alert: "التنبيه", device: "الجهاز", container: "الحاوية", vehicle: "المركبة", since: "منذ",
     alertKinds: { FILL_HIGH: "حاوية شبه ممتلئة", BATTERY_LOW: "بطارية ضعيفة", FIRE_RISK: "خطر حريق (حرارة مرتفعة)" },
@@ -903,6 +905,15 @@ const ar: Dictionary = {
     keyOnce: "مفتاح الجهاز — انسخه في الجهاز الآن. لن يظهر مرة أخرى.", howTo: "يرسل الجهاز (أو بوابة LoRaWAN/الشبكة الخلوية) بيانات JSON عبر HTTPS:",
     fill: "الامتلاء", temperature: "الحرارة", lastPosition: "آخر موقع", openMap: "فتح الخريطة",
     readings: "قراءات المستشعر (14 يومًا)", threshold: "عتبة التنبيه: {pct}%", vehiclesTracked: "مركبات بجهاز GPS",
+  },
+  email: {
+    sendInvoice: "إرسال بالبريد الإلكتروني", to: "المستلم", message: "رسالة (اختيارية)", send: "إرسال الفاتورة",
+    noCustomerEmail: "لا يوجد بريد إلكتروني لهذا الزبون؛ أدخل عنوانًا.",
+    queued: "أُضيفت إلى قائمة الإرسال إلى {to}.", queuedNoSmtp: "أُضيفت إلى القائمة لـ {to}. إرسال البريد غير مُعدّ بعد (SMTP)، وستُرسل فور إعداده.",
+    platformInvoiceSubject: "فاتورة NEXVO رقم {number}", platformInvoiceIntro: "فاتورة اشتراكك في NEXVO متاحة.",
+    reminderSubject: "تذكير: فاتورة NEXVO رقم {number} متأخرة", reminderIntro: "تجاوزت هذه الفاتورة تاريخ استحقاقها. يرجى تسديدها للحفاظ على الوصول إلى مساحة عملك.",
+    viewInvoice: "عرض الفاتورة", footer: "تتلقى هذا البريد بصفتك مالكًا أو مديرًا لمساحة عمل في NEXVO.",
+    customerInvoiceSubject: "فاتورة رقم {number} من {org}", customerInvoiceIntro: "تجدون أدناه فاتورتكم من {org}.", footerCustomer: "أُرسلت من {org} عبر NEXVO.",
   },
   certificate: {
     title: "شهادة جمع",

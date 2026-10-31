@@ -75,3 +75,7 @@ GPS positions of vehicles reveal where drivers are during work: this is personal
 ## 11. Two-step verification and payment keys
 
 TOTP secrets and organizations' payment keys are encrypted at rest (AES-256-GCM). Recovery codes are stored hashed.
+
+## 12. Email
+
+Invoice emails contain the invoice details (customer name, amounts, line descriptions) and go only to the address the user enters or the customer's recorded email; NEXVO billing emails go to the organization's owners/admins and contact address. Sent messages stay in the `Notification` table (retention job to add). The SMTP provider processes these messages: choose one with an acceptable data-protection position (see §4).

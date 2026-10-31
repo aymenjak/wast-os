@@ -14,6 +14,7 @@ import type { ContractStatus, VehicleStatus } from "@/lib/generated/prisma/enums
 import * as schedules from "@/server/services/schedules";
 import * as containers from "@/server/services/containers";
 import * as iot from "@/server/services/iot";
+import { sendInvoiceEmail } from "@/server/services/mailer";
 import { globalSearch, type SearchHit } from "@/server/services/search";
 import { requireOrg } from "@/server/auth/session";
 import { isLocale } from "@/lib/i18n/config";
@@ -219,4 +220,20 @@ export async function revokeDeviceAction(_: ActionState, fd: FormData) {
 }
 export async function resolveAlertAction(_: ActionState, fd: FormData) {
   return orgAction(fd, (ctx) => iot.resolveAlert(ctx, s(fd.get("alertId"))), { revalidate: ["/app/iot"] });
+}
+export async function registerIntegrationAction(_: ActionState, fd: FormData): Promise<ActionState> {
+  let key = "";
+  const r = await orgAction(fd, async (ctx, input) => void (key = (await iot.registerIntegration(ctx, input)).key), { revalidate: ["/app/iot"] });
+  return r.ok ? { ...r, data: { key } } : r;
+}
+export async function revokeIntegrationAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, (ctx) => iot.revokeIntegration(ctx, s(fd.get("integrationId"))), { revalidate: ["/app/iot"] });
+}
+export async function sendInvoiceEmailAction(_: ActionState, fd: FormData): Promise<ActionState> {
+  let out: Record<string, string> = {};
+  const r = await orgAction(fd, async (ctx, input) => {
+    const res = await sendInvoiceEmail(ctx, s(input.invoiceId), input);
+    out = { to: res.to, configured: String(res.deliveryConfigured) };
+  });
+  return r.ok ? { ...r, data: out } : r;
 }

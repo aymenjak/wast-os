@@ -9,6 +9,7 @@ test.describe.serial("billing, IoT, 2FA", () => {
   const org = `Billing Co ${id}`;
   let ownerSecret = "";
   let tenantSecret = "";
+  const eui = `70B3D57E${Math.floor(Math.random() * 0xffffffff).toString(16).padStart(8, "0").toUpperCase()}`;
 
   test("setup", async ({ page }) => {
     await register(page, { org, email: tenantEmail });
@@ -27,8 +28,8 @@ test.describe.serial("billing, IoT, 2FA", () => {
     await expect(page.getByRole("link", { name: `IOT-${id}`.toUpperCase() })).toBeVisible();
     await page.goto("/en/app/iot");
     await page.locator('select[name="containerId"]').selectOption({ label: `IOT-${id}`.toUpperCase() });
-    await page.locator('input[name="name"]').fill("Sensor A");
-    await page.locator('input[name="serial"]').fill(`SN-${id}`);
+    await page.locator('form:has(select[name="kind"]) input[name="name"]').fill("Sensor A");
+    await page.locator('input[name="serial"]').fill(eui);
     await page.getByRole("button", { name: "Register a device" }).click();
     const key = (await page.getByTestId("device-key").locator("code").textContent())!.trim();
     expect(key).toMatch(/^nxd_/);
@@ -39,6 +40,26 @@ test.describe.serial("billing, IoT, 2FA", () => {
     await page.reload();
     await expect(page.getByText("Bin almost full")).toBeVisible();
     await expect(page.getByText("At or above threshold now.").first()).toBeVisible();
+  });
+
+  test("LoRaWAN: a TTN webhook (real HTTP, verified format) reaches the device matched by DevEUI", async ({ page }) => {
+    await signIn(page, tenantEmail);
+    await page.goto("/en/app/iot");
+    await page.locator('select[name="provider"]').selectOption("TTN");
+    await page.locator('form:has(select[name="provider"]) input[name="name"]').fill("TTN Oran");
+    await page.getByRole("button", { name: "Add integration" }).click();
+    const header = (await page.getByTestId("integration-key").locator("code").nth(1).textContent())!.trim();
+    const key = header.replace("Authorization: Bearer ", "");
+    const post = (data: object, headers: Record<string, string> = { authorization: `Bearer ${key}` }) => page.request.post("/api/iot/v1/lorawan/ttn", { headers, data });
+    const up = (devEui: string, decoded: object) => ({ end_device_ids: { device_id: "bin", application_ids: { application_id: "nexvo" }, dev_eui: devEui }, received_at: new Date().toISOString(), uplink_message: { f_port: 1, decoded_payload: decoded, received_at: new Date().toISOString() } });
+    expect((await post(up(eui, { fill_level: 40 }), {})).status()).toBe(401);
+    expect((await page.request.post("/api/iot/v1/lorawan/chirpstack", { headers: { authorization: `Bearer ${key}` }, data: {} })).status()).toBe(401);
+    const unknown = await post(up("0000000000000001", { fill_level: 40 }));
+    expect([unknown.status(), (await unknown.json()).outcome]).toEqual([202, "unknown_device"]);
+    const ok = await post(up(eui.toLowerCase(), { fill_level: 35, battery: 77 }));
+    expect([ok.status(), (await ok.json()).outcome]).toEqual([200, "ingested"]);
+    await page.reload();
+    await expect(page.getByText("Bin almost full")).toHaveCount(0); // 35 % closes the earlier fill alert automatically
   });
 
   test("owner configures billing, runs it, and the organization gets an invoice", async ({ page }) => {

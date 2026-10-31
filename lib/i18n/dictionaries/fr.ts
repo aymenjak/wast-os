@@ -678,6 +678,7 @@ const fr: Dictionary = {
     container: { codeTaken: "Un conteneur porte déjà ce code." },
     ai: { disabled: "L'assistance IA n'est pas configurée.", refusal: "L'IA a refusé cette demande.", failed: "Le service d'IA est indisponible. Réessayez plus tard." },
     support: { closed: "Cette demande est fermée.", noGrant: "Le client n'a pas accordé d'accès à l'assistance.", readOnly: "La vue support est en lecture seule." },
+    email: { invoiceNotIssued: "Seules les factures émises peuvent être envoyées.", noRecipient: "Aucune adresse e-mail pour ce client." },
     iot: { serialExists: "Un appareil avec ce numéro de série existe déjà." },
     mfa: { invalidCode: "Code incorrect ou expiré.", challengeExpired: "Cette tentative a expiré. Reconnectez-vous.", alreadyEnabled: "La validation en deux étapes est déjà activée.", notStarted: "Commencez d'abord la configuration.", notEnabled: "La validation en deux étapes est désactivée.", requiredForStaff: "L'équipe plateforme doit utiliser la validation en deux étapes." },
     config: { encryptionKey: "La clé de chiffrement du serveur n'est pas configurée (APP_ENCRYPTION_KEY)." },
@@ -892,6 +893,7 @@ const fr: Dictionary = {
     voidReason: "Motif", void: "Annuler la facture",
   },
   iot: {
+    minutesAgo: "il y a {n} min", integrations: "Serveurs réseau LoRaWAN", integrationsLead: "Connectez ChirpStack ou The Things Stack une fois ; leurs appareils sont reconnus par DevEUI (utilisez le DevEUI comme numéro de série). Le codec doit produire fillPct/batteryPct/temperatureC, ou lat/lng pour les traceurs.", provider: "Serveur réseau", addIntegration: "Ajouter l'intégration", chirpstackHow: "ChirpStack : Application → Integrations → HTTP. Encodage : JSON. URL de l'endpoint : l'URL ci-dessus. Headers : l'en-tête Authorization ci-dessus.", ttnHow: "The Things Stack : Application → Integrations → Webhooks → Custom webhook. Format : JSON. Base URL : l'URL ci-dessus. Additional headers : Authorization comme ci-dessus. Événement : Uplink message.",
     title: "Capteurs et traceurs", lead: "Les capteurs de remplissage des bacs et les traceurs GPS des véhicules envoient leurs données ici. Les alertes s'ouvrent seules ; les collectes restent votre décision.",
     alerts: "Alertes ouvertes", alertsLead: "Les alertes de remplissage se ferment seules quand le bac est vidé.", noAlerts: "Aucune alerte ouverte.", alert: "Alerte", device: "Appareil", container: "Contenant", vehicle: "Véhicule", since: "Depuis",
     alertKinds: { FILL_HIGH: "Bac presque plein", BATTERY_LOW: "Batterie faible", FIRE_RISK: "Risque d'incendie (température élevée)" },
@@ -904,6 +906,15 @@ const fr: Dictionary = {
     keyOnce: "Clé de l'appareil — copiez-la dans l'appareil maintenant. Elle ne sera plus affichée.", howTo: "L'appareil (ou votre passerelle LoRaWAN/cellulaire) envoie du JSON en HTTPS :",
     fill: "Remplissage", temperature: "Température", lastPosition: "Dernière position", openMap: "Ouvrir la carte",
     readings: "Mesures du capteur (14 jours)", threshold: "Seuil d'alerte : {pct} %", vehiclesTracked: "Véhicules avec GPS",
+  },
+  email: {
+    sendInvoice: "Envoyer par e-mail", to: "Destinataire", message: "Message (facultatif)", send: "Envoyer la facture",
+    noCustomerEmail: "Ce client n'a pas d'adresse e-mail ; saisissez-en une.",
+    queued: "En file d'envoi pour {to}.", queuedNoSmtp: "En file pour {to}. L'envoi d'e-mails n'est pas encore configuré (SMTP) : il partira dès qu'il le sera.",
+    platformInvoiceSubject: "Facture NEXVO {number}", platformInvoiceIntro: "La facture de votre abonnement NEXVO est disponible.",
+    reminderSubject: "Rappel : la facture NEXVO {number} est en retard", reminderIntro: "Cette facture a dépassé son échéance. Merci de la régler pour garder l'accès à votre espace.",
+    viewInvoice: "Voir la facture", footer: "Vous recevez cet e-mail en tant que propriétaire ou administrateur d'un espace NEXVO.",
+    customerInvoiceSubject: "Facture {number} de {org}", customerInvoiceIntro: "Veuillez trouver ci-dessous votre facture de {org}.", footerCustomer: "Envoyé par {org} avec NEXVO.",
   },
   certificate: {
     title: "Attestation de collecte",

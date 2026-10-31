@@ -145,6 +145,7 @@ model Organization {
   subscription       Subscription?
   platformInvoices   PlatformInvoice[]
   iotDevices         IotDevice[]
+  iotIntegrations    IotIntegration[]
   sensorReadings     SensorReading[]
   vehiclePositions   VehiclePosition[]
   iotAlerts          IotAlert[]
@@ -339,6 +340,30 @@ model PlatformBillingSettings {
 enum DeviceKind {
   FILL_SENSOR
   GPS_TRACKER
+}
+
+enum LoraProvider {
+  CHIRPSTACK
+  TTN
+}
+
+/// A LoRaWAN network-server integration (ChirpStack or The Things Stack) posting uplinks for many devices.
+/// Authenticates with its own key (hash stored); devices are matched by DevEUI = IotDevice.serial.
+model IotIntegration {
+  id             String       @id @default(cuid())
+  organizationId String
+  provider       LoraProvider
+  name           String
+  keyHash        String       @unique
+  keyPrefix      String
+  lastEventAt    DateTime?    @db.Timestamptz(3)
+  revokedAt      DateTime?    @db.Timestamptz(3)
+  createdById    String
+  createdAt      DateTime     @default(now()) @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
 }
 
 enum IotAlertKind {
@@ -1218,11 +1243,17 @@ model Notification {
   readAt         DateTime?           @db.Timestamptz(3)
   sentAt         DateTime?           @db.Timestamptz(3)
   createdAt      DateTime            @default(now()) @db.Timestamptz(3)
+  /// Email outbox delivery state (retries with backoff; failedAt after the last attempt).
+  attempts       Int                 @default(0)
+  nextAttemptAt  DateTime            @default(now()) @db.Timestamptz(3)
+  lastError      String?
+  failedAt       DateTime?           @db.Timestamptz(3)
 
   organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@index([userId, readAt])
   @@index([channel, sentAt])
+  @@index([channel, sentAt, failedAt, nextAttemptAt])
 }
 
 // ───────────────────────────── NEXVO Civic ─────────────────────────────
