@@ -1,0 +1,49 @@
+# NEXVO
+
+Waste-operations SaaS for Algeria, in Arabic (RTL), French and English.
+
+- **NEXVO Business** — for private collection companies: customers, service locations, contracts, collection requests, dispatch, field evidence (photos, weights), fleet, invoicing and payments, reports, customer portal.
+- **NEXVO Civic** — for communes: anonymous citizen reports, verification with PostGIS duplicate detection, team assignment, public tracking, SLA analytics.
+
+Status: **MVP milestone, not deployed.** Pilot-oriented; pricing and market figures are hypotheses (see `BUSINESS-MODEL.md`).
+
+## Quick start (development)
+
+Requirements: Node 22, PostgreSQL 16 with PostGIS 3.4 and citext.
+
+```bash
+cp .env.example .env            # adjust DATABASE_URL / TEST_DATABASE_URL
+npm ci
+npx prisma migrate dev          # creates schema, triggers, constraints
+npm run db:seed                 # synthetic demo data (refuses in production)
+npm run dev                     # http://localhost:3000 → /fr
+```
+
+Demo logins after seeding (synthetic): `owner@demo-collecte.test`, `dispatch@…`, `driver@…`, `finance@demo-collecte.test`, `civic@demo-apc.test` — password `nexvo-demo-2026`.
+
+## Tests
+
+```bash
+npm run typecheck
+npm run test:unit
+npm run test:integration        # real Postgres+PostGIS test DB
+npm run build && npm run test:e2e
+```
+
+Last recorded run: 59 unit/integration tests and 19 E2E tests passing (details in `TEST-PLAN.md`).
+
+## Documentation map
+
+| Topic | File |
+|-------|------|
+| Project overview, Phase 0 report, status | `PROJECT.md` |
+| Requirements, personas, acceptance criteria | `PRODUCT-REQUIREMENTS.md` |
+| Research, sources, competitors | `RESEARCH-DOSSIER.md`, `SOURCES.md`, `COMPETITOR-ANALYSIS.md` |
+| Business model and pricing | `BUSINESS-MODEL.md`, `PRICING-ASSUMPTIONS.md` |
+| Architecture, database, API | `ARCHITECTURE.md`, `DATABASE.md`, `API-CONTRACTS.md` |
+| Design system | `DESIGN-SYSTEM.md`, `docs/screenshots/` |
+| Security, privacy, compliance | `SECURITY.md`, `PRIVACY-AND-COMPLIANCE.md` |
+| Testing, deployment, roadmap, decisions | `TEST-PLAN.md`, `DEPLOYMENT.md`, `ROADMAP.md`, `DECISIONS.md` |
+| Agent workflow, skills, MCP | `AGENTS.md`, `.claude/skills/`, `docs/skills/`, `docs/mcp/` |
+
+The original Bolt-generated "Waste City OS" prototype is preserved, unmodified, in `archive/bolt-prototype/` (excluded from the build).
