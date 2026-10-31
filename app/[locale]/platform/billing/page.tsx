@@ -36,7 +36,7 @@ export default async function PlatformBilling({ params, searchParams }: { params
               </Link>
             ))}
           </nav>
-          {inv.rows.length === 0 ? <EmptyState title={d.billing.noInvoices} /> : (
+          {inv.rows.length === 0 ? <EmptyState art="invoices" title={d.billing.noInvoices} /> : (
             <Table scroll>
               <thead><tr><Th>{d.invoices.number}</Th><Th>{d.platform.nav.tenants}</Th><Th>{d.invoices.dueDate}</Th><Th numeric>{d.invoices.total}</Th><Th>{d.common.status}</Th><Th /></tr></thead>
               <tbody>

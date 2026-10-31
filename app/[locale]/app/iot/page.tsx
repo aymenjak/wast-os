@@ -26,7 +26,7 @@ export default async function IotPage({ params }: { params: Promise<{ locale: Lo
 
       <Card className="mb-6">
         <CardHeader title={d.iot.alerts} description={d.iot.alertsLead} />
-        {o.alerts.length === 0 ? <EmptyState title={d.iot.noAlerts} /> : (
+        {o.alerts.length === 0 ? <EmptyState art="done" title={d.iot.noAlerts} /> : (
           <Table>
             <thead><tr><Th>{d.iot.alert}</Th><Th>{d.iot.device}</Th><Th>{d.iot.container}</Th><Th>{d.iot.since}</Th><Th /></tr></thead>
             <tbody>
@@ -50,7 +50,7 @@ export default async function IotPage({ params }: { params: Promise<{ locale: Lo
 
       <Card className="mb-6">
         <CardHeader title={d.iot.forecastTitle} description={d.iot.forecastLead} />
-        {forecasts.length === 0 ? <EmptyState title={d.iot.noSensors} /> : (
+        {forecasts.length === 0 ? <EmptyState art="devices" title={d.iot.noSensors} /> : (
           <CardBody className="space-y-4">
             {forecasts.map((f) => (
               <div key={f.id}>
@@ -71,7 +71,7 @@ export default async function IotPage({ params }: { params: Promise<{ locale: Lo
       <div className="grid gap-6 lg:grid-cols-5">
         <Card className="lg:col-span-3">
           <CardHeader title={d.iot.devices} />
-          {o.devices.length === 0 ? <EmptyState title={d.iot.noDevices} /> : (
+          {o.devices.length === 0 ? <EmptyState art="devices" title={d.iot.noDevices} /> : (
             <Table>
               <thead><tr><Th>{d.common.name}</Th><Th>{d.iot.kind}</Th><Th>{d.iot.linkedTo}</Th><Th>{d.iot.lastSeen}</Th><Th>{d.iot.battery}</Th><Th /></tr></thead>
               <tbody>

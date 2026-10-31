@@ -41,7 +41,7 @@ export default async function WorkOrdersPage({ params, searchParams }: { params:
       ) : null}
       {field ? (
         <ul className="space-y-3">
-          {rows.length === 0 ? <Card><EmptyState title={d.workOrders.empty} /></Card> : rows.map((o) => (
+          {rows.length === 0 ? <Card><EmptyState art="done" title={d.workOrders.empty} /></Card> : rows.map((o) => (
             <li key={o.id}>
               <Link href={`/${locale}/app/work-orders/${o.id}`} className="block rounded-[var(--radius-card)] border border-ink-200 bg-white p-4 shadow-[var(--shadow-card)] active:bg-ink-50">
                 <div className="flex items-center justify-between gap-2">
@@ -63,7 +63,7 @@ export default async function WorkOrdersPage({ params, searchParams }: { params:
               { value: "OPEN", label: d.civic.open },
               ...(["PLANNED", "ASSIGNED", "IN_PROGRESS", "COMPLETED", "FAILED", "DISPUTED"] as const).map((x) => ({ value: x, label: d.enums.WorkOrderStatus[x] })),
             ]} />
-          {page!.total === 0 ? <EmptyState title={d.table.noResults} /> : (
+          {page!.total === 0 ? <EmptyState art="search" title={d.table.noResults} /> : (
             <Table scroll>
               <thead><tr>
                 <SortTh sp={sp} col="number" label={d.workOrders.number} sort={s.sort} dir={s.dir} d={d} />

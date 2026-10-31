@@ -73,7 +73,7 @@ export default async function DispatchPage({ params, searchParams }: { params: P
         {mapPoints.length || liveVehicles.length ? <OpsMap points={mapPoints} routes={mapRoutes} initialVehicles={liveVehicles} locale={locale} /> : <EmptyState title={d.schedule.noLocated} />}
       </section>
 
-      {v.teams.length === 0 ? <Card className="mb-6"><EmptyState title={d.dispatch.noTeams} /></Card> : null}
+      {v.teams.length === 0 ? <Card className="mb-6"><EmptyState art="workOrders" title={d.dispatch.noTeams} /></Card> : null}
 
       {v.backlog.length ? (
         <Card className="mb-6">
@@ -94,7 +94,7 @@ export default async function DispatchPage({ params, searchParams }: { params: P
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         <Card>
           <CardHeader title={`${d.dispatch.unassignedColumn} (${formatNumber(v.unassigned.length, locale)})`} />
-          {v.unassigned.length === 0 ? <EmptyState title={d.dispatch.emptyDay} /> : (
+          {v.unassigned.length === 0 ? <EmptyState art="done" title={d.dispatch.emptyDay} /> : (
             <ul className="divide-y divide-ink-100">
               {v.unassigned.map((o) => (
                 <li key={o.id} className="space-y-2 px-4 py-3 text-sm">

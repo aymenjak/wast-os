@@ -31,7 +31,7 @@ export default async function RequestsPage({ params, searchParams }: { params: P
         ))}
       </nav>
       <Card>
-        {rows.length === 0 ? <EmptyState title={d.requests.empty} /> : (
+        {rows.length === 0 ? <EmptyState art="workOrders" title={d.requests.empty} /> : (
           <Table>
             <thead><tr><Th>{d.requests.number}</Th><Th>{d.requests.customer}</Th><Th>{d.requests.category}</Th><Th>{d.requests.preferredDate}</Th><Th>{d.requests.priority}</Th><Th>{d.requests.source}</Th><Th>{d.common.status}</Th><Th>{d.common.actions}</Th></tr></thead>
             <tbody>

@@ -17,7 +17,7 @@ export default async function Console({ params }: { params: Promise<{ locale: Lo
     <>
       <PageHeader title={d.support.consoleTitle} description={d.support.consoleLead} />
       <Card>
-        {tickets.length === 0 ? <EmptyState title={d.support.noTickets} /> : (
+        {tickets.length === 0 ? <EmptyState art="support" title={d.support.noTickets} /> : (
           <Table>
             <thead><tr><Th>{d.support.subject}</Th><Th>{d.support.workspace}</Th><Th>{d.requests.priority}</Th><Th>{d.support.grantTitle}</Th><Th>{d.common.status}</Th><Th>{d.common.date}</Th></tr></thead>
             <tbody>

@@ -26,6 +26,14 @@
 
 No new third-party skill was vendored in round 3.
 
+### Round 4 (2026-10-31): illustrations
+
+| Need | Skill / source | Decision |
+|------|----------------|----------|
+| Illustrations that "bring the system to life" | Anthropic [`canvas-design`](https://github.com/anthropics/skills/tree/main/skills/canvas-design) (Apache-2.0, instructions only, no scripts) and `algorithmic-art` (p5.js generative art) | `canvas-design` **vendored** (`.claude/skills/canvas-design`, licence included) as the method reference; it produces posters (PNG/PDF), not UI art. `algorithmic-art` not adopted (generative canvas art, not product illustration) |
+| SVG/diagram skills | community `svg-illustration`, `technical-svg-diagrams` (listed on claudemarketplaces.com) | Not installed: technical diagrams, and `svg-illustration` was not found at the published path |
+| Product illustration system | **new project skill `nexvo-illustration`** | Applies canvas-design's method (philosophy → craft → refinement pass) to inline SVG React components: palette tokens, geometry, RTL, a11y, motion and CSP rules, scene library |
+
 ## Project skills
 
 | Skill | Responsibility |

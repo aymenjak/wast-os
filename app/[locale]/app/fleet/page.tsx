@@ -21,7 +21,7 @@ export default async function FleetPage({ params }: { params: Promise<{ locale: 
       <div className="grid gap-6 xl:grid-cols-5">
         <Card className="xl:col-span-3">
           <CardHeader title={d.fleet.vehicles} />
-          {vehicles.length === 0 ? <EmptyState title={d.fleet.noVehicles} /> : (
+          {vehicles.length === 0 ? <EmptyState art="workOrders" title={d.fleet.noVehicles} /> : (
             <Table>
               <thead><tr><Th>{d.fleet.plate}</Th><Th>{d.fleet.type}</Th><Th numeric>{d.fleet.capacity}</Th><Th>{d.fleet.lastService}</Th><Th numeric>{d.fleet.jobs30}</Th><Th>{d.common.status}</Th></tr></thead>
               <tbody>

@@ -29,7 +29,7 @@ export default async function CivicQueue({ params, searchParams }: { params: Pro
         ))}
       </nav>
       <Card>
-        {rows.length === 0 ? <EmptyState title={d.civic.noReports} /> : (
+        {rows.length === 0 ? <EmptyState art="done" title={d.civic.noReports} /> : (
           <Table>
             <thead><tr><Th>{d.civic.trackingCode}</Th><Th>{d.civic.category}</Th><Th>{d.civic.submittedAt}</Th><Th>{d.requests.priority}</Th><Th>{d.civic.slaDue}</Th><Th>{d.civic.intervention}</Th><Th>{d.common.status}</Th></tr></thead>
             <tbody>

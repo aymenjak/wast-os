@@ -33,7 +33,7 @@ export default async function Tenants({ params, searchParams }: { params: Promis
       <PageHeader title={d.platform.nav.tenants} />
       <Card>
         <TableToolbar sp={sp} d={d} locale={locale} q={st.q} filters={filters} active={st.filter} />
-        {page.rows.length === 0 ? <EmptyState title={d.table.noResults} /> : (
+        {page.rows.length === 0 ? <EmptyState art="search" title={d.table.noResults} /> : (
           <Table scroll>
             <thead>
               <tr>

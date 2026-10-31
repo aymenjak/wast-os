@@ -31,7 +31,7 @@ export default async function ContainersPage({ params, searchParams }: { params:
       <Card>
         <TableToolbar sp={sp} d={d} locale={locale} q={st.q} active={st.filter} exportKind={ctx.support ? undefined : "containers"}
           filters={[{ value: null, label: d.common.all }, ...(["AT_CUSTOMER", "IN_YARD", "MAINTENANCE", "RETIRED"] as const).map((x) => ({ value: x, label: d.enums.ContainerStatus[x] }))]} />
-        {page.total === 0 ? <EmptyState title={rows.length ? d.table.noResults : d.containers.empty} /> : (
+        {page.total === 0 ? <EmptyState art={st.q || st.filter ? "search" : "workOrders"} title={st.q || st.filter ? d.table.noResults : d.containers.empty} /> : (
           <Table scroll>
             <thead><tr>
               <SortTh sp={sp} col="code" label={d.containers.code} sort={st.sort} dir={st.dir} d={d} />

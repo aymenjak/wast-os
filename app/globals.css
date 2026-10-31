@@ -125,3 +125,7 @@
   .route-hero .rh-stop--done .rh-num { animation: none; fill: #ffffff; }
   .route-hero li .rh-before { animation: none; opacity: 0; }
 }
+
+/* Illustration motion (nexvo-illustration skill); only applied through motion-safe: utilities. */
+@keyframes nexvo-route { to { stroke-dashoffset: -26; } }
+@keyframes nexvo-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-1.5px); } }

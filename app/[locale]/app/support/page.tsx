@@ -26,7 +26,7 @@ export default async function SupportPage({ params }: { params: Promise<{ locale
         <div className="space-y-6 xl:col-span-2">
           <Card>
             <CardHeader title={d.support.tickets} />
-            {tickets.length === 0 ? <EmptyState title={d.support.noTickets} /> : (
+            {tickets.length === 0 ? <EmptyState art="support" title={d.support.noTickets} /> : (
               <ul className="divide-y divide-ink-100">
                 {tickets.map((t) => (
                   <li key={t.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 text-sm">

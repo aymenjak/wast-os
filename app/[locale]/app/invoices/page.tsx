@@ -36,7 +36,7 @@ export default async function InvoicesPage({ params, searchParams }: { params: P
             { value: "OPEN", label: d.civic.open },
             ...(["DRAFT", "ISSUED", "PARTIALLY_PAID", "PAID", "VOID"] as const).map((x) => ({ value: x, label: d.enums.InvoiceStatus[x] })),
           ]} />
-        {page.total === 0 ? <EmptyState title={s.q || s.filter ? d.table.noResults : d.invoices.empty} /> : (
+        {page.total === 0 ? <EmptyState art={s.q || s.filter ? "search" : "invoices"} title={s.q || s.filter ? d.table.noResults : d.invoices.empty} /> : (
           <Table scroll>
             <thead><tr>
               <SortTh sp={sp} col="number" label={d.invoices.number} sort={s.sort} dir={s.dir} d={d} />

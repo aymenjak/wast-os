@@ -42,7 +42,7 @@ export default async function PortalHome({ params, searchParams }: { params: Pro
         </Disclosure>
         <Card>
           <CardHeader title={d.workOrders.title} />
-          {orders.length === 0 ? <EmptyState title={d.workOrders.empty} /> : (
+          {orders.length === 0 ? <EmptyState art="workOrders" title={d.workOrders.empty} /> : (
             <ul className="divide-y divide-ink-100">
               {orders.map((o) => (
                 <li key={o.id} className="flex flex-wrap items-center gap-3 px-5 py-3 text-sm">

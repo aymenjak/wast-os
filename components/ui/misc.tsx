@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { Illustration, type IllustrationName } from "@/components/illustrations";
 import type { ReactNode } from "react";
 import { Inbox, ShieldAlert } from "lucide-react";
 
@@ -15,10 +16,10 @@ export function PageHeader({ title, description, actions, eyebrow }: { title: Re
   );
 }
 
-export function EmptyState({ title, hint, action }: { title: ReactNode; hint?: ReactNode; action?: ReactNode }) {
+export function EmptyState({ title, hint, action, art }: { title: ReactNode; hint?: ReactNode; action?: ReactNode; art?: IllustrationName }) {
   return (
     <div className="flex flex-col items-center justify-center gap-2 px-6 py-12 text-center">
-      <Inbox aria-hidden className="size-6 text-ink-500" />
+      {art ? <Illustration name={art} className="mb-2 w-44 sm:w-52" /> : <Inbox aria-hidden className="size-6 text-ink-500" />}
       <p className="text-sm font-medium text-ink-800">{title}</p>
       {hint ? <p className="max-w-sm text-sm text-ink-600">{hint}</p> : null}
       {action ? <div className="mt-2">{action}</div> : null}

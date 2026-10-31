@@ -22,7 +22,7 @@ export default async function CustomersPage({ params, searchParams }: { params: 
       <Card>
         <TableToolbar sp={sp} d={d} locale={locale} q={s.q} active={s.filter} exportKind={ctx.support ? undefined : "customers"}
           filters={[{ value: null, label: d.common.all }, { value: "ACTIVE", label: d.enums.CustomerStatus.ACTIVE }, { value: "INACTIVE", label: d.enums.CustomerStatus.INACTIVE }]} />
-        {page.total === 0 ? <EmptyState title={s.q || s.filter ? d.table.noResults : d.customers.empty} hint={s.q || s.filter ? undefined : d.customers.emptyHint} /> : (
+        {page.total === 0 ? <EmptyState art={s.q || s.filter ? "search" : "customers"} title={s.q || s.filter ? d.table.noResults : d.customers.empty} hint={s.q || s.filter ? undefined : d.customers.emptyHint} /> : (
           <Table scroll>
             <thead><tr>
               <SortTh sp={sp} col="code" label={d.customers.code} sort={s.sort} dir={s.dir} d={d} />

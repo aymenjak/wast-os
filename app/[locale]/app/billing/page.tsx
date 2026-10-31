@@ -31,7 +31,7 @@ export default async function BillingPage({ params }: { params: Promise<{ locale
       ) : null}
       <Card>
         <CardHeader title={d.billing.invoices} />
-        {b.invoices.length === 0 ? <EmptyState title={d.billing.noInvoices} /> : (
+        {b.invoices.length === 0 ? <EmptyState art="invoices" title={d.billing.noInvoices} /> : (
           <Table>
             <thead><tr><Th>{d.invoices.number}</Th><Th>{d.billing.period}</Th><Th>{d.invoices.dueDate}</Th><Th numeric>{d.invoices.total}</Th><Th>{d.common.status}</Th><Th /></tr></thead>
             <tbody>

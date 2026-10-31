@@ -17,7 +17,7 @@ export default async function ContractsPage({ params }: { params: Promise<{ loca
     <>
       <PageHeader title={d.contracts.title} actions={ctx.permissions.has("contracts.write") ? <ButtonLink href={`/${locale}/app/contracts/new`}><Plus aria-hidden className="size-4" />{d.contracts.new}</ButtonLink> : null} />
       <Card>
-        {rows.length === 0 ? <EmptyState title={d.contracts.empty} /> : (
+        {rows.length === 0 ? <EmptyState art="invoices" title={d.contracts.empty} /> : (
           <Table>
             <thead><tr><Th>{d.contracts.reference}</Th><Th>{d.contracts.titleField}</Th><Th>{d.contracts.customer}</Th><Th>{d.contracts.startDate}</Th><Th>{d.contracts.endDate}</Th><Th numeric>{d.contracts.lines}</Th><Th>{d.common.status}</Th></tr></thead>
             <tbody>
