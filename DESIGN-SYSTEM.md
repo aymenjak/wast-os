@@ -1,41 +1,35 @@
 # Design system
 
-## Brand direction
+## Brand direction — "Kerbside" (v2, 2026-10-31)
 
-NEXVO should read as **operational infrastructure**: calm, legible, trustworthy, with a restrained environmental accent. No gradients-as-decoration, glassmorphism, oversized icons, fake logos, live-activity theatre or unsupported impact numbers. Patterns were studied from GOV.UK Design System (form errors, summary lists), Carbon (data tables, density), Material 3 (state layers) — identities were not copied.
+Redesigned following Anthropic's official `frontend-design` skill (`.claude/skills/frontend-design`). v1 had the generic tells that skill lists: Inter, a green-on-white SaaS card kit with the same shadow on every box, tracked uppercase labels, "A · B" meta strings, an arrow on the CTA, and decorative numbering.
 
-Logo: a rounded square in brand-700 with a single-stroke "N" path ending in a light dot (a route reaching its stop). Wordmark: NEXVO, letter-spaced. Files: `components/ui/misc.tsx → Logo`, `public/icon.svg`.
+**Pass 1 (plan, grounded in the subject).** Subject: private waste collection in Algeria. Its vernacular is hi-vis vests, skip containers, truck livery, road signage, the route sheet and the weighbridge ticket. Audience: owners and dispatchers at a desk, and drivers on a phone in the sun. Primary job: see today's rounds and what is billable.
 
-## Tokens (`app/globals.css`, Tailwind v4 `@theme`)
+| Role | Name | Hex |
+|------|------|-----|
+| Structure, headings, nav rail | Asphalt | #1d2a2e |
+| Page | Concrete | #edefed |
+| Surfaces | Paper | #ffffff |
+| Primary action, "done" | Skip green | #1f5a44 |
+| Route signature, today, active marker, focus | Hi-vis | #e8590c (graphics only; text-safe variant #b8460a) |
+| Muted text | Kerb grey | #566468 |
 
-| Token | Value | Use |
-|-------|-------|-----|
-| `ink-950 … ink-50` | #0b1513 → #f6f8f7 (green-tinted neutrals) | Text, surfaces, borders |
-| `brand-900 … brand-50` | #063b33 → #edf8f5 (verdigris) | Primary actions, active nav, focus |
-| `sand-600 / sand-100` | #9a5b13 / #fbefd9 | Highlights, access notes |
-| `info/success/warning/danger-700/100` | blue / green / amber / red | Status badges, alerts |
-| `--radius-control` 8px, `--radius-card` 12px | | |
-| `--shadow-card`, `--shadow-pop` | subtle | Cards, popovers |
-| Fonts | Inter Variable (Latin), IBM Plex Sans Arabic (Arabic, line-height 1.7) | self-hosted via @fontsource |
+Type: **Archivo** (variable width), with headings at 72–80% width (the voice of truck livery and road signs) and body at 100%. **Noto Kufi Arabic** for Arabic, a geometric Kufi with the same signage spirit, at line-height 1.75.
 
-### Verified contrast (computed from token values, WCAG 2.x formula)
+Layout: a dark asphalt rail with a hi-vis bar on the active item. Content sits on concrete. Pages are made of white sheets with a 1px border and no shadow. Metrics live in one divided strip (`MetricStrip`) rather than four identical cards. The radius varies by hierarchy: 6px for controls, 10px for sheets, full for chips.
 
-| Pair | Ratio |
-|------|-------|
-| ink-500 #5a6b65 on ink-50 | 5.28 |
-| ink-500 on white | 5.64 |
-| white on brand-700 | 7.80 |
-| brand-700 on brand-50 | 7.18 |
-| warning-700 on warning-100 | 5.06 |
-| danger-700 on danger-100 | 5.30 |
-| success-700 on success-100 | 4.57 |
-| info-700 on info-100 | 5.49 |
+Principle: **spend the boldness in one place — the route line.** It appears in the hero (an animated round), the "request → paid invoice" stations, the dispatch team strips, the ops map polylines, the logo mark and the active nav marker. Everything else stays quiet.
 
-`ink-500` was darkened from #65776f (4.45:1, failed axe) to #5a6b65. `ink-400` is no longer used for text.
+**Pass 2 (review against defaults).** A generic "waste SaaS" prompt lands on green + leaf icons + white cards, which is what v1 was, so that was replaced. Asphalt plus one bright accent risks the "near-black + acid accent" default. It is mitigated by keeping the canvas light (concrete/paper), using orange only for the route, and keeping actions in skip green. Numbered markers appear only for true sequences (route stops, the five workflow stages).
+
+Removed across the app: uppercase eyebrow labels, middle-dot meta strings (replaced by commas or separate elements), the CTA arrow, identical shadowed cards, and the icon-box feature grid.
+
+Logo: an asphalt tile with a route-shaped "N" ending in a hi-vis depot dot. The wordmark "Nexvo" is set in Archivo condensed.
 
 ## Typography scale
 
-Page title 24px/600 · section title 15px/600 · body 14px · meta 12px · marketing H1 36–48px/600. Numbers use `tabular-nums`.
+Page title 28px Archivo 80% width, bold. Section title 17px bold. Body 14–16px. Metrics 32px condensed bold. Marketing H1 42–70px at 72% width. Numbers use `tabular-nums`.
 
 ## Components (`components/ui`)
 
@@ -43,7 +37,11 @@ Page title 24px/600 · section title 15px/600 · body 14px · meta 12px · marke
 |-----------|-------|
 | `Button`, `ButtonLink`, `buttonClass` | primary, secondary, subtle, ghost, danger; sm/md/lg (lg = 48px for field use) |
 | `ActionForm`, `Field`, `Input`, `Select`, `Textarea`, `Checkbox`, `SubmitButton` | server-action forms; error summary with `role="alert"` receives focus; per-field messages linked via `aria-describedby`; pending state on submit |
-| `Card`, `CardHeader`, `CardBody` | |
+| `Card`, `CardHeader`, `CardBody` | border-only sheets, no shadow |
+| `MetricStrip` + `Stat` | one divided instrument panel |
+| `TrendChart` | stacked daily bars, SVG decorative + sr-only data table, today marked in hi-vis |
+| `RouteHero` | homepage round illustration; one orchestrated load sequence; reduced-motion shows final state |
+| `CommandPalette` | Ctrl/⌘+K, native `<dialog>`, combobox/listbox ARIA, arrow-key navigation |
 | `Badge`, `StatusBadge` | status = text + dot (never colour only); one tone map for all entities |
 | `Table`, `Th`, `Td` | semantic table, `scope=col`, start-aligned, numeric columns end-aligned, horizontal scroll on mobile |
 | `PageHeader`, `Stat`, `DescriptionList`, `EmptyState`, `Forbidden` | |

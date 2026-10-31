@@ -3,23 +3,23 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import {
-  BarChart3, Building2, CalendarRange, ClipboardList, FileText, Gauge, Map, Menu, Receipt, Settings, ShieldCheck, Truck, Users, Wrench, X, Home,
+  BarChart3, Box, Building2, CalendarRange, ClipboardList, FileText, Gauge, Map, Menu, Receipt, Settings, ShieldCheck, Truck, Users, Wrench, X, Home,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/components/i18n-provider";
 import { LanguageSwitcher } from "@/components/language-switcher";
 
-const ICONS = { Gauge, Building2, FileText, ClipboardList, CalendarRange, Wrench, Truck, Receipt, BarChart3, Users, Settings, ShieldCheck, Map, Home } as const;
+const ICONS = { Box, Gauge, Building2, FileText, ClipboardList, CalendarRange, Wrench, Truck, Receipt, BarChart3, Users, Settings, ShieldCheck, Map, Home } as const;
 export type NavItem = { href: string; label: string; icon: keyof typeof ICONS };
 export type NavSection = { title?: string; items: NavItem[] };
 
-function NavList({ sections, onNavigate }: { sections: NavSection[]; onNavigate?: () => void }) {
+function NavList({ sections, onNavigate, dark = false }: { sections: NavSection[]; onNavigate?: () => void; dark?: boolean }) {
   const pathname = usePathname();
   return (
     <div className="space-y-6">
       {sections.map((s, i) => (
         <div key={i}>
-          {s.title ? <div className="mb-1.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-ink-500">{s.title}</div> : null}
+          {s.title ? <div className="mb-1 px-3 text-xs font-medium text-[#9fb0ad]">{s.title}</div> : null}
           <ul className="space-y-0.5">
             {s.items.map((it) => {
               const Icon = ICONS[it.icon];
@@ -31,11 +31,14 @@ function NavList({ sections, onNavigate }: { sections: NavSection[]; onNavigate?
                     onClick={onNavigate}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "flex items-center gap-2.5 rounded-md px-3 py-2 text-sm",
-                      active ? "bg-brand-50 font-medium text-brand-800" : "text-ink-700 hover:bg-ink-100 hover:text-ink-900",
+                      "relative flex items-center gap-2.5 rounded-md px-3 py-2 text-sm",
+                      dark
+                        ? active ? "bg-white/10 font-medium text-white" : "text-[#c9d3d1] hover:bg-white/5 hover:text-white"
+                        : active ? "bg-ink-100 font-medium text-ink-950" : "text-ink-700 hover:bg-ink-100",
                     )}
                   >
-                    <Icon aria-hidden className={cn("size-4", active ? "text-brand-700" : "text-ink-500")} />
+                    {active ? <span aria-hidden className="absolute inset-y-1.5 start-0 w-[3px] rounded-full bg-hivis-600" /> : null}
+                    <Icon aria-hidden className={cn("size-4", dark ? (active ? "text-white" : "text-[#9fb0ad]") : active ? "text-ink-900" : "text-ink-500")} />
                     {it.label}
                   </Link>
                 </li>
@@ -52,7 +55,7 @@ export function SidebarNav({ sections }: { sections: NavSection[] }) {
   const { t } = useI18n();
   return (
     <nav aria-label={t("common.menu")} className="px-3 py-4">
-      <NavList sections={sections} />
+      <NavList sections={sections} dark />
     </nav>
   );
 }

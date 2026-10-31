@@ -57,6 +57,19 @@ Each source ID (S-xx) is referenced from `RESEARCH-DOSSIER.md` and `DECISIONS.md
 | S-54 | Wastebits on Capterra | Capterra | https://www.capterra.com/p/134866/Wastebits/ | 2026 | C | Hazardous/special waste profiles and EPA e-Manifest (US-specific). |
 | S-55 | Oslo route-optimisation tender 23/1620 | TED (EU) | https://ted.europa.eu/en/notice/602214-2023/pdf | 2023 | A | Shows municipal demand for route optimisation; winner not identified; Urban Sharing's involvement **not verified**. |
 
+| S-56 | 4 Best Dumpster Rental Software to Use in 2026 | Windows Report | https://windowsreport.com/roll-off-software/ | 2026 | C | Starlight Pro: container GPS tracking, driver app with order changes, billing; ServiceCore: route optimisation and stop-by-stop route printing |
+| S-57 | RollOS (G2 seller page) | G2 | https://www.g2.com/sellers/rollos | 2026 | C | Container serial/size locks against double-booking; drivers get daily stops by SMS magic link |
+| S-58 | Roll-off container tracking software (glossary) | CurbWaste | https://curbwaste.com/glossary/roll-off-container-tracking-app | — | C | Generic definitions only; not a feature list for CurbWaste's own product |
+
+## Agent skills (sources for D-20/D-21)
+
+| ID | Title | URL | Quality |
+|----|-------|-----|---------|
+| S-70 | frontend-design SKILL.md | https://github.com/anthropics/skills/tree/main/skills/frontend-design | A (publisher) |
+| S-71 | Superpowers skills (verification-before-completion, systematic-debugging) | https://github.com/obra/superpowers | A (publisher) |
+| S-72 | The 12 Best Claude Code Skills in 2026 | https://www.tella.com/blog/best-claude-code-skills | C |
+| S-73 | Best Claude Code Skills (2026): 15 Tested & Ranked | https://designrevision.com/blog/best-claude-code-skills | C |
+
 ## Technical and design references
 
 | ID | Title | URL | Quality |

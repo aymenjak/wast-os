@@ -19,9 +19,9 @@ export default async function PublicLayout({ children, params }: { children: Rea
   ];
   return (
     <div className="flex min-h-dvh flex-col bg-white">
-      <header className="sticky top-0 z-30 border-b border-ink-100 bg-white/90 backdrop-blur">
+      <header className="sticky top-0 z-30 border-b border-ink-200 bg-ink-50/90 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-6xl items-center gap-6 px-4 sm:px-6">
-          <Link href={`/${locale}`} aria-label="NEXVO" className="shrink-0">
+          <Link href={`/${locale}`} aria-label="Nexvo" className="shrink-0">
             <Logo />
           </Link>
           <nav aria-label={d.nav.product} className="hidden items-center gap-5 text-sm text-ink-700 md:flex">
@@ -38,16 +38,16 @@ export default async function PublicLayout({ children, params }: { children: Rea
         </div>
       </header>
       <main id="main" className="flex-1">{children}</main>
-      <footer className="border-t border-ink-100 bg-ink-50">
-        <div className="mx-auto grid max-w-6xl gap-6 px-4 py-10 text-sm text-ink-600 sm:grid-cols-3 sm:px-6">
+      <footer className="bg-ink-900 text-[#c9d3d1]">
+        <div className="mx-auto grid max-w-6xl gap-6 px-4 py-12 text-sm sm:grid-cols-3 sm:px-6 [&_a:hover]:text-white [&_nav_a]:text-[#c9d3d1] [&_nav_a[aria-current]]:text-white [&_svg]:text-[#9fb0ad]">
           <div className="space-y-2">
-            <Logo />
+            <Logo inverted />
             <p>{d.footer.tagline}</p>
           </div>
           <ul className="space-y-1.5">
-            <li><Link className="hover:text-ink-900" href={`/${locale}/civic/report`}>{d.nav.reportProblem}</Link></li>
-            <li><Link className="hover:text-ink-900" href={`/${locale}/civic/track`}>{d.nav.trackReport}</Link></li>
-            <li><Link className="hover:text-ink-900" href={`/${locale}/pricing`}>{d.nav.pricing}</Link></li>
+            <li><Link className="hover:text-white" href={`/${locale}/civic/report`}>{d.nav.reportProblem}</Link></li>
+            <li><Link className="hover:text-white" href={`/${locale}/civic/track`}>{d.nav.trackReport}</Link></li>
+            <li><Link className="hover:text-white" href={`/${locale}/pricing`}>{d.nav.pricing}</Link></li>
           </ul>
           <div className="space-y-2">
             <p>{d.footer.privacy}</p>

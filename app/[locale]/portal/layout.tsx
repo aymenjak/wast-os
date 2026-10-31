@@ -22,7 +22,7 @@ export default async function PortalLayout({ children, params }: { children: Rea
       <header className="border-b border-ink-200 bg-white">
         <div className="mx-auto flex h-14 max-w-5xl items-center gap-4 px-4">
           <Logo />
-          <span className="hidden text-sm text-ink-600 sm:inline">· {ctx.org.name}</span>
+          <span className="hidden border-s border-ink-200 ps-4 text-sm text-ink-600 sm:inline">{ctx.org.name}</span>
           <div className="ms-auto flex items-center gap-4">
             <LanguageSwitcher className="hidden sm:flex" />
             <form action={logoutAction}>

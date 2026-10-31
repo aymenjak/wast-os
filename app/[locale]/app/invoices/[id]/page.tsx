@@ -39,13 +39,13 @@ export default async function InvoiceDetail({ params }: { params: Promise<{ loca
           <CardBody className="space-y-6">
             <div className="grid gap-6 sm:grid-cols-2">
               <div className="text-sm">
-                <div className="text-xs font-medium uppercase tracking-wide text-ink-500">{d.invoices.from}</div>
+                <div className="text-sm font-semibold text-ink-600">{d.invoices.from}</div>
                 <div className="mt-1 font-semibold text-ink-900">{org.legalName ?? org.name}</div>
                 {org.address ? <div className="text-ink-700">{org.address}</div> : null}
-                <div className="num text-xs text-ink-600">{[org.taxId && `NIF ${org.taxId}`, org.statisticalId && `NIS ${org.statisticalId}`, org.tradeRegister && `RC ${org.tradeRegister}`].filter(Boolean).join(" · ")}</div>
+                <div className="num text-xs text-ink-600">{[org.taxId && `NIF ${org.taxId}`, org.statisticalId && `NIS ${org.statisticalId}`, org.tradeRegister && `RC ${org.tradeRegister}`].filter(Boolean).join(", ")}</div>
               </div>
               <div className="text-sm">
-                <div className="text-xs font-medium uppercase tracking-wide text-ink-500">{d.invoices.billTo}</div>
+                <div className="text-sm font-semibold text-ink-600">{d.invoices.billTo}</div>
                 <div className="mt-1 font-semibold text-ink-900">{inv.billToName ?? inv.customer.name}</div>
                 {(inv.billToAddress ?? inv.customer.billingAddress) ? <div className="text-ink-700">{inv.billToAddress ?? inv.customer.billingAddress}</div> : null}
                 {(inv.billToTaxId ?? inv.customer.taxId) ? <div className="num text-xs text-ink-600">NIF {inv.billToTaxId ?? inv.customer.taxId}</div> : null}
@@ -106,7 +106,7 @@ export default async function InvoiceDetail({ params }: { params: Promise<{ loca
                         <span className={p.status === "REVERSED" ? "text-ink-500 line-through" : "font-medium text-ink-900"}>{money(p.amount)}</span>
                         <span className="text-xs text-ink-500">{formatDay(p.receivedAt, locale)}</span>
                       </div>
-                      <div className="text-xs text-ink-600">{p.source === "WEBHOOK" ? d.invoices.webhook : d.enums.PaymentMethod[p.method]}{p.reference ? <> · <span className="num">{p.reference}</span></> : null}{p.status === "REVERSED" ? ` · ${d.invoices.reversed}` : ""}</div>
+                      <div className="text-xs text-ink-600">{p.source === "WEBHOOK" ? d.invoices.webhook : d.enums.PaymentMethod[p.method]}{p.reference ? <>, <span className="num">{p.reference}</span></> : null}{p.status === "REVERSED" ? `, ${d.invoices.reversed}` : ""}</div>
                       {canPay && p.status === "RECORDED" ? <ReverseForm paymentId={p.id} invoiceId={inv.id} /> : null}
                     </li>
                   ))}

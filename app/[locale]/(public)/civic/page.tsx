@@ -12,11 +12,11 @@ export default async function CivicPage({ params }: { params: Promise<{ locale: 
   const s = d.civicPage.steps;
   return (
     <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
-      <h1 className="text-4xl font-semibold tracking-tight text-ink-950">{d.civicPage.title}</h1>
+      <h1 className="text-5xl leading-none text-ink-950" style={{ fontStretch: "72%" }}>{d.civicPage.title}</h1>
       <p className="mt-3 max-w-2xl text-lg text-ink-700">{d.civicPage.lead}</p>
       <ol className="mt-12 grid gap-6 md:grid-cols-4">
         {[s.report, s.verify, s.assign, s.confirm].map((step, i) => (
-          <li key={step.title} className="border-t-2 border-brand-600 pt-4">
+          <li key={step.title} className="border-t-4 border-hivis-600 pt-4">
             <span className="num text-xs font-semibold text-ink-500">0{i + 1}</span>
             <h2 className="mt-1 font-semibold text-ink-900">{step.title}</h2>
             <p className="mt-1.5 text-sm leading-relaxed text-ink-600">{step.body}</p>

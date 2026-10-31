@@ -14,7 +14,7 @@ export default async function FleetPage({ params }: { params: Promise<{ locale: 
   if (!ctx.permissions.has("fleet.read")) return <Forbidden message={d.errors.forbiddenPage} />;
   const canWrite = ctx.permissions.has("fleet.write");
   const [vehicles, teams, staff] = await Promise.all([listVehicles(ctx), listTeams(ctx), canWrite ? staffOptions(ctx) : Promise.resolve([])]);
-  const staffOpts = staff.map((s) => ({ id: s.id, name: `${s.user.name} · ${d.enums.OrgRole[s.role]}` }));
+  const staffOpts = staff.map((s) => ({ id: s.id, name: `${s.user.name}, ${d.enums.OrgRole[s.role]}` }));
   return (
     <>
       <PageHeader title={d.fleet.title} />

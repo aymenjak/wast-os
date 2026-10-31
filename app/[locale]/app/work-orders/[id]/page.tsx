@@ -12,6 +12,7 @@ import { StatusBadge } from "@/components/ui/badge";
 import { DescriptionList, PageHeader, Table, Td, Th } from "@/components/ui/misc";
 import { AssignForm } from "../../dispatch/assign-form";
 import { EvidenceUpload, WeightForm, WorkOrderActions } from "./forms";
+import { MoveForm } from "../../containers/forms";
 
 export default async function WorkOrderDetail({ params }: { params: Promise<{ locale: Locale; id: string }> }) {
   const { locale, ctx, d } = await appPage(params);
@@ -33,13 +34,21 @@ export default async function WorkOrderDetail({ params }: { params: Promise<{ lo
   const lng = wo.serviceLocation?.longitude;
   const name = (x: { nameEn: string; nameFr: string; nameAr: string }) => (locale === "ar" ? x.nameAr : locale === "fr" ? x.nameFr : x.nameEn);
   const netTotal = wo.weightTickets.reduce((s, t) => s + Number(t.netKg), 0);
+  // Containers on site / in the yard: shown to whoever can move them during this job.
+  const canMoveContainers = wo.kind === "COLLECTION" && wo.serviceLocationId && (ctx.permissions.has("fleet.write") || (canExecute && wo.status === "IN_PROGRESS"));
+  const [onSite, inYard] = canMoveContainers
+    ? await Promise.all([
+        prisma.container.findMany({ where: { organizationId: ctx.org.id, serviceLocationId: wo.serviceLocationId!, status: "AT_CUSTOMER" }, orderBy: { code: "asc" } }),
+        prisma.container.findMany({ where: { organizationId: ctx.org.id, status: "IN_YARD" }, orderBy: { code: "asc" }, take: 50 }),
+      ])
+    : [[], []];
 
   return (
     <>
       <PageHeader
         eyebrow={<Link href={`/${locale}/app/work-orders`} className="hover:underline">{d.workOrders.title}</Link>}
         title={<span className="num">{wo.number}</span>}
-        description={`${d.enums.WorkOrderKind[wo.kind]} · ${formatDay(wo.scheduledDate, locale)}`}
+        description={`${d.enums.WorkOrderKind[wo.kind]}, ${formatDay(wo.scheduledDate, locale)}`}
         actions={<><StatusBadge status={wo.priority} label={d.enums.Priority[wo.priority]} /><StatusBadge status={wo.status} label={d.enums.WorkOrderStatus[wo.status]} /></>}
       />
 
@@ -70,7 +79,7 @@ export default async function WorkOrderDetail({ params }: { params: Promise<{ lo
               ) : null}
               {wo.civicReport ? (
                 <div className="rounded-md bg-ink-50 p-3 text-sm">
-                  <div className="font-medium text-ink-900">{d.workOrders.civicReport} · <Link className="num hover:underline" href={`/${locale}/app/civic/reports/${wo.civicReport.id}`}>{wo.civicReport.trackingCode}</Link></div>
+                  <div className="font-medium text-ink-900">{d.workOrders.civicReport}, <Link className="num hover:underline" href={`/${locale}/app/civic/reports/${wo.civicReport.id}`}>{wo.civicReport.trackingCode}</Link></div>
                   <div className="text-ink-700">{d.enums.CivicCategory[wo.civicReport.category]} — {wo.civicReport.description}</div>
                 </div>
               ) : null}
@@ -78,7 +87,7 @@ export default async function WorkOrderDetail({ params }: { params: Promise<{ lo
                 [d.contracts.category, wo.wasteCategory ? name(wo.wasteCategory) : null],
                 [d.requests.contract, wo.contract ? <Link className="num hover:underline" href={`/${locale}/app/contracts/${wo.contract.id}`}>{wo.contract.reference}</Link> : null],
                 [d.workOrders.team, wo.team?.name ?? d.workOrders.unassigned],
-                [d.workOrders.vehicle, wo.vehicle ? <span className="num">{wo.vehicle.plateNumber} · {wo.vehicle.label}</span> : null],
+                [d.workOrders.vehicle, wo.vehicle ? <span className="num">{wo.vehicle.plateNumber}, {wo.vehicle.label}</span> : null],
                 [d.workOrders.started, formatDateTime(wo.actualStart, locale, ctx.org.timezone)],
                 [d.workOrders.finished, formatDateTime(wo.actualEnd, locale, ctx.org.timezone)],
                 [d.workOrders.instructions, wo.instructions],
@@ -89,7 +98,7 @@ export default async function WorkOrderDetail({ params }: { params: Promise<{ lo
               ]} />
               {canDispatch && ["PLANNED", "ASSIGNED"].includes(wo.status) ? (
                 <div className="border-t border-ink-100 pt-4">
-                  <AssignForm workOrderId={wo.id} teams={teams.map((t) => ({ id: t.id, name: t.name }))} vehicles={vehicles.map((v) => ({ id: v.id, name: `${v.plateNumber} · ${v.label}` }))} date={wo.scheduledDate.toISOString().slice(0, 10)} defaultTeamId={wo.teamId} defaultVehicleId={wo.vehicleId} />
+                  <AssignForm workOrderId={wo.id} teams={teams.map((t) => ({ id: t.id, name: t.name }))} vehicles={vehicles.map((v) => ({ id: v.id, name: `${v.plateNumber}, ${v.label}` }))} date={wo.scheduledDate.toISOString().slice(0, 10)} defaultTeamId={wo.teamId} defaultVehicleId={wo.vehicleId} />
                 </div>
               ) : null}
             </CardBody>
@@ -106,7 +115,7 @@ export default async function WorkOrderDetail({ params }: { params: Promise<{ lo
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={`/api/files/${e.id}`} alt={`${d.enums.EvidenceKind[e.kind]} — ${wo.number}`} className="aspect-[4/3] w-full bg-ink-100 object-cover" loading="lazy" />
                       ) : <a href={`/api/files/${e.id}`} className="flex aspect-[4/3] items-center justify-center bg-ink-50 text-sm text-brand-700 underline">PDF</a>}
-                      <div className="px-2 py-1 text-xs text-ink-600">{d.enums.EvidenceKind[e.kind]} · {formatDateTime(e.createdAt, locale, ctx.org.timezone)}</div>
+                      <div className="px-2 py-1 text-xs text-ink-600">{d.enums.EvidenceKind[e.kind]}, {formatDateTime(e.createdAt, locale, ctx.org.timezone)}</div>
                     </li>
                   ))}
                 </ul>
@@ -114,6 +123,37 @@ export default async function WorkOrderDetail({ params }: { params: Promise<{ lo
               {canExecute && ["ASSIGNED", "IN_PROGRESS", "COMPLETED", "DISPUTED"].includes(wo.status) ? <EvidenceUpload workOrderId={wo.id} /> : null}
             </CardBody>
           </Card>
+
+          {canMoveContainers ? (
+            <Card>
+              <CardHeader title={d.containers.atThisSite} />
+              <CardBody className="space-y-3">
+                {onSite.length ? (
+                  <ul className="divide-y divide-ink-100">
+                    {onSite.map((c) => (
+                      <li key={c.id} className="flex items-center justify-between gap-3 py-2">
+                        <span><span className="num font-semibold text-ink-900">{c.code}</span> <span className="text-sm text-ink-600">{d.enums.ContainerType[c.type]}</span></span>
+                        <MoveForm containerId={c.id} action="remove" label={d.containers.pickUpHere} workOrderId={wo.id} />
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+                {inYard.length ? (
+                  <details className="rounded-md bg-ink-50 p-3">
+                    <summary className="cursor-pointer text-sm font-medium text-ink-800">{d.containers.deliverHere}</summary>
+                    <ul className="mt-2 divide-y divide-ink-100">
+                      {inYard.map((c) => (
+                        <li key={c.id} className="flex items-center justify-between gap-3 py-2">
+                          <span><span className="num font-semibold">{c.code}</span> <span className="text-sm text-ink-600">{d.enums.ContainerType[c.type]}</span></span>
+                          <MoveForm containerId={c.id} action="deliver" label={d.containers.deliver} workOrderId={wo.id} locations={[{ id: wo.serviceLocationId!, label: wo.serviceLocation?.label ?? "" }]} variant="subtle" />
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
+                ) : <p className="text-sm text-ink-600">{d.containers.noneInYard}</p>}
+              </CardBody>
+            </Card>
+          ) : null}
 
           {wo.kind === "COLLECTION" ? (
             <Card>

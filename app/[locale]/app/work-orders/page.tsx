@@ -39,7 +39,7 @@ export default async function WorkOrdersPage({ params, searchParams }: { params:
                 </div>
                 <div className="mt-1 text-ink-800">{o.customer?.name ?? o.civicReport?.trackingCode}</div>
                 <div className="text-sm text-ink-600">{o.serviceLocation?.addressLine ?? o.civicReport?.addressHint}</div>
-                <div className="mt-1 text-xs text-ink-500">{formatDay(o.scheduledDate, locale)}{o.vehicle ? <> · <span className="num">{o.vehicle.plateNumber}</span></> : null}</div>
+                <div className="mt-1 text-xs text-ink-500">{formatDay(o.scheduledDate, locale)}{o.vehicle ? <>, <span className="num">{o.vehicle.plateNumber}</span></> : null}</div>
               </Link>
             </li>
           ))}

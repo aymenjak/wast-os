@@ -5,7 +5,7 @@ const base = process.env.BASE_URL ?? "http://localhost:3000";
 const browser = await chromium.launch();
 async function shoot(page, path, name, opts = {}) {
   await page.goto(base + path, { waitUntil: "networkidle" });
-  await page.waitForTimeout(400);
+  await page.waitForTimeout(path.length <= 3 ? 3200 : 500);
   await page.screenshot({ path: `${out}/${name}.png`, fullPage: opts.full ?? false });
 }
 const desktop = await browser.newContext({ viewport: { width: 1360, height: 860 } });
@@ -23,6 +23,15 @@ await shoot(p, "/fr/app", "app-dashboard-fr", { full: true });
 await shoot(p, "/ar/app/dispatch", "app-dispatch-ar", { full: true });
 await shoot(p, "/en/app/customers", "app-customers-en");
 await shoot(p, "/ar/app/requests?status=ALL", "app-requests-ar");
+await shoot(p, "/fr/app/containers", "app-containers-fr");
+await p.goto(base + "/en/app/dispatch", { waitUntil: "networkidle" });
+const sheet = await p.locator("a[href*='/dispatch/sheet']").first().getAttribute("href").catch(() => null);
+if (sheet) await shoot(p, sheet, "app-route-sheet-en", { full: true });
+await p.goto(base + "/en/app", { waitUntil: "networkidle" });
+await p.keyboard.press("Control+k");
+await p.keyboard.type("dem");
+await p.waitForTimeout(900);
+await p.screenshot({ path: `${out}/app-command-palette-en.png` });
 const mobile = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true });
 const m = await mobile.newPage();
 await m.goto(base + "/ar/login");

@@ -12,6 +12,9 @@ import { createRequest, validateRequest } from "../server/services/requests";
 import { createVehicle, createTeam, addTeamMember } from "../server/services/fleet";
 import { assignWorkOrder } from "../server/services/work-orders";
 import { submitCivicReport } from "../server/services/civic";
+import { createContainer, moveContainer } from "../server/services/containers";
+import { generateRecurringWorkOrders } from "../server/services/schedules";
+import { createDraftInvoice, issueInvoice, recordPayment } from "../server/services/invoices";
 import { randomUUID } from "node:crypto";
 
 const PASSWORD = "nexvo-demo-2026";
@@ -68,7 +71,7 @@ async function main() {
     const contract = await createContract(owner, {
       customerId: cust.id, title: "Collecte régulière", startDate: today,
       lines: [
-        { serviceLocationId: loc.id, wasteCategoryId: msw.id, frequency: "WEEKLY", billingUnit: i === 0 ? "PER_TONNE" : "PER_COLLECTION", unitPrice: i === 0 ? "4500" : "3500" },
+        { serviceLocationId: loc.id, wasteCategoryId: msw.id, frequency: "WEEKLY", weekdays: [7, 3], billingUnit: i === 0 ? "PER_TONNE" : "PER_COLLECTION", unitPrice: i === 0 ? "4500" : "3500" },
         { serviceLocationId: loc.id, wasteCategoryId: card.id, frequency: "MONTHLY", billingUnit: "PER_COLLECTION", unitPrice: "2000" },
       ],
     });
@@ -79,6 +82,57 @@ async function main() {
       await assignWorkOrder(dispatcher, wo.id, { teamId: team.id, vehicleId: v1.id, scheduledDate: today });
     }
   }
+
+  // Containers (synthetic): some in the yard, some placed at customer sites
+  const locs = await prisma.serviceLocation.findMany({ where: { organizationId: reg.org.id }, orderBy: { createdAt: "asc" } });
+  const specs = [["SKP-001", "SKIP_10M3"], ["SKP-002", "SKIP_10M3"], ["BAC-660-01", "BIN_660L"], ["BAC-660-02", "BIN_660L"], ["CSN-30-01", "ROLLOFF_30M3"], ["BAC-1100-01", "BIN_1100L"]] as const;
+  for (const [i, [code, type]] of specs.entries()) {
+    const c = await createContainer(owner, { code, type });
+    if (i < 3 && locs[i]) await moveContainer(owner, { containerId: c.id, action: "deliver", serviceLocationId: locs[i]!.id });
+  }
+  // 14 days of synthetic history so dashboards are not empty in demos (clearly demo data).
+  const team1 = team;
+  const custs = await prisma.customer.findMany({ where: { organizationId: reg.org.id }, include: { locations: true, contracts: { include: { lines: true } } } });
+  let n = 1000;
+  for (let back = 13; back >= 1; back--) {
+    const day = new Date(Date.now() - back * 86400_000).toISOString().slice(0, 10);
+    const dow = new Date(`${day}T00:00:00Z`).getUTCDay();
+    if (dow === 5 || dow === 6) continue; // Friday/Saturday off
+    for (const [ci, c] of custs.entries()) {
+      const line = c.contracts[0]?.lines[0];
+      if (!line) continue;
+      const failed = (back + ci) % 7 === 0;
+      const start = new Date(`${day}T0${7 + ci}:15:00Z`);
+      const wo = await prisma.workOrder.create({
+        data: {
+          organizationId: reg.org.id, number: `WO-H${n++}`, kind: "COLLECTION", customerId: c.id, serviceLocationId: line.serviceLocationId,
+          contractId: c.contracts[0]!.id, wasteCategoryId: line.wasteCategoryId, teamId: team1.id, vehicleId: v1.id,
+          status: failed ? "FAILED" : "COMPLETED", scheduledDate: new Date(`${day}T00:00:00Z`), actualStart: start,
+          actualEnd: new Date(start.getTime() + (25 + ci * 7) * 60_000), failureReason: failed ? (ci === 1 ? "NO_ACCESS" : "WASTE_NOT_READY") : null,
+          createdById: reg.user.id,
+        },
+      });
+      if (!failed && line.billingUnit === "PER_TONNE") {
+        const gross = 9900 + 900 + ((back * 137) % 1400);
+        await prisma.weightTicket.create({ data: { organizationId: reg.org.id, workOrderId: wo.id, grossKg: String(gross), tareKg: "9900", netKg: String(gross - 9900), weighedAt: start, recordedById: reg.user.id } });
+      }
+    }
+  }
+
+  // Invoices built from that history through the normal services (one paid, one partially paid).
+  const finance = (await loadContext((await prisma.user.findUniqueOrThrow({ where: { email: "finance@demo-collecte.test" } })).id, reg.org.id))!;
+  for (const [i, c] of custs.slice(0, 2).entries()) {
+    const done = await prisma.workOrder.findMany({ where: { organizationId: reg.org.id, customerId: c.id, status: "COMPLETED", number: { startsWith: "WO-H" } }, select: { id: true } });
+    if (!done.length) continue;
+    const draft = await createDraftInvoice(finance, { customerId: c.id, workOrderIds: done.map((w) => w.id) });
+    await issueInvoice(finance, draft.id, { issueDate: new Date(Date.now() - 3 * 86400_000).toISOString().slice(0, 10), dueDate: new Date(Date.now() + 27 * 86400_000).toISOString().slice(0, 10) });
+    const inv = await prisma.invoice.findUniqueOrThrow({ where: { id: draft.id } });
+    const amount = i === 0 ? inv.total.toString() : (Math.round(Number(inv.total) * 40) / 100).toFixed(2);
+    await recordPayment(finance, draft.id, { amount, method: "BANK_TRANSFER", receivedAt: new Date(Date.now() - 86400_000).toISOString().slice(0, 10), idempotencyKey: `seed-payment-${i}-0001` });
+  }
+
+  const plusSix = new Date(Date.now() + 6 * 86400_000).toISOString().slice(0, 10);
+  await generateRecurringWorkOrders(dispatcher, { from: today, to: plusSix });
 
   // Municipality (synthetic) for the civic pilot
   const muni = await registerOrganization({ organizationName: "APC Démo", kind: "MUNICIPALITY", wilaya: "Alger", name: "Karima Démo", email: "civic@demo-apc.test", password: PASSWORD, locale: "ar" });

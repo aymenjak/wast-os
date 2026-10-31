@@ -1,57 +1,60 @@
 @import "tailwindcss";
-@import "@fontsource-variable/inter";
-@import "@fontsource/ibm-plex-sans-arabic/400.css";
-@import "@fontsource/ibm-plex-sans-arabic/500.css";
-@import "@fontsource/ibm-plex-sans-arabic/600.css";
-@import "@fontsource/ibm-plex-sans-arabic/700.css";
+@import "@fontsource-variable/archivo/wdth.css";
+@import "@fontsource-variable/noto-kufi-arabic";
 
 /*
- * NEXVO design tokens. See DESIGN-SYSTEM.md.
- * Ink: green-tinted neutrals. Brand: verdigris (restrained environmental accent).
- * Contrast pairs used for text were checked against WCAG 2.2 AA (4.5:1).
+ * NEXVO design tokens — see DESIGN-SYSTEM.md ("Kerbside" direction).
+ * Asphalt neutrals, skip-container green for actions and completion,
+ * hi-vis orange reserved for the route signature, "today" and focus (never small text).
+ * All text pairs checked against WCAG 2.2 AA.
  */
 @theme {
-  --font-sans: "Inter Variable", "IBM Plex Sans Arabic", ui-sans-serif, system-ui, sans-serif;
-  --font-arabic: "IBM Plex Sans Arabic", "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Archivo Variable", "Noto Kufi Arabic Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-arabic: "Noto Kufi Arabic Variable", "Archivo Variable", ui-sans-serif, system-ui, sans-serif;
 
-  --color-ink-950: #0b1513;
-  --color-ink-900: #13201d;
-  --color-ink-800: #1e2e2a;
-  --color-ink-700: #2f4240;
-  --color-ink-600: #4a5e5a;
-  --color-ink-500: #5a6b65;
-  --color-ink-400: #94a3a0;
-  --color-ink-300: #c3ccca;
-  --color-ink-200: #dde3e1;
-  --color-ink-100: #eef2f1;
-  --color-ink-50: #f6f8f7;
+  --color-ink-950: #141d20;
+  --color-ink-900: #1d2a2e;
+  --color-ink-800: #2a3a3e;
+  --color-ink-700: #3a4b4f;
+  --color-ink-600: #4a5a5e;
+  --color-ink-500: #566468;
+  --color-ink-400: #8a9799;
+  --color-ink-300: #bcc5c5;
+  --color-ink-200: #d9dfde;
+  --color-ink-100: #e5e9e8;
+  --color-ink-50: #edefed;
 
-  --color-brand-900: #063b33;
-  --color-brand-800: #084a40;
-  --color-brand-700: #0b5d4f;
-  --color-brand-600: #0e7563;
-  --color-brand-500: #13907a;
-  --color-brand-200: #a9dccf;
-  --color-brand-100: #d7efe9;
-  --color-brand-50: #edf8f5;
+  --color-brand-900: #0f3326;
+  --color-brand-800: #174634;
+  --color-brand-700: #1f5a44;
+  --color-brand-600: #2a6f55;
+  --color-brand-500: #3a8668;
+  --color-brand-200: #b4d6c6;
+  --color-brand-100: #dcece4;
+  --color-brand-50: #eef6f2;
 
-  --color-sand-600: #9a5b13;
-  --color-sand-100: #fbefd9;
+  --color-hivis-600: #e8590c;
+  --color-hivis-500: #f2661b;
+  --color-hivis-100: #fde6d6;
+  --color-hivis-50: #fff4ec;
+
+  --color-sand-600: #8a5212;
+  --color-sand-100: #f6ecdb;
 
   --color-info-700: #1d4ed8;
   --color-info-100: #dbeafe;
-  --color-success-700: #15803d;
-  --color-success-100: #dcfce7;
-  --color-warning-700: #a1520a;
-  --color-warning-100: #fef3c7;
-  --color-danger-700: #b91c1c;
-  --color-danger-100: #fee2e2;
+  --color-success-700: #1f5a44;
+  --color-success-100: #dcece4;
+  --color-warning-700: #9a4a07;
+  --color-warning-100: #fdecd8;
+  --color-danger-700: #b42318;
+  --color-danger-100: #fde3e0;
 
-  --radius-control: 0.5rem;
-  --radius-card: 0.75rem;
+  --radius-control: 0.375rem;
+  --radius-card: 0.625rem;
 
-  --shadow-card: 0 1px 2px rgb(11 21 19 / 0.04), 0 1px 3px rgb(11 21 19 / 0.06);
-  --shadow-pop: 0 8px 24px rgb(11 21 19 / 0.12);
+  --shadow-card: 0 0 #0000;
+  --shadow-pop: 0 12px 32px -8px rgb(20 29 32 / 0.28);
 }
 
 @layer base {
@@ -61,14 +64,23 @@
   }
   html[lang="ar"] body {
     font-family: var(--font-arabic);
-    line-height: 1.7;
+    line-height: 1.75;
   }
   body {
     @apply bg-ink-50 text-ink-900 antialiased;
-    font-feature-settings: "cv11", "ss01";
+  }
+  /* Headings use Archivo's condensed width: the vernacular of truck livery and road signage. */
+  h1, h2, .display {
+    font-stretch: 80%;
+    letter-spacing: -0.005em;
+  }
+  h1 { font-weight: 700; }
+  html[lang="ar"] h1, html[lang="ar"] h2, html[lang="ar"] .display {
+    font-stretch: 100%;
+    letter-spacing: 0;
   }
   :focus-visible {
-    outline: 2px solid var(--color-brand-600);
+    outline: 2px solid var(--color-hivis-600);
     outline-offset: 2px;
     border-radius: 4px;
   }
@@ -90,4 +102,26 @@
 .leaflet-container {
   font: inherit;
   direction: ltr;
+}
+
+/* ─── Route hero: one orchestrated load sequence ─── */
+.route-hero .rh-route { stroke-dasharray: 1; stroke-dashoffset: var(--to); animation: rh-draw var(--draw) cubic-bezier(.45,.05,.35,1) both; }
+@keyframes rh-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: var(--to); } }
+.route-hero .rh-truck { offset-distance: var(--at); offset-rotate: 0deg; animation: rh-drive var(--draw) cubic-bezier(.45,.05,.35,1) both; }
+@keyframes rh-drive { from { offset-distance: 0%; } to { offset-distance: var(--at); } }
+.route-hero .rh-fill { opacity: 0; }
+.route-hero .rh-stop--done .rh-fill { animation: rh-pop 260ms ease-out both; animation-delay: var(--d); }
+.route-hero .rh-stop--done .rh-num { fill: #1d2a2e; animation: rh-num 1ms linear both; animation-delay: var(--d); }
+@keyframes rh-pop { from { opacity: 0; transform: scale(.4); transform-box: fill-box; transform-origin: center; } to { opacity: 1; transform: scale(1); transform-box: fill-box; transform-origin: center; } }
+@keyframes rh-num { to { fill: #ffffff; } }
+.route-hero li .rh-after { opacity: 0; animation: rh-in 200ms ease-out both; animation-delay: var(--d); }
+.route-hero li .rh-before { animation: rh-out 200ms ease-out both; animation-delay: var(--d); }
+@keyframes rh-in { to { opacity: 1; } }
+@keyframes rh-out { to { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .route-hero .rh-route { animation: none; }
+  .route-hero .rh-truck { animation: none; }
+  .route-hero .rh-stop--done .rh-fill, .route-hero li .rh-after { animation: none; opacity: 1; }
+  .route-hero .rh-stop--done .rh-num { animation: none; fill: #ffffff; }
+  .route-hero li .rh-before { animation: none; opacity: 0; }
 }

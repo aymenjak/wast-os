@@ -14,13 +14,17 @@
 | 9 Hardening | ⏳ next | See below |
 | 10 Launch | ⏳ | Pilots → paid conversion |
 
+## Done in v2 (2026-10-31)
+
+Redesign ("Kerbside"), recurring schedules, container tracking, ops map, route sheet, command palette, 14-day trend, accent-insensitive search.
+
 ## Next milestone (M2): pilot-ready hardening — acceptance tests
 
 1. Email delivery for invitations, password reset and citizen updates via the outbox worker (test: outbox rows → sent, retries idempotent).
 2. S3-compatible `StorageProvider` (test: upload/download/authorization unchanged).
 3. Shared rate limiter in Postgres (test: limits hold across two app instances).
 4. Nonce-based CSP for HTML (test: e2e checks header and no console CSP violations).
-5. Recurring schedules from contract lines → auto-generated work orders (test: weekly line on Mon/Thu creates exactly 2 per week, idempotent on re-run).
+5. Nightly automatic schedule generation + public-holiday calendar (generation itself is done).
 6. Invoice PDF in the validated legal format (after accountant review).
 7. axe on authenticated pages + Arabic screen-reader pass.
 8. CSV import of customers/locations for onboarding.

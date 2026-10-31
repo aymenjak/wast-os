@@ -92,7 +92,9 @@ export async function createDraftInvoice(ctx: OrgContext, input: unknown) {
       if (wo.customerId !== customer.id) throw new DomainError("errors.invoice.customerMismatch");
       if (wo.status !== "COMPLETED") throw new DomainError("errors.invoice.workOrderNotCompleted", { number: wo.number });
       if (wo.invoiceLine) throw new DomainError("errors.invoice.alreadyInvoiced", { number: wo.number });
-      const cl = wo.contract?.lines.find((l) => l.serviceLocationId === wo.serviceLocationId && l.wasteCategoryId === wo.wasteCategoryId);
+      const cl =
+        (wo.contractLineId ? wo.contract?.lines.find((l) => l.id === wo.contractLineId) : undefined) ??
+        wo.contract?.lines.find((l) => l.serviceLocationId === wo.serviceLocationId && l.wasteCategoryId === wo.wasteCategoryId);
       if (!cl) throw new DomainError("errors.invoice.noContractPrice", { number: wo.number });
       let qty = "1";
       if (cl.billingUnit === "PER_TONNE") {

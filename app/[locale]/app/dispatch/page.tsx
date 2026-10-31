@@ -1,15 +1,17 @@
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, MapPin } from "lucide-react";
+import { ChevronLeft, ChevronRight, Printer } from "lucide-react";
 import type { Locale } from "@/lib/i18n/config";
 import { appPage } from "@/server/page";
-import { dispatchBoard } from "@/server/services/work-orders";
 import { orgToday } from "@/server/services/reports";
-import { straightLineRouting } from "@/server/routing";
+import { dispatchView, stopOf, type BoardOrder } from "@/server/dispatch-view";
 import { formatDay, formatNumber } from "@/lib/i18n/format";
 import { Card, CardHeader } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/badge";
 import { EmptyState, Forbidden, PageHeader } from "@/components/ui/misc";
+import { buttonClass } from "@/components/ui/button";
 import { AssignForm } from "./assign-form";
+import { GenerateSchedule } from "./generate-schedule";
+import { OpsMap } from "./ops-map";
 
 function shift(day: string, n: number) {
   return new Date(new Date(`${day}T00:00:00Z`).getTime() + n * 86400_000).toISOString().slice(0, 10);
@@ -19,57 +21,67 @@ export default async function DispatchPage({ params, searchParams }: { params: P
   const { locale, ctx, d } = await appPage(params);
   if (!ctx.permissions.has("workorders.dispatch")) return <Forbidden message={d.errors.forbiddenPage} />;
   const sp = await searchParams;
-  const date = sp.date && /^\d{4}-\d{2}-\d{2}$/.test(sp.date) ? sp.date : orgToday(ctx);
-  const { orders, teams, vehicles, backlog } = await dispatchBoard(ctx, date);
-  const open = orders.filter((o) => !["CANCELLED"].includes(o.status));
-  const unassigned = open.filter((o) => !o.teamId);
-  const teamOpts = teams.map((t) => ({ id: t.id, name: t.name }));
-  const vehicleOpts = vehicles.map((v) => ({ id: v.id, name: `${v.plateNumber} · ${v.label}` }));
-  const stop = (o: (typeof orders)[number]) => {
-    const lat = o.serviceLocation?.latitude ?? o.civicReport?.latitude;
-    const lng = o.serviceLocation?.longitude ?? o.civicReport?.longitude;
-    return lat != null && lng != null ? { id: o.id, lat: Number(lat), lng: Number(lng) } : { id: o.id, lat: null, lng: null };
-  };
-  const columns = await Promise.all(
-    teams.map(async (t) => {
-      const list = open.filter((o) => o.teamId === t.id);
-      const route = await straightLineRouting.plan(null, list.map(stop));
-      const ordered = [...route.order, ...route.unlocated].map((id) => list.find((o) => o.id === id)!);
-      return { team: t, list: ordered, km: route.distanceKm };
-    }),
-  );
+  const today = orgToday(ctx);
+  const date = sp.date && /^\d{4}-\d{2}-\d{2}$/.test(sp.date) ? sp.date : today;
+  const v = await dispatchView(ctx, date);
+  const teamOpts = v.teams.map((t) => ({ id: t.id, name: t.name }));
+  const vehicleOpts = v.vehicles.map((x) => ({ id: x.id, name: `${x.plateNumber}, ${x.label}` }));
+  const label = (o: BoardOrder) => o.customer?.name ?? (o.civicReport ? `${d.workOrders.civicReport} ${o.civicReport.trackingCode}` : "—");
+  const where = (o: BoardOrder) => o.serviceLocation?.label ?? o.civicReport?.addressHint ?? "";
 
-  const label = (o: (typeof orders)[number]) => o.customer?.name ?? (o.civicReport ? `${d.workOrders.civicReport} ${o.civicReport.trackingCode}` : "—");
-  const where = (o: (typeof orders)[number]) => o.serviceLocation?.label ?? o.civicReport?.addressHint ?? "";
+  const mapPoints = [
+    ...v.teamRoutes.flatMap((r) => r.orders.map((o, i) => ({ o, color: r.color, order: i + 1 }))),
+    ...v.unassigned.map((o) => ({ o, color: "#566468", order: undefined })),
+  ].flatMap(({ o, color, order }) => {
+    const s = stopOf(o);
+    return s.lat == null ? [] : [{ id: o.id, lat: s.lat, lng: s.lng!, color, order, label: `${o.number}, ${label(o)}`, href: `/${locale}/app/work-orders/${o.id}` }];
+  });
+  const mapRoutes = v.teamRoutes.map((r) => ({ id: r.team.id, color: r.color, points: r.orders.map(stopOf).filter((s) => s.lat != null).map((s) => [s.lat!, s.lng!] as [number, number]) }));
 
   return (
     <>
       <PageHeader
         title={d.dispatch.title}
-        actions={
-          <nav aria-label={d.dispatch.date} className="flex items-center gap-1">
-            <Link href={`?date=${shift(date, -1)}`} className="rounded-md p-2 text-ink-700 hover:bg-ink-100"><ChevronLeft aria-hidden className="size-4 rtl:rotate-180" /><span className="sr-only">−1</span></Link>
-            <form className="flex items-center gap-2">
-              <label htmlFor="date" className="sr-only">{d.dispatch.date}</label>
-              <input id="date" type="date" name="date" defaultValue={date} className="h-9 rounded-md border border-ink-300 px-2 text-sm" />
-              <button className="h-9 rounded-md bg-white px-3 text-sm ring-1 ring-ink-200 hover:bg-ink-50">{d.common.apply}</button>
-            </form>
-            <Link href={`?date=${shift(date, 1)}`} className="rounded-md p-2 text-ink-700 hover:bg-ink-100"><ChevronRight aria-hidden className="size-4 rtl:rotate-180" /><span className="sr-only">+1</span></Link>
-          </nav>
-        }
         description={formatDay(date, locale)}
+        actions={
+          <>
+            <nav aria-label={d.dispatch.date} className="flex items-center gap-1">
+              <Link href={`?date=${shift(date, -1)}`} className="rounded-md p-2 text-ink-700 hover:bg-ink-100"><ChevronLeft aria-hidden className="size-4 rtl:rotate-180" /><span className="sr-only">{formatDay(shift(date, -1), locale)}</span></Link>
+              <form className="flex items-center gap-2">
+                <label htmlFor="date" className="sr-only">{d.dispatch.date}</label>
+                <input id="date" type="date" name="date" defaultValue={date} className="h-9 rounded-md border border-ink-300 bg-white px-2 text-sm" />
+                <button className={buttonClass("secondary", "sm", "h-9")}>{d.common.apply}</button>
+              </form>
+              <Link href={`?date=${shift(date, 1)}`} className="rounded-md p-2 text-ink-700 hover:bg-ink-100"><ChevronRight aria-hidden className="size-4 rtl:rotate-180" /><span className="sr-only">{formatDay(shift(date, 1), locale)}</span></Link>
+            </nav>
+            <GenerateSchedule from={today} to={shift(today, 6)} />
+          </>
+        }
       />
-      {teams.length === 0 ? <Card><EmptyState title={d.dispatch.noTeams} /></Card> : null}
 
-      {backlog.length ? (
-        <Card className="mb-6 border-warning-100">
-          <CardHeader title={`${d.dispatch.backlog} (${formatNumber(backlog.length, locale)})`} />
+      <section aria-labelledby="ops-map" className="mb-6 overflow-hidden rounded-[var(--radius-card)] border border-ink-200 bg-white">
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-b border-ink-100 px-5 py-3">
+          <h2 id="ops-map" className="text-[1.05rem] font-bold text-ink-900">{d.schedule.opsMap}</h2>
+          <ul className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink-700">
+            {v.teamRoutes.map((r) => (
+              <li key={r.team.id} className="flex items-center gap-1.5"><span aria-hidden className="h-1 w-5 rounded-full" style={{ background: r.color }} />{r.team.name}</li>
+            ))}
+          </ul>
+        </div>
+        {mapPoints.length ? <OpsMap points={mapPoints} routes={mapRoutes} /> : <EmptyState title={d.schedule.noLocated} />}
+      </section>
+
+      {v.teams.length === 0 ? <Card className="mb-6"><EmptyState title={d.dispatch.noTeams} /></Card> : null}
+
+      {v.backlog.length ? (
+        <Card className="mb-6">
+          <CardHeader title={`${d.dispatch.backlog} (${formatNumber(v.backlog.length, locale)})`} />
           <ul className="divide-y divide-ink-100 text-sm">
-            {backlog.map((o) => (
+            {v.backlog.map((o) => (
               <li key={o.id} className="flex flex-wrap items-center justify-between gap-2 px-5 py-2">
-                <Link className="num font-medium hover:underline" href={`/${locale}/app/work-orders/${o.id}`}>{o.number}</Link>
+                <Link className="num font-semibold hover:underline" href={`/${locale}/app/work-orders/${o.id}`}>{o.number}</Link>
                 <span className="text-ink-700">{o.customer?.name ?? o.civicReport?.trackingCode}</span>
-                <span className="text-xs text-danger-700">{formatDay(o.scheduledDate, locale)}</span>
+                <span className="text-xs font-medium text-danger-700">{formatDay(o.scheduledDate, locale)}</span>
                 <AssignForm workOrderId={o.id} teams={teamOpts} vehicles={vehicleOpts} date={date} compact />
               </li>
             ))}
@@ -79,44 +91,56 @@ export default async function DispatchPage({ params, searchParams }: { params: P
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         <Card>
-          <CardHeader title={`${d.dispatch.unassignedColumn} (${formatNumber(unassigned.length, locale)})`} />
-          {unassigned.length === 0 ? <EmptyState title={d.dispatch.emptyDay} /> : (
+          <CardHeader title={`${d.dispatch.unassignedColumn} (${formatNumber(v.unassigned.length, locale)})`} />
+          {v.unassigned.length === 0 ? <EmptyState title={d.dispatch.emptyDay} /> : (
             <ul className="divide-y divide-ink-100">
-              {unassigned.map((o) => (
+              {v.unassigned.map((o) => (
                 <li key={o.id} className="space-y-2 px-4 py-3 text-sm">
                   <div className="flex items-center justify-between gap-2">
-                    <Link className="num font-medium text-ink-900 hover:underline" href={`/${locale}/app/work-orders/${o.id}`}>{o.number}</Link>
+                    <Link className="num font-semibold text-ink-900 hover:underline" href={`/${locale}/app/work-orders/${o.id}`}>{o.number}</Link>
                     <StatusBadge status={o.priority} label={d.enums.Priority[o.priority]} />
                   </div>
                   <div className="text-ink-800">{label(o)}</div>
-                  <div className="text-xs text-ink-500">{where(o)}</div>
-                  {teams.length ? <AssignForm workOrderId={o.id} teams={teamOpts} vehicles={vehicleOpts} date={date} /> : null}
+                  <div className="text-xs text-ink-600">{where(o)}</div>
+                  {v.teams.length ? <AssignForm workOrderId={o.id} teams={teamOpts} vehicles={vehicleOpts} date={date} /> : null}
                 </li>
               ))}
             </ul>
           )}
         </Card>
-        {columns.map(({ team, list, km }) => (
+
+        {v.teamRoutes.map(({ team, color, orders, km }) => (
           <Card key={team.id}>
-            <CardHeader title={team.name} description={`${formatNumber(list.length, locale)} ${d.dispatch.stops}${list.length > 1 ? ` · ≈ ${formatNumber(km, locale, 1)} ${d.dispatch.km}` : ""}`} />
-            {list.length === 0 ? <EmptyState title={d.dispatch.emptyDay} /> : (
+            <header className="flex items-start justify-between gap-3 border-b border-ink-100 px-5 py-3.5">
+              <div className="min-w-0">
+                <h2 className="flex items-center gap-2 text-[1.05rem] font-bold text-ink-900"><span aria-hidden className="h-1 w-5 rounded-full" style={{ background: color }} />{team.name}</h2>
+                <p className="mt-0.5 text-sm text-ink-600">{formatNumber(orders.length, locale)} {d.dispatch.stops}{orders.length > 1 ? `, ≈ ${formatNumber(km, locale, 1)} ${d.dispatch.km}` : ""}</p>
+              </div>
+              {orders.length ? (
+                <Link href={`/${locale}/app/dispatch/sheet?date=${date}&team=${team.id}`} className={buttonClass("ghost", "sm")} title={d.schedule.routeSheet}>
+                  <Printer aria-hidden className="size-4" /><span className="sr-only">{d.schedule.routeSheet}</span>
+                </Link>
+              ) : null}
+            </header>
+            {orders.length === 0 ? <EmptyState title={d.dispatch.emptyDay} /> : (
               <>
-                <ol className="divide-y divide-ink-100">
-                  {list.map((o, i) => (
-                    <li key={o.id} className="flex gap-3 px-4 py-3 text-sm">
-                      <span className="num mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-ink-100 text-xs font-semibold text-ink-700">{i + 1}</span>
-                      <div className="min-w-0 flex-1">
+                <ol className="relative px-4 py-3">
+                  {orders.map((o, i) => (
+                    <li key={o.id} className="relative flex gap-3 pb-4 last:pb-0">
+                      {i < orders.length - 1 ? <span aria-hidden className="absolute start-[11px] top-6 bottom-0 w-[3px] rounded-full" style={{ background: color, opacity: 0.35 }} /> : null}
+                      <span className="num relative z-10 flex size-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white" style={{ background: o.status === "COMPLETED" ? "#1f5a44" : o.status === "FAILED" ? "#b42318" : color }}>{i + 1}</span>
+                      <div className="min-w-0 flex-1 text-sm">
                         <div className="flex items-center justify-between gap-2">
-                          <Link className="num font-medium text-ink-900 hover:underline" href={`/${locale}/app/work-orders/${o.id}`}>{o.number}</Link>
+                          <Link className="num font-semibold text-ink-900 hover:underline" href={`/${locale}/app/work-orders/${o.id}`}>{o.number}</Link>
                           <StatusBadge status={o.status} label={d.enums.WorkOrderStatus[o.status]} />
                         </div>
                         <div className="truncate text-ink-800">{label(o)}</div>
-                        <div className="flex items-center gap-1 text-xs text-ink-500"><MapPin aria-hidden className="size-3" />{where(o)}{o.vehicle ? <> · <span className="num">{o.vehicle.plateNumber}</span></> : null}</div>
+                        <div className="text-xs text-ink-600">{where(o)}{o.vehicle ? <>, <span className="num">{o.vehicle.plateNumber}</span></> : null}</div>
                       </div>
                     </li>
                   ))}
                 </ol>
-                {list.length > 1 ? <p className="border-t border-ink-100 px-4 py-2 text-xs text-ink-500">{d.dispatch.suggestedOrder}: {d.dispatch.straightLineNote}</p> : null}
+                {orders.length > 1 ? <p className="border-t border-ink-100 px-4 py-2 text-xs text-ink-600">{d.dispatch.straightLineNote}</p> : null}
               </>
             )}
           </Card>

@@ -36,7 +36,7 @@ export default async function NewInvoice({ params, searchParams }: { params: Pro
               customerId={selected.id}
               orders={billable.map((w) => ({
                 id: w.id,
-                label: `${w.number} · ${formatDay(w.scheduledDate, locale)} · ${w.serviceLocation?.label ?? ""} · ${w.wasteCategory ? name(w.wasteCategory) : ""}`,
+                label: `${w.number}, ${formatDay(w.scheduledDate, locale)}, ${w.serviceLocation?.label ?? ""}, ${w.wasteCategory ? name(w.wasteCategory) : ""}`,
                 weight: w.weightTickets.length ? `${formatNumber(w.weightTickets.reduce((s, t) => s + Number(t.netKg), 0), locale)} kg` : null,
               }))}
             />

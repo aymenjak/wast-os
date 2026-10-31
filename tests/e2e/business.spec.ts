@@ -88,7 +88,7 @@ test.describe.serial("NEXVO Business end-to-end", () => {
     await expect(page.getByRole("link", { name: `E2E-${id}`.toUpperCase() })).toBeVisible();
     await page.locator('input[name="name"]').fill("Team North");
     await page.getByRole("button", { name: "New team" }).click();
-    await page.locator('select[name="membershipId"]').selectOption({ label: "Field Worker · Field worker" });
+    await page.locator('select[name="membershipId"]').selectOption({ label: "Field Worker, Field worker" });
     await page.getByRole("button", { name: "Add", exact: true }).click();
     await expect(page.locator("li", { hasText: "Team North" }).getByText("Field Worker")).toBeVisible();
 

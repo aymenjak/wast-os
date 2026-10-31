@@ -9,6 +9,7 @@ import { buildNav } from "@/server/navigation";
 import { SidebarNav, MobileNav } from "@/components/app-nav";
 import { Logo } from "@/components/ui/misc";
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { CommandPalette } from "@/components/command-palette";
 import { logoutAction, switchOrgAction } from "@/app/actions/public";
 
 export const dynamic = "force-dynamic";
@@ -27,18 +28,20 @@ export default async function AppLayout({ children, params }: { children: React.
 
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-[240px_1fr]">
-      <aside className="sticky top-0 hidden h-dvh flex-col border-e border-ink-200 bg-white lg:flex">
-        <div className="flex h-14 items-center border-b border-ink-100 px-5">
-          <Link href={`/${locale}/app`} aria-label="NEXVO"><Logo /></Link>
+      <aside className="hidden bg-ink-900 lg:block print:hidden">
+        <div className="sticky top-0 flex h-dvh flex-col">
+        <div className="flex h-14 items-center px-5">
+          <Link href={`/${locale}/app`} aria-label="Nexvo"><Logo inverted /></Link>
         </div>
         <div className="flex-1 overflow-y-auto"><SidebarNav sections={nav} /></div>
-        <div className="border-t border-ink-100 px-5 py-3 text-xs text-ink-500">
-          <div className="truncate font-medium text-ink-800">{ctx.org.name}</div>
+        <div className="border-t border-white/10 px-5 py-3 text-xs text-[#9fb0ad]">
+          <div className="truncate font-medium text-white">{ctx.org.name}</div>
           <div>{d.enums.OrgRole[ctx.role]}</div>
+        </div>
         </div>
       </aside>
       <div className="min-w-0">
-        <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-ink-200 bg-white/95 px-4 backdrop-blur sm:px-6">
+        <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-ink-200 bg-ink-50/95 px-4 backdrop-blur sm:px-6 print:hidden">
           <MobileNav sections={nav} />
           <div className="lg:hidden"><Logo withWordmark={false} /></div>
           {orgs.length > 1 ? (
@@ -53,6 +56,7 @@ export default async function AppLayout({ children, params }: { children: React.
           ) : (
             <span className="truncate text-sm font-medium text-ink-800 lg:hidden">{ctx.org.name}</span>
           )}
+          <div className="hidden flex-1 md:flex"><CommandPalette /></div>
           <div className="ms-auto flex items-center gap-4">
             <LanguageSwitcher className="hidden sm:flex" />
             <span className="hidden text-sm text-ink-700 md:inline">{ctx.userName}</span>

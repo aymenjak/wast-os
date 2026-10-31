@@ -17,17 +17,16 @@ export default async function BusinessPage({ params }: { params: Promise<{ local
   ] as const;
   return (
     <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
-      <h1 className="text-4xl font-semibold tracking-tight text-ink-950">{d.businessPage.title}</h1>
+      <h1 className="text-5xl leading-none text-ink-950" style={{ fontStretch: "72%" }}>{d.businessPage.title}</h1>
       <p className="mt-3 max-w-2xl text-lg text-ink-700">{d.businessPage.lead}</p>
-      <div className="mt-12 grid gap-px overflow-hidden rounded-[var(--radius-card)] border border-ink-200 bg-ink-200 sm:grid-cols-2 lg:grid-cols-3">
+      <dl className="mt-14 grid gap-x-12 gap-y-9 sm:grid-cols-2 lg:grid-cols-3">
         {items.map(([Icon, mod]) => (
-          <div key={mod.title} className="bg-white p-6">
-            <Icon aria-hidden className="size-5 text-brand-700" />
-            <h2 className="mt-3 font-semibold text-ink-900">{mod.title}</h2>
-            <p className="mt-1.5 text-sm leading-relaxed text-ink-600">{mod.body}</p>
+          <div key={mod.title} className="border-t-2 border-ink-900 pt-3">
+            <dt className="flex items-center gap-2 font-bold text-ink-900"><Icon aria-hidden className="size-4 text-ink-600" />{mod.title}</dt>
+            <dd className="mt-1.5 text-sm leading-relaxed text-ink-700">{mod.body}</dd>
           </div>
         ))}
-      </div>
+      </dl>
       <div className="mt-10 flex flex-wrap gap-3">
         <ButtonLink href={`/${locale}/register`} size="lg">{d.nav.startTrial}</ButtonLink>
         <ButtonLink href={`/${locale}/pricing`} size="lg" variant="secondary">{d.nav.pricing}</ButtonLink>

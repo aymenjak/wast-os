@@ -4,7 +4,7 @@ import { appPage } from "@/server/page";
 import { businessDashboard, orgToday } from "@/server/services/reports";
 import { formatMinor, formatNumber, formatPercent } from "@/lib/i18n/format";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
-import { Forbidden, PageHeader, Stat } from "@/components/ui/misc";
+import { Forbidden, PageHeader, Stat, MetricStrip } from "@/components/ui/misc";
 import { BarList } from "@/components/bar-list";
 import { buttonClass } from "@/components/ui/button";
 
@@ -29,12 +29,12 @@ export default async function ReportsPage({ params, searchParams }: { params: Pr
           {ctx.permissions.has("invoices.read") ? <a className={buttonClass("subtle", "sm", "h-9")} href={`/api/exports/invoices?from=${from}&to=${to}`}><Download aria-hidden className="size-4" />{d.reportsPage.invoicesCsv}</a> : null}
         </div>
       </form>
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <MetricStrip>
         <Stat label={d.dashboard.completionRate} value={k.workOrders.completionRate == null ? "—" : formatPercent(k.workOrders.completionRate, locale)} />
         <Stat label={d.dashboard.failedAttempts} value={formatNumber(k.workOrders.failed, locale)} />
         <Stat label={d.dashboard.invoiced} value={<span className="num">{formatMinor(k.revenue.invoicedMinor, locale, ctx.org.currency)}</span>} />
         <Stat label={d.dashboard.collected} value={<span className="num">{formatMinor(k.revenue.collectedMinor, locale, ctx.org.currency)}</span>} />
-      </div>
+      </MetricStrip>
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader title={d.reportsPage.statusBreakdown} />

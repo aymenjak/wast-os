@@ -24,6 +24,7 @@ export function buildNav(ctx: OrgContext, d: Dictionary, locale: string): NavSec
   if (p("workorders.dispatch")) ops.items.push({ href: `${base}/dispatch`, label: d.nav.dispatch, icon: "CalendarRange" });
   if (p("workorders.read") && ctx.role !== "FIELD_WORKER") ops.items.push({ href: `${base}/work-orders`, label: d.nav.workOrders, icon: "Wrench" });
   if (p("fleet.read")) ops.items.push({ href: `${base}/fleet`, label: d.nav.fleet, icon: "Truck" });
+  if (p("fleet.read") && ctx.org.kind === "SERVICE_PROVIDER") ops.items.push({ href: `${base}/containers`, label: d.nav.containers, icon: "Box" });
 
   if (p("customers.read")) commercial.items.push({ href: `${base}/customers`, label: d.nav.customers, icon: "Building2" });
   if (p("contracts.read")) commercial.items.push({ href: `${base}/contracts`, label: d.nav.contracts, icon: "FileText" });

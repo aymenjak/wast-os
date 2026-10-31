@@ -19,7 +19,7 @@ export default async function PricingPage({ params }: { params: Promise<{ locale
   const limit = (n: number) => (n < 0 ? d.pricing.unlimited : formatNumber(n, locale));
   return (
     <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
-      <h1 className="text-4xl font-semibold tracking-tight text-ink-950">{d.pricing.title}</h1>
+      <h1 className="text-5xl leading-none text-ink-950" style={{ fontStretch: "72%" }}>{d.pricing.title}</h1>
       <p className="mt-3 max-w-2xl text-ink-700">{d.pricing.lead}</p>
       <div className="mt-12 grid gap-6 md:grid-cols-3">
         {plans.map((p, i) => (

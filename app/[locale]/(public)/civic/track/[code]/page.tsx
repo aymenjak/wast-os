@@ -27,7 +27,7 @@ export default async function TrackDetail({ params }: { params: Promise<{ locale
         <h1 className="text-2xl font-semibold text-ink-950">{d.enums.CivicCategory[r.category]}</h1>
         <StatusBadge status={r.status} label={d.enums.CivicReportStatus[r.status]} />
       </div>
-      <p className="mt-1 text-sm text-ink-600">{r.organization.name}{r.addressHint ? ` · ${r.addressHint}` : ""}</p>
+      <p className="mt-1 text-sm text-ink-600">{r.organization.name}{r.addressHint ? `, ${r.addressHint}` : ""}</p>
 
       <h2 className="mt-10 text-sm font-semibold text-ink-900">{d.civic.timeline}</h2>
       <ol className="mt-4 space-y-4 border-s border-ink-200 ps-5">

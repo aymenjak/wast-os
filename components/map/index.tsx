@@ -5,7 +5,7 @@ export const LeafletMap = dynamic(() => import("./leaflet-map"), {
   ssr: false,
   loading: () => <div className="h-80 w-full animate-pulse rounded-[var(--radius-control)] bg-ink-100" />,
 });
-export type { MapPoint } from "./leaflet-map";
+export type { MapPoint, MapRoute } from "./leaflet-map";
 
 export const STATUS_COLORS: Record<string, string> = {
   SUBMITTED: "#a1520a", UNDER_REVIEW: "#a1520a", VERIFIED: "#1d4ed8", ASSIGNED: "#1d4ed8", IN_PROGRESS: "#0e7563",

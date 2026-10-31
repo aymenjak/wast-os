@@ -25,7 +25,7 @@ export default async function ContractDetail({ params }: { params: Promise<{ loc
       <PageHeader
         eyebrow={<Link href={`/${locale}/app/contracts`} className="hover:underline">{d.contracts.title}</Link>}
         title={c.title}
-        description={<><span className="num">{c.reference}</span> · <Link className="hover:underline" href={`/${locale}/app/customers/${c.customerId}`}>{c.customer.name}</Link></>}
+        description={<><span className="num">{c.reference}</span>, <Link className="hover:underline" href={`/${locale}/app/customers/${c.customerId}`}>{c.customer.name}</Link></>}
         actions={
           <>
             <StatusBadge status={c.status} label={d.enums.ContractStatus[c.status]} />

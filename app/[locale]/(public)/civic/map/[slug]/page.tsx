@@ -16,7 +16,7 @@ export default async function PublicMapPage({ params }: { params: Promise<{ loca
   return (
     <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
       <h1 className="text-2xl font-semibold text-ink-950">{d.civic.publicMapTitle}</h1>
-      <p className="mt-1 text-sm text-ink-600">{org.name} · {d.civic.publicMapNote}</p>
+      <p className="mt-1 text-sm text-ink-600">{org.name}, {d.civic.publicMapNote}</p>
       <div className="mt-6">
         <PublicMap points={points.map((p, i) => ({ id: String(i), lat: p.lat, lng: p.lng, status: p.status, label: `${d.enums.CivicCategory[p.category]} — ${d.enums.CivicReportStatus[p.status]}` }))} />
       </div>

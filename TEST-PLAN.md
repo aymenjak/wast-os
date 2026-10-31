@@ -23,19 +23,22 @@
 | G Citizen report lifecycle | integration `civic-flow` (idempotent submit, no PII, PostGIS duplicates, full timeline, dispute→reopen); e2e `civic.spec` (Arabic mobile submission → review → public tracking) |
 | H Invalid transitions | unit `state-machines` (exhaustive terminal-state check); integration H |
 | I Idempotent financial effects | integration `payments-idempotency` (retry, conflict, 3 concurrent payments, webhook replay ×5) |
-| J ar/fr/en desktop & mobile | e2e `i18n-a11y` (lang/dir, translated H1, axe WCAG 2.2 AA serious/critical = 0 on 6 public pages × 3 locales, no overflow at 360 px); manual screenshots in `docs/screenshots` |
+| K Recurring schedules | unit `schedule.test.ts` (daily/weekly/biweekly/monthly, Fri–Sat off, contract bounds); integration `operations.test.ts` (idempotent generation, range limit, role, tenant, invoice price from own line); e2e `operations.spec.ts` |
+| L Containers | integration (transitions, history, field-worker scope, cross-tenant location rejected); e2e (register + deliver) |
+| M Command palette search | integration (tenant + permission scoping, accent-insensitive, LIKE wildcards literal); e2e (Ctrl+K → result → navigate) |
+| J ar/fr/en desktop & mobile | e2e `i18n-a11y` (lang/dir, translated H1, axe WCAG 2.2 AA serious/critical = 0 on 6 public pages × 3 locales with reduced motion, no overflow at 360 px); screenshots in `docs/screenshots` reviewed |
 
-## Recorded results (2026-10-30/31, this environment)
+## Recorded results (2026-10-31, after v2 redesign and operations features)
 
 | Suite | Result |
 |-------|--------|
-| `npx vitest run` | **7 files, 59 tests passed** |
-| `npx playwright test` | **19 passed** (44.8 s) |
+| `npx vitest run` | **9 files, 76 tests passed** |
+| `npx playwright test` | **22 passed** (52.7 s) |
 | `npx tsc --noEmit` | 0 errors |
 | `npx next build` | success |
 | `npm audit --omit=dev` | 0 vulnerabilities |
 
-Defects found by tests and fixed during this milestone: Prisma nested-create with composite tenant FKs; contrast of `ink-500`/`ink-400` (axe); "today" computed in UTC instead of org timezone (surfaced by tests running after midnight in Algiers); overdue backlog ignoring assigned work.
+Defects found by tests and fixed: search treated `%`/`_` as wildcards (Prisma `contains` does not escape) and was accent-sensitive (now `unaccent`); hero label wrapped in Arabic (screenshot review). Milestone 1 defects: Prisma nested-create with composite tenant FKs; contrast of `ink-500`/`ink-400` (axe); "today" computed in UTC instead of org timezone (surfaced by tests running after midnight in Algiers); overdue backlog ignoring assigned work.
 
 ## Not yet covered (honest gaps)
 

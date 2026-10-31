@@ -105,3 +105,20 @@ export async function exportInvoicesCsv(ctx: OrgContext, from: string, to: strin
     ]),
   );
 }
+
+/** Completed vs failed work orders per day for the last `days` days (org-local calendar). */
+export async function dailyTrend(ctx: OrgContext, days = 14) {
+  requirePermission(ctx, "reports.read");
+  const to = orgToday(ctx);
+  const from = new Date(new Date(`${to}T00:00:00Z`).getTime() - (days - 1) * 86400_000).toISOString().slice(0, 10);
+  const rows = await prisma.workOrder.groupBy({
+    by: ["scheduledDate", "status"],
+    where: { organizationId: ctx.org.id, scheduledDate: { gte: dateOnly(from), lte: dateOnly(to) }, status: { in: ["COMPLETED", "FAILED"] } },
+    _count: true,
+  });
+  return Array.from({ length: days }, (_, i) => {
+    const day = new Date(new Date(`${from}T00:00:00Z`).getTime() + i * 86400_000).toISOString().slice(0, 10);
+    const of = (s: string) => rows.find((r) => r.scheduledDate.toISOString().slice(0, 10) === day && r.status === s)?._count ?? 0;
+    return { day, completed: of("COMPLETED"), failed: of("FAILED") };
+  });
+}

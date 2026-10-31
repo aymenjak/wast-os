@@ -11,12 +11,14 @@ import L from "leaflet";
 const TILE_URL = process.env.NEXT_PUBLIC_MAP_TILE_URL || "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 const ATTRIBUTION = process.env.NEXT_PUBLIC_MAP_ATTRIBUTION || '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
-export type MapPoint = { id: string; lat: number; lng: number; color: string; label: string; href?: string };
+export type MapPoint = { id: string; lat: number; lng: number; color: string; label: string; href?: string; order?: number };
+export type MapRoute = { id: string; color: string; points: [number, number][] };
 
 const ALGIERS: [number, number] = [36.7538, 3.0588];
 
 export default function LeafletMap({
   points = [],
+  routes = [],
   picked,
   onPick,
   center,
@@ -25,6 +27,7 @@ export default function LeafletMap({
   label,
 }: {
   points?: MapPoint[];
+  routes?: MapRoute[];
   picked?: { lat: number; lng: number } | null;
   onPick?: (p: { lat: number; lng: number }) => void;
   center?: { lat: number; lng: number } | null;
@@ -58,14 +61,21 @@ export default function LeafletMap({
     const g = layer.current;
     if (!g || !map.current) return;
     g.clearLayers();
+    for (const r of routes) {
+      if (r.points.length < 2) continue;
+      L.polyline(r.points, { color: "#ffffff", weight: 7, opacity: 0.9 }).addTo(g);
+      L.polyline(r.points, { color: r.color, weight: 4, opacity: 1, lineJoin: "round" }).addTo(g);
+    }
     for (const p of points) {
-      const mk = L.circleMarker([p.lat, p.lng], { radius: 7, color: "#fff", weight: 2, fillColor: p.color, fillOpacity: 0.95 });
+      const mk = p.order != null
+        ? L.marker([p.lat, p.lng], { icon: L.divIcon({ className: "", iconSize: [22, 22], html: `<span style="display:flex;width:22px;height:22px;align-items:center;justify-content:center;border-radius:999px;background:${p.color};color:#fff;font:700 11px/1 system-ui;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.3)">${p.order}</span>` }) })
+        : L.circleMarker([p.lat, p.lng], { radius: 7, color: "#fff", weight: 2, fillColor: p.color, fillOpacity: 0.95 });
       const content = p.href ? `<a href="${encodeURI(p.href)}">${escapeHtml(p.label)}</a>` : escapeHtml(p.label);
       mk.bindTooltip(content).bindPopup(content);
       mk.addTo(g);
     }
     if (points.length > 1 && !center) map.current.fitBounds(L.latLngBounds(points.map((p) => [p.lat, p.lng])), { padding: [24, 24], maxZoom: 15 });
-  }, [points, center]);
+  }, [points, routes, center]);
 
   useEffect(() => {
     if (!map.current) return;

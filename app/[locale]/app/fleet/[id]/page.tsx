@@ -21,7 +21,7 @@ export default async function VehicleDetail({ params }: { params: Promise<{ loca
       <PageHeader
         eyebrow={<Link href={`/${locale}/app/fleet`} className="hover:underline">{d.fleet.title}</Link>}
         title={<span className="num">{v.plateNumber}</span>}
-        description={`${v.label} · ${d.enums.VehicleType[v.type]}`}
+        description={`${v.label}, ${d.enums.VehicleType[v.type]}`}
         actions={
           <>
             <StatusBadge status={v.status} label={d.enums.VehicleStatus[v.status]} />
@@ -64,7 +64,7 @@ export default async function VehicleDetail({ params }: { params: Promise<{ loca
             {v.workOrders.map((w) => (
               <li key={w.id} className="px-5 py-2">
                 <div className="flex items-center justify-between"><Link href={`/${locale}/app/work-orders/${w.id}`} className="num font-medium hover:underline">{w.number}</Link><StatusBadge status={w.status} label={d.enums.WorkOrderStatus[w.status]} /></div>
-                <div className="text-xs text-ink-500">{formatDay(w.scheduledDate, locale)} · {w.customer?.name ?? "—"} · {w.team?.name ?? "—"}</div>
+                <div className="text-xs text-ink-500">{formatDay(w.scheduledDate, locale)}, {w.customer?.name ?? "—"}, {w.team?.name ?? "—"}</div>
               </li>
             ))}
           </ul>

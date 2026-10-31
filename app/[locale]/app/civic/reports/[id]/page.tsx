@@ -27,7 +27,7 @@ export default async function CivicReportDetail({ params }: { params: Promise<{ 
       <PageHeader
         eyebrow={<Link href={`/${locale}/app/civic/queue`} className="hover:underline">{d.civic.queueTitle}</Link>}
         title={<span className="num">{r.trackingCode}</span>}
-        description={`${d.enums.CivicCategory[r.category]} · ${formatDateTime(r.createdAt, locale, ctx.org.timezone)}`}
+        description={`${d.enums.CivicCategory[r.category]}, ${formatDateTime(r.createdAt, locale, ctx.org.timezone)}`}
         actions={<><StatusBadge status={r.priority} label={d.enums.Priority[r.priority]} /><StatusBadge status={r.status} label={d.enums.CivicReportStatus[r.status]} /></>}
       />
       <div className="grid gap-6 lg:grid-cols-3">
@@ -39,7 +39,7 @@ export default async function CivicReportDetail({ params }: { params: Promise<{ 
               <DescriptionList items={[
                 [d.civic.addressHint, r.addressHint],
                 [`${d.common.latitude}, ${d.common.longitude}`, <span key="c" className="num">{r.latitude.toString()}, {r.longitude.toString()}</span>],
-                [d.civic.reporter, r.reporterName || r.reporterContact ? `${r.reporterName ?? ""} ${r.reporterContact ? `· ${r.reporterContact}` : ""}` : d.civic.anonymous],
+                [d.civic.reporter, r.reporterName || r.reporterContact ? `${r.reporterName ?? ""} ${r.reporterContact ? `, ${r.reporterContact}` : ""}` : d.civic.anonymous],
                 [d.civic.slaDue, formatDateTime(r.slaDueAt, locale, ctx.org.timezone)],
                 ...(r.rejectionReason ? [[d.common.reason, r.rejectionReason] as [string, string]] : []),
                 ...(r.disputeReason ? [[d.civic.disputeReason, r.disputeReason] as [string, string]] : []),
@@ -64,7 +64,7 @@ export default async function CivicReportDetail({ params }: { params: Promise<{ 
               <CardHeader title={d.civic.intervention} action={<StatusBadge status={r.workOrder.status} label={d.enums.WorkOrderStatus[r.workOrder.status]} />} />
               <CardBody className="space-y-3 text-sm">
                 <Link className="num font-medium text-brand-700 hover:underline" href={`/${locale}/app/work-orders/${r.workOrder.id}`}>{r.workOrder.number}</Link>
-                <div className="text-ink-700">{r.workOrder.team?.name}{r.workOrder.vehicle ? <> · <span className="num">{r.workOrder.vehicle.plateNumber}</span></> : null}</div>
+                <div className="text-ink-700">{r.workOrder.team?.name}{r.workOrder.vehicle ? <>, <span className="num">{r.workOrder.vehicle.plateNumber}</span></> : null}</div>
                 {r.workOrder.evidence.length ? (
                   <ul className="grid grid-cols-3 gap-2">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -80,7 +80,7 @@ export default async function CivicReportDetail({ params }: { params: Promise<{ 
             <Card>
               <CardHeader title={d.civic.decision} />
               <CardBody>
-                <ReviewForm reportId={r.id} next={r.nextStatuses} teams={teams.map((t) => ({ id: t.id, name: t.name }))} vehicles={vehicles.map((v) => ({ id: v.id, name: `${v.plateNumber} · ${v.label}` }))} priority={r.priority} today={orgToday(ctx)} />
+                <ReviewForm reportId={r.id} next={r.nextStatuses} teams={teams.map((t) => ({ id: t.id, name: t.name }))} vehicles={vehicles.map((v) => ({ id: v.id, name: `${v.plateNumber}, ${v.label}` }))} priority={r.priority} today={orgToday(ctx)} />
               </CardBody>
             </Card>
           ) : null}

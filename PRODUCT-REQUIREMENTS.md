@@ -26,6 +26,9 @@
 | H. Invoicing | Draft from completed work (contract price, weights), manual lines, issue with sequential number, void (if unpaid), payments (partial), reversals, idempotency, signed webhook endpoint | Quotations, credit notes (legal format TBD), PDF generation (print CSS used) |
 | I. Reports | KPIs, completion rate, failures by reason, tonnage by category, vehicle use, receivables, renewals; CSV exports with formula-injection protection | Scheduled reports, charts over time |
 | J. Portal | Requests, work-order list with confirm/dispute, invoices | Online payment |
+| Recurring schedules | Service weekdays per contract line; one-click generation of the next 7 days' work orders, idempotent; Algerian Sun–Thu working week (per-org setting) | Holiday calendar, auto-run nightly |
+| Containers | Register bins/skips/roll-offs; deliver / bring back / maintenance / retire with append-only history; days on site; moves from the work order by the crew | Rental billing per day, GPS/RFID tags |
+| Ops & productivity | Ops map with each team's round drawn; dispatch team strips in route order; printable route sheet; Ctrl/⌘+K search across records; 14-day completed/failed trend | Live GPS, road routing |
 | Civic | Anonymous report (photos, map/coordinates), tracking code, public timeline, confirm/dispute, verification queue, duplicate detection (PostGIS 75 m/14 days), assignment to municipal team (work order), SLA clock, analytics, coarse public map | Contractor assignment across tenants, Eco Points (policy not approved), SMS notifications |
 
 ## 3. User journeys and acceptance criteria

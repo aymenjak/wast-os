@@ -4,7 +4,7 @@ import { appPage } from "@/server/page";
 import { civicAnalytics } from "@/server/services/civic";
 import { formatNumber } from "@/lib/i18n/format";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
-import { Forbidden, PageHeader, Stat, Table, Td, Th } from "@/components/ui/misc";
+import { Forbidden, PageHeader, Stat, MetricStrip, Table, Td, Th } from "@/components/ui/misc";
 import { BarList } from "@/components/bar-list";
 import { buttonClass } from "@/components/ui/button";
 
@@ -20,12 +20,12 @@ export default async function CivicOverview({ params }: { params: Promise<{ loca
         <Link href={`/${locale}/app/civic/queue`} className={buttonClass("primary", "sm")}>{d.civic.queueTitle}</Link>
         <Link href={`/${locale}/civic/map/${ctx.org.slug}`} className={buttonClass("secondary", "sm")}>{d.civic.publicMapTitle}</Link>
       </>} />
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <MetricStrip>
         <Stat label={d.civic.open} value={formatNumber(open, locale)} />
         <Stat label={d.enums.CivicReportStatus.SUBMITTED} value={formatNumber(s.SUBMITTED ?? 0, locale)} tone={(s.SUBMITTED ?? 0) > 0 ? "warning" : "default"} />
         <Stat label={d.civic.overdueSla} value={formatNumber(a.overdue, locale)} tone={a.overdue > 0 ? "danger" : "default"} />
         <Stat label={d.civic.medianResolution} value={a.medianResolutionHours == null ? "—" : `${formatNumber(a.medianResolutionHours, locale, 1)} ${d.civic.hours}`} sub={`${formatNumber(a.resolvedCount, locale)} ${d.civic.resolved.toLowerCase()}`} />
-      </div>
+      </MetricStrip>
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader title={d.civic.byCategory} />

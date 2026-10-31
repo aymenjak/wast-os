@@ -81,6 +81,8 @@ model Organization {
   invoicePrefix      String             @default("INV")
   /// Municipalities only: target hours between verification and resolution.
   civicSlaHours      Int                @default(72)
+  /// ISO weekdays on which crews work (1=Mon … 7=Sun). Algerian default: Sunday–Thursday.
+  workingWeekdays    Int[]              @default([7, 1, 2, 3, 4])
   createdAt          DateTime           @default(now()) @db.Timestamptz(3)
 
   memberships        Membership[]
@@ -109,6 +111,8 @@ model Organization {
   auditEvents        AuditEvent[]
   notifications      Notification[]
   civicReports       CivicReport[]
+  containers         Container[]
+  containerMoves     ContainerMovement[]
 }
 
 enum OrgRole {
@@ -318,6 +322,8 @@ model ServiceLocation {
   contractLines ContractServiceLine[]
   requests      CollectionRequest[]
   workOrders    WorkOrder[]
+  containers    Container[]
+  containerMoves ContainerMovement[]
 
   @@unique([organizationId, id])
   @@index([organizationId, customerId])
@@ -431,7 +437,9 @@ model ContractServiceLine {
   contract        Contract        @relation(fields: [organizationId, contractId], references: [organizationId, id], onDelete: Cascade)
   serviceLocation ServiceLocation @relation(fields: [organizationId, serviceLocationId], references: [organizationId, id])
   wasteCategory   WasteCategory   @relation(fields: [organizationId, wasteCategoryId], references: [organizationId, id])
+  workOrders      WorkOrder[]
 
+  @@unique([organizationId, id])
   @@index([organizationId, contractId])
 }
 
@@ -624,6 +632,8 @@ model WorkOrder {
   kind                WorkOrderKind   @default(COLLECTION)
   collectionRequestId String?         @unique
   civicReportId       String?         @unique
+  /// Set when generated from a recurring contract line; unique per day for idempotent generation.
+  contractLineId      String?
   customerId          String?
   serviceLocationId   String?
   contractId          String?
@@ -648,6 +658,7 @@ model WorkOrder {
   organization      Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   collectionRequest CollectionRequest? @relation(fields: [organizationId, collectionRequestId], references: [organizationId, id])
   civicReport       CivicReport?       @relation(fields: [civicReportId], references: [id])
+  contractLine      ContractServiceLine? @relation(fields: [organizationId, contractLineId], references: [organizationId, id])
   customer          Customer?          @relation(fields: [organizationId, customerId], references: [organizationId, id])
   serviceLocation   ServiceLocation?   @relation(fields: [organizationId, serviceLocationId], references: [organizationId, id])
   contract          Contract?          @relation(fields: [organizationId, contractId], references: [organizationId, id])
@@ -657,7 +668,9 @@ model WorkOrder {
   weightTickets     WeightTicket[]
   evidence          EvidenceFile[]
   invoiceLine       InvoiceLine?
+  containerMoves    ContainerMovement[]
 
+  @@unique([contractLineId, scheduledDate])
   @@unique([organizationId, number])
   @@unique([organizationId, id])
   @@unique([organizationId, collectionRequestId])
@@ -713,6 +726,75 @@ model EvidenceFile {
 
   @@index([organizationId, workOrderId])
   @@index([civicReportId])
+}
+
+// ───────────────────────────── Containers (bins, skips, roll-offs) ─────────────────────────────
+
+enum ContainerType {
+  BIN_240L
+  BIN_660L
+  BIN_1100L
+  SKIP_6M3
+  SKIP_10M3
+  ROLLOFF_20M3
+  ROLLOFF_30M3
+  COMPACTOR_UNIT
+  OTHER
+}
+
+enum ContainerStatus {
+  IN_YARD
+  AT_CUSTOMER
+  MAINTENANCE
+  RETIRED
+}
+
+enum ContainerMoveKind {
+  DELIVERED
+  REMOVED
+  TO_MAINTENANCE
+  BACK_IN_SERVICE
+  RETIRED
+}
+
+model Container {
+  id                String          @id @default(cuid())
+  organizationId    String
+  code              String
+  type              ContainerType
+  status            ContainerStatus @default(IN_YARD)
+  serviceLocationId String?
+  placedAt          DateTime?       @db.Timestamptz(3)
+  notes             String?
+  createdAt         DateTime        @default(now()) @db.Timestamptz(3)
+
+  organization    Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  serviceLocation ServiceLocation?    @relation(fields: [organizationId, serviceLocationId], references: [organizationId, id])
+  movements       ContainerMovement[]
+
+  @@unique([organizationId, code])
+  @@unique([organizationId, id])
+  @@index([organizationId, status])
+}
+
+/// Append-only history of where each container has been.
+model ContainerMovement {
+  id                String            @id @default(cuid())
+  organizationId    String
+  containerId       String
+  kind              ContainerMoveKind
+  serviceLocationId String?
+  workOrderId       String?
+  actorUserId       String
+  notes             String?
+  occurredAt        DateTime          @default(now()) @db.Timestamptz(3)
+
+  organization    Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  container       Container        @relation(fields: [organizationId, containerId], references: [organizationId, id], onDelete: Cascade)
+  serviceLocation ServiceLocation? @relation(fields: [organizationId, serviceLocationId], references: [organizationId, id])
+  workOrder       WorkOrder?       @relation(fields: [organizationId, workOrderId], references: [organizationId, id])
+
+  @@index([organizationId, containerId, occurredAt])
 }
 
 // ───────────────────────────── Billing ─────────────────────────────

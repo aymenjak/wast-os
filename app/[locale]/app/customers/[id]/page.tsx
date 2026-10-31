@@ -22,7 +22,7 @@ export default async function CustomerDetail({ params }: { params: Promise<{ loc
       <PageHeader
         eyebrow={<Link href={`/${locale}/app/customers`} className="hover:underline">{d.customers.title}</Link>}
         title={c.name}
-        description={<><span className="num">{c.code}</span> · {d.enums.CustomerKind[c.kind]}</>}
+        description={<><span className="num">{c.code}</span>, {d.enums.CustomerKind[c.kind]}</>}
         actions={
           <>
             <StatusBadge status={c.status} label={d.enums.CustomerStatus[c.status]} />
@@ -73,7 +73,7 @@ export default async function CustomerDetail({ params }: { params: Promise<{ loc
               <ul className="divide-y divide-ink-100 text-sm">
                 {c.contracts.map((k) => (
                   <li key={k.id} className="flex items-center justify-between gap-3 px-5 py-2.5">
-                    <Link href={`/${locale}/app/contracts/${k.id}`} className="font-medium text-ink-900 hover:underline">{k.title} · <span className="num text-ink-600">{k.reference}</span></Link>
+                    <Link href={`/${locale}/app/contracts/${k.id}`} className="font-medium text-ink-900 hover:underline">{k.title}, <span className="num text-ink-600">{k.reference}</span></Link>
                     <StatusBadge status={k.status} label={d.enums.ContractStatus[k.status]} />
                   </li>
                 ))}
@@ -119,7 +119,7 @@ export default async function CustomerDetail({ params }: { params: Promise<{ loc
                 <li key={p.id} className="px-5 py-3">
                   <div className="flex items-center gap-1.5 font-medium text-ink-900">{p.name}{p.isPrimary ? <Star aria-label={d.customers.primary} className="size-3.5 fill-sand-600 text-sand-600" /> : null}</div>
                   {p.jobTitle ? <div className="text-ink-600">{p.jobTitle}</div> : null}
-                  <div className="num text-xs text-ink-500">{[p.email, p.phone].filter(Boolean).join(" · ")}</div>
+                  <div className="num text-xs text-ink-500">{[p.email, p.phone].filter(Boolean).join(", ")}</div>
                 </li>
               ))}
             </ul>
@@ -133,7 +133,7 @@ export default async function CustomerDetail({ params }: { params: Promise<{ loc
                 {c.notes.map((n) => (
                   <li key={n.id} className="text-sm">
                     <p className="whitespace-pre-wrap text-ink-800">{n.body}</p>
-                    <p className="mt-0.5 text-xs text-ink-500">{c.noteAuthors[n.authorId] ?? "—"} · {formatDateTime(n.createdAt, locale, ctx.org.timezone)}</p>
+                    <p className="mt-0.5 text-xs text-ink-500">{c.noteAuthors[n.authorId] ?? "—"}, {formatDateTime(n.createdAt, locale, ctx.org.timezone)}</p>
                   </li>
                 ))}
               </ul>

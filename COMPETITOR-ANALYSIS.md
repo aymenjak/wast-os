@@ -11,6 +11,22 @@ Status: first pass from desk research (2026-10-30). Products listed are **resear
 | Generic field-service SaaS (e.g. Jobber, ServiceTitan, Odoo Field Service) | Not researched in this pass | SMB field services | Odoo has French/Arabic | Not researched | Likely the real "alternative" for a small collector along with Excel/WhatsApp | — |
 | Status quo: Excel + WhatsApp + paper delivery slips | Inferred, to be validated in interviews (H1) | Algerian SMEs | n/a | ~0 | **Primary competitor** | hypothesis |
 
+## Feature parity check (2026-10-31)
+
+Features that roll-off and hauler tools advertise (S-56–S-58), and NEXVO's status:
+
+| Feature | Seen in | NEXVO |
+|---------|---------|-------|
+| Container tracking (where each skip is, history) | Starlight, RollOS, CurbWaste | ✅ v2 |
+| Recurring routes / schedules | hauler suites generally | ✅ v2 (7-day generation, idempotent) |
+| Stop-by-stop route printing | ServiceCore | ✅ v2 route sheet |
+| Route optimisation | ServiceCore, Oslo tender | 🟡 straight-line suggestion only |
+| Driver app with job changes | Starlight, ProHauler | ✅ mobile web field view (no native app, no offline) |
+| Drivers receive stops via SMS link | RollOS | ❌ (needs SMS provider) |
+| Double-booking locks on containers | RollOS | 🟡 state machine prevents delivering a container that is not in the yard |
+| Live GPS/telematics | Starlight, Rubicon | ❌ |
+| Integrated billing | AMCS, Starlight | ✅ |
+
 ## Positioning conclusions
 
 1. Enterprise waste suites are not priced or localised for 2–15 truck Algerian operators → room for a focused, affordable, Arabic/French-first product.

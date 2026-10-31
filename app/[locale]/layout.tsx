@@ -14,7 +14,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   if (!isLocale(locale)) return {};
   const d = getDictionary(locale);
   return {
-    title: { default: d.meta.title, template: `%s · NEXVO` },
+    title: { default: d.meta.title, template: `%s, NEXVO` },
     description: d.meta.description,
     icons: { icon: "/icon.svg" },
     alternates: { languages: Object.fromEntries(LOCALES.map((l) => [l, `/${l}`])) },

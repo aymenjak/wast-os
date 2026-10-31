@@ -6,10 +6,15 @@ import { useI18n } from "@/components/i18n-provider";
 import { createContractAction } from "@/app/actions/business";
 
 type Opt = { id: string; name: string };
+
+/** Algerian working week first (Sunday), ISO numbering (1 = Monday … 7 = Sunday). */
+const WEEKDAYS = [7, 1, 2, 3, 4, 5, 6] as const;
 type CustomerOpt = { id: string; name: string; locations: { id: string; label: string }[] };
 
 export function ContractForm({ customers, categories, defaultCustomerId, today }: { customers: CustomerOpt[]; categories: Opt[]; defaultCustomerId?: string; today: string }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  // 2024-01-01 is a Monday, so day (w - 1) of that week has ISO weekday w.
+  const weekdayName = (w: number) => new Intl.DateTimeFormat(locale === "ar" ? "ar-DZ" : locale === "fr" ? "fr-DZ" : "en-GB", { weekday: "short", timeZone: "UTC" }).format(new Date(Date.UTC(2024, 0, w)));
   const [customerId, setCustomerId] = useState(defaultCustomerId && customers.some((c) => c.id === defaultCustomerId) ? defaultCustomerId : "");
   const [lines, setLines] = useState<number[]>([0]);
   const [next, setNext] = useState(1);
@@ -55,6 +60,17 @@ export function ContractForm({ customers, categories, defaultCustomerId, today }
             <Field label={t("contracts.frequency")} name={`lines.${i}.frequency`} className="sm:col-span-2">
               {(p) => <Select {...p} defaultValue="WEEKLY">{(["ON_DEMAND", "DAILY", "WEEKLY", "BIWEEKLY", "MONTHLY"] as const).map((f) => <option key={f} value={f}>{t(`enums.Frequency.${f}`)}</option>)}</Select>}
             </Field>
+            <fieldset className="sm:col-span-6">
+              <legend className="mb-1.5 text-sm font-medium text-ink-800">{t("schedule.weekdays")} <span className="font-normal text-ink-600">({t("common.optional")})</span></legend>
+              <div className="flex flex-wrap gap-1.5">
+                {WEEKDAYS.map((w) => (
+                  <label key={w} className="cursor-pointer">
+                    <input type="checkbox" name={`lines.${i}.weekdays[]`} value={w} className="peer sr-only" />
+                    <span className="inline-flex h-8 min-w-11 items-center justify-center rounded-[var(--radius-control)] border border-ink-300 bg-white px-2 text-sm text-ink-700 peer-checked:border-ink-900 peer-checked:bg-ink-900 peer-checked:text-white peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-hivis-600">{weekdayName(w)}</span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
             <Field label={t("contracts.billingUnit")} name={`lines.${i}.billingUnit`} className="sm:col-span-2">
               {(p) => <Select {...p}>{(["PER_COLLECTION", "PER_TONNE", "PER_MONTH"] as const).map((f) => <option key={f} value={f}>{t(`enums.BillingUnit.${f}`)}</option>)}</Select>}
             </Field>

@@ -23,3 +23,8 @@ Format: decision · reason · evidence (S = source, T = test, A = assumption) ·
 | D-17 | 2026-10-31 | `ink-500` darkened to #5a6b65 | axe contrast failure 4.45:1 | T i18n-a11y | Done |
 | D-18 | 2026-10-31 | "Today" always computed in the org timezone | Bug found when tests ran after midnight Algiers time | T business-flow | Done |
 | D-19 | 2026-10-30 | Install vendor-published Prisma skills? — **No** for now | Prisma's `init` drops 10 skills; useful but large; project skills reference official docs instead | docs/skills | Revisit |
+| D-20 | 2026-10-31 | Redesign v2 "Kerbside" using Anthropic's `frontend-design` skill | Owner feedback: the design looked generic/AI-made; the skill lists exactly the tells v1 had | DESIGN-SYSTEM.md, screenshots | Done |
+| D-21 | 2026-10-31 | Vendor `frontend-design` (Apache-2.0) and two Superpowers skills (MIT); reject `webapp-testing` | Instruction-only skills are safe to adopt after reading; scripts are not executed | docs/skills | Done |
+| D-22 | 2026-10-31 | Add recurring schedules, containers, ops map, route sheet, command palette | Core features in hauler software (route sheets, container tracking, recurring routes) per competitor research | S-56–S-58 | Done |
+| D-23 | 2026-10-31 | Working week stored per organization, default Sun–Thu | Algerian weekend is Fri–Sat | — | Active |
+| D-24 | 2026-10-31 | `unaccent`-based search via `nexvo_fold()` | French names with accents must match unaccented typing | T operations | Done |

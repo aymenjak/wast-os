@@ -11,6 +11,11 @@ import * as accounts from "@/server/services/accounts";
 import { DomainError } from "@/server/domain/errors";
 import type { WorkOrderAction } from "@/server/domain/work-order-machine";
 import type { ContractStatus, VehicleStatus } from "@/lib/generated/prisma/enums";
+import * as schedules from "@/server/services/schedules";
+import * as containers from "@/server/services/containers";
+import { globalSearch, type SearchHit } from "@/server/services/search";
+import { requireOrg } from "@/server/auth/session";
+import { isLocale } from "@/lib/i18n/config";
 
 const s = (v: unknown) => (typeof v === "string" ? v : "");
 
@@ -42,7 +47,7 @@ export async function createContractAction(_: ActionState, fd: FormData) {
       billingUnit: input[`lines.${i}.billingUnit`],
       unitPrice: input[`lines.${i}.unitPrice`],
       estimatedQuantity: input[`lines.${i}.estimatedQuantity`],
-      weekdays: [],
+      weekdays: Array.isArray(input[`lines.${i}.weekdays`]) ? input[`lines.${i}.weekdays`] : [],
     })).filter((l) => l.serviceLocationId);
     const c = await contracts.createContract(ctx, { ...input, lines });
     return `/app/contracts/${c.id}`;
@@ -173,4 +178,31 @@ export async function setMemberStatusAction(_: ActionState, fd: FormData) {
 }
 export async function updateSettingsAction(_: ActionState, fd: FormData) {
   return orgAction(fd, async (ctx, input) => void (await accounts.updateOrganizationSettings(ctx, input)), { revalidate: ["/app/settings"] });
+}
+
+// ── Schedules, containers, search ──
+
+export async function generateScheduleAction(_: ActionState, fd: FormData) {
+  return orgAction(
+    fd,
+    async (ctx, input) => {
+      const r = await schedules.generateRecurringWorkOrders(ctx, input);
+      return { data: { created: String(r.created), skipped: String(r.skipped) } };
+    },
+    { revalidate: ["/app/dispatch"] },
+  );
+}
+export async function createContainerAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, async (ctx, input) => void (await containers.createContainer(ctx, input)), { revalidate: ["/app/containers"] });
+}
+export async function moveContainerAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, async (ctx, input) => void (await containers.moveContainer(ctx, input)), {
+    revalidate: ["/app/containers", `/app/containers/${s(fd.get("containerId"))}`, `/app/work-orders/${s(fd.get("workOrderId"))}`],
+  });
+}
+/** Read-only search for the command palette. Scoped by the caller's session and permissions. */
+export async function searchAction(query: string, locale: string): Promise<SearchHit[]> {
+  const l = isLocale(locale) ? locale : "fr";
+  const ctx = await requireOrg(l);
+  return globalSearch(ctx, String(query ?? ""), l);
 }

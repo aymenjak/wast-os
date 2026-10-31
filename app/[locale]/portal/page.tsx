@@ -37,7 +37,7 @@ export default async function PortalHome({ params }: { params: Promise<{ locale:
               {orders.map((o) => (
                 <li key={o.id} className="flex flex-wrap items-center gap-3 px-5 py-3 text-sm">
                   <span className="num font-medium text-ink-900">{o.number}</span>
-                  <span className="text-ink-600">{formatDay(o.scheduledDate, locale)} · {o.serviceLocation?.label}</span>
+                  <span className="text-ink-600">{formatDay(o.scheduledDate, locale)}, {o.serviceLocation?.label}</span>
                   <StatusBadge status={o.status} label={d.enums.WorkOrderStatus[o.status]} />
                   <div className="ms-auto">{o.status === "COMPLETED" ? <FeedbackForm workOrderId={o.id} /> : null}</div>
                 </li>

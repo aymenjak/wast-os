@@ -12,7 +12,7 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
   return (
     <div className="mx-auto grid max-w-6xl gap-12 px-4 py-16 sm:px-6 lg:grid-cols-2">
       <div>
-        <h1 className="text-4xl font-semibold tracking-tight text-ink-950">{d.about.title}</h1>
+        <h1 className="text-5xl leading-none text-ink-950" style={{ fontStretch: "72%" }}>{d.about.title}</h1>
         <p className="mt-5 leading-relaxed text-ink-700">{d.about.body1}</p>
         <p className="mt-4 leading-relaxed text-ink-700">{d.about.body2}</p>
         <p className="mt-4 text-sm text-ink-500">{d.about.sourcesNote}</p>

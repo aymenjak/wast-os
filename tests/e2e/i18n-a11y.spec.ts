@@ -19,6 +19,8 @@ for (const { l, dir, heading } of LOCALES) {
   });
 
   test(`${l}: no serious axe violations on public pages`, async ({ page }) => {
+    // Reduced motion renders the hero's final state; mid-animation crossfades would otherwise be sampled.
+    await page.emulateMedia({ reducedMotion: "reduce" });
     for (const p of PAGES) {
       await page.goto(`/${l}${p}`);
       const r = await new AxeBuilder({ page: page as never }).withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"]).disableRules(["region"]).exclude(".leaflet-container").analyze();
