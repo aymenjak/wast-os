@@ -10,6 +10,8 @@ import { StatusBadge } from "@/components/ui/badge";
 import { DescriptionList, PageHeader } from "@/components/ui/misc";
 import { CivicMap } from "../../map/civic-map";
 import { ReviewForm } from "./review-form";
+import { AiTriage } from "@/components/ai-triage";
+import { aiEnabled } from "@/server/services/ai";
 
 export default async function CivicReportDetail({ params }: { params: Promise<{ locale: Locale; id: string }> }) {
   const { locale, ctx, d } = await appPage(params);
@@ -76,6 +78,7 @@ export default async function CivicReportDetail({ params }: { params: Promise<{ 
           ) : null}
         </div>
         <div className="space-y-6">
+          {canReview && aiEnabled() && ["SUBMITTED", "UNDER_REVIEW"].includes(r.status) ? <AiTriage reportId={r.id} /> : null}
           {canReview && r.nextStatuses.length ? (
             <Card>
               <CardHeader title={d.civic.decision} />

@@ -12,8 +12,11 @@ import { PageHeader, Table, Td, Th } from "@/components/ui/misc";
 import { Disclosure, InlineAction } from "@/components/inline-action";
 import { removeInvoiceLineAction } from "@/app/actions/business";
 import { IssueForm, LineForm, PaymentForm, PrintButton, ReverseForm, VoidForm } from "./forms";
+import { PayOnline } from "@/components/pay-online";
+import { chargilyEnabled } from "@/server/payments/chargily";
+import { prisma } from "@/server/db";
 
-export default async function InvoiceDetail({ params }: { params: Promise<{ locale: Locale; id: string }> }) {
+export default async function InvoiceDetail({ params, searchParams }: { params: Promise<{ locale: Locale; id: string }>; searchParams: Promise<{ payment?: string }> }) {
   const { locale, ctx, d } = await appPage(params);
   const { id } = await params;
   const [inv, org] = await Promise.all([orNotFound(getInvoice(ctx, id)), getOrganization(ctx)]);
@@ -22,6 +25,9 @@ export default async function InvoiceDetail({ params }: { params: Promise<{ loca
   const balanceMinor = toMinor(inv.total) - toMinor(inv.amountPaid);
   const money = (v: { toString(): string } | number) => <span className="num">{formatMoney(v, locale, inv.currency)}</span>;
   const today = orgToday(ctx);
+  const { payment } = await searchParams;
+  const open = inv.status === "ISSUED" || inv.status === "PARTIALLY_PAID";
+  const checkouts = await prisma.paymentCheckout.findMany({ where: { organizationId: ctx.org.id, invoiceId: inv.id }, orderBy: { createdAt: "desc" }, take: 10 });
   const due = new Date(new Date(`${today}T00:00:00Z`).getTime() + 30 * 86400_000).toISOString().slice(0, 10);
 
   return (
@@ -34,6 +40,8 @@ export default async function InvoiceDetail({ params }: { params: Promise<{ loca
           actions={<><StatusBadge status={inv.status} label={d.enums.InvoiceStatus[inv.status]} /><PrintButton /></>}
         />
       </div>
+      {payment === "returned" ? <p role="status" className="mb-4 rounded-md bg-info-100 px-4 py-3 text-sm text-info-700 print:hidden">{d.payOnline.returned}</p> : null}
+      {payment === "failed" ? <p role="alert" className="mb-4 rounded-md bg-danger-100 px-4 py-3 text-sm text-danger-700 print:hidden">{d.payOnline.failed}</p> : null}
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2 print:border-0 print:shadow-none">
           <CardBody className="space-y-6">
@@ -115,6 +123,20 @@ export default async function InvoiceDetail({ params }: { params: Promise<{ loca
               {canPay && (inv.status === "ISSUED" || inv.status === "PARTIALLY_PAID") ? (
                 <CardBody className="border-t border-ink-100"><PaymentForm invoiceId={inv.id} balance={(balanceMinor / 100).toFixed(2)} today={today} /></CardBody>
               ) : null}
+            </Card>
+          ) : null}
+          {open && canPay && chargilyEnabled() ? <PayOnline invoiceId={inv.id} /> : null}
+          {checkouts.length ? (
+            <Card>
+              <CardHeader title={d.payOnline.history} />
+              <ul className="divide-y divide-ink-100 text-sm">
+                {checkouts.map((c) => (
+                  <li key={c.id} className="flex items-center justify-between gap-2 px-5 py-2">
+                    <span>{money(c.amount)}</span>
+                    <span className="text-xs text-ink-600">{d.enums.CheckoutStatus[c.status]}{c.livemode ? "" : " (test)"}</span>
+                  </li>
+                ))}
+              </ul>
             </Card>
           ) : null}
           {canWrite && (inv.status === "DRAFT" || inv.status === "ISSUED") ? <Disclosure summary={d.invoices.void}><VoidForm invoiceId={inv.id} /></Disclosure> : null}

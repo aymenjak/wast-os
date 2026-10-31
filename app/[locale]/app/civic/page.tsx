@@ -5,7 +5,7 @@ import { civicAnalytics } from "@/server/services/civic";
 import { formatNumber } from "@/lib/i18n/format";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { Forbidden, PageHeader, Stat, MetricStrip, Table, Td, Th } from "@/components/ui/misc";
-import { BarList } from "@/components/bar-list";
+import { RankedBars } from "@/components/charts/charts";
 import { buttonClass } from "@/components/ui/button";
 
 export default async function CivicOverview({ params }: { params: Promise<{ locale: Locale }> }) {
@@ -29,7 +29,7 @@ export default async function CivicOverview({ params }: { params: Promise<{ loca
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader title={d.civic.byCategory} />
-          <CardBody>{a.byCategory.length ? <BarList items={a.byCategory.map((c) => ({ label: d.enums.CivicCategory[c.category], value: c.count, display: formatNumber(c.count, locale) }))} /> : <p className="text-sm text-ink-500">{d.civic.noReports}</p>}</CardBody>
+          <CardBody>{a.byCategory.length ? <RankedBars items={a.byCategory.map((c) => ({ label: d.enums.CivicCategory[c.category], value: c.count, display: formatNumber(c.count, locale) }))} /> : <p className="text-sm text-ink-500">{d.civic.noReports}</p>}</CardBody>
         </Card>
         <Card>
           <CardHeader title={d.civic.teamPerformance} />

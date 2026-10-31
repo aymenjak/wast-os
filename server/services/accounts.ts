@@ -13,6 +13,9 @@ import type { OrgRole } from "@/lib/generated/prisma/enums";
 export const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const INVITATION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const TRIAL_DAYS = 30;
+/** Lock an account for 15 minutes after 5 consecutive failed logins. */
+export const LOCKOUT_THRESHOLD = 5;
+const LOCKOUT_MS = 15 * 60_000;
 
 const registerSchema = z.object({
   organizationName: requiredText(120),
@@ -121,8 +124,19 @@ export async function login(input: unknown, meta: { userAgent?: string } = {}) {
     where: { email: data.email },
     include: { memberships: { where: { status: "ACTIVE" }, orderBy: { createdAt: "asc" }, take: 1 } },
   });
+  // Locked accounts still run a full hash comparison so timing does not reveal the lock.
+  const locked = !!user?.lockedUntil && user.lockedUntil > new Date();
   const ok = await verifyPassword(data.password, user?.passwordHash ?? (await getDummyHash()));
-  if (!user || !ok || user.disabledAt) throw new DomainError("errors.auth.invalidCredentials");
+  if (user && !ok && !locked) {
+    const failed = user.failedLogins + 1;
+    await prisma.user.update({
+      where: { id: user.id },
+      data: failed >= LOCKOUT_THRESHOLD ? { failedLogins: 0, lockedUntil: new Date(Date.now() + LOCKOUT_MS) } : { failedLogins: failed },
+    });
+    if (failed >= LOCKOUT_THRESHOLD) await audit(prisma, { organizationId: null, actorType: "SYSTEM", action: "user.locked", entityType: "User", entityId: user.id });
+  }
+  if (!user || !ok || locked || user.disabledAt) throw new DomainError("errors.auth.invalidCredentials");
+  if (user.failedLogins > 0 || user.lockedUntil) await prisma.user.update({ where: { id: user.id }, data: { failedLogins: 0, lockedUntil: null } });
   const token = await createSessionRecord(prisma, user.id, user.memberships[0]?.organizationId ?? null, meta.userAgent);
   return { token, user };
 }
@@ -146,7 +160,8 @@ export async function resolveSession(token: string) {
     });
   }
   let ctx: OrgContext | null = null;
-  if (session.activeOrganizationId) ctx = await loadContext(session.user.id, session.activeOrganizationId);
+  if (session.supportGrantId) ctx = await loadSupportContext(session.user, session.supportGrantId, session.id);
+  else if (session.activeOrganizationId) ctx = await loadContext(session.user.id, session.activeOrganizationId);
   return { session, user: session.user, ctx };
 }
 
@@ -174,6 +189,30 @@ export async function loadContext(userId: string, organizationId: string): Promi
       civicSlaHours: o.civicSlaHours,
     },
   });
+}
+
+/**
+ * Read-only context for NEXVO staff inside a customer workspace. Valid only while the grant is
+ * active and the user is still platform staff; otherwise the support session is cleared.
+ */
+async function loadSupportContext(user: { id: string; name: string; isPlatformStaff: boolean }, grantId: string, sessionId: string): Promise<OrgContext | null> {
+  const grant = await prisma.supportAccessGrant.findUnique({ where: { id: grantId }, include: { organization: true } });
+  if (!user.isPlatformStaff || !grant || grant.revokedAt || grant.expiresAt <= new Date()) {
+    await prisma.session.update({ where: { id: sessionId }, data: { supportGrantId: null, activeOrganizationId: null } });
+    return null;
+  }
+  const o = grant.organization;
+  return {
+    ...buildContext({
+      userId: user.id,
+      userName: user.name,
+      membershipId: `support:${grant.id}`,
+      role: "VIEWER",
+      customerId: null,
+      org: { id: o.id, slug: o.slug, name: o.name, kind: o.kind, timezone: o.timezone, currency: o.currency, defaultTaxRateBps: o.defaultTaxRateBps, civicSlaHours: o.civicSlaHours },
+    }),
+    support: { grantId: grant.id, expiresAt: grant.expiresAt },
+  };
 }
 
 export async function listUserOrganizations(userId: string) {

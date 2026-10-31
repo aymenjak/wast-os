@@ -6,28 +6,39 @@ import { formatDay } from "@/lib/i18n/format";
 import { Card } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/badge";
 import { EmptyState, Forbidden, PageHeader, Table, Td, Th } from "@/components/ui/misc";
+import { Pagination, SortTh, TableToolbar } from "@/components/data-table";
+import { tableState } from "@/server/table";
+import { WORK_ORDER_SORTS, workOrdersTable } from "@/server/services/tables";
 import type { WorkOrderStatus } from "@/lib/generated/prisma/enums";
 
 const FILTERS: (WorkOrderStatus | "OPEN" | "ALL")[] = ["OPEN", "PLANNED", "ASSIGNED", "IN_PROGRESS", "COMPLETED", "FAILED", "DISPUTED", "ALL"];
 
-export default async function WorkOrdersPage({ params, searchParams }: { params: Promise<{ locale: Locale }>; searchParams: Promise<{ status?: string }> }) {
+export default async function WorkOrdersPage({ params, searchParams }: { params: Promise<{ locale: Locale }>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { locale, ctx, d } = await appPage(params);
   if (!ctx.permissions.has("workorders.read")) return <Forbidden message={d.errors.forbiddenPage} />;
   const sp = await searchParams;
-  const f = FILTERS.includes(sp.status as WorkOrderStatus) ? (sp.status as (typeof FILTERS)[number]) : "OPEN";
-  let rows = await listWorkOrders(ctx, { status: f === "OPEN" || f === "ALL" ? undefined : f });
-  if (f === "OPEN") rows = rows.filter((r) => ["PLANNED", "ASSIGNED", "IN_PROGRESS", "DISPUTED"].includes(r.status));
   const field = ctx.role === "FIELD_WORKER";
+  const legacyStatus = typeof sp.status === "string" ? sp.status : undefined;
+  const f = FILTERS.includes(legacyStatus as WorkOrderStatus) ? (legacyStatus as (typeof FILTERS)[number]) : "OPEN";
+  let rows = field ? await listWorkOrders(ctx, { status: f === "OPEN" || f === "ALL" ? undefined : f }) : [];
+  if (field && f === "OPEN") rows = rows.filter((r) => ["PLANNED", "ASSIGNED", "IN_PROGRESS", "DISPUTED"].includes(r.status));
+  const s = tableState(sp, WORK_ORDER_SORTS, { sort: "scheduledDate", dir: "desc" });
+  if (!field && !sp.filter && legacyStatus) s.filter = legacyStatus === "ALL" ? null : legacyStatus;
+  else if (!field && !sp.filter) s.filter = "OPEN";
+  if (s.filter === "ALL") s.filter = null;
+  const page = field ? null : await workOrdersTable(ctx, s);
   return (
     <>
       <PageHeader title={field ? d.workOrders.myWork : d.workOrders.title} />
-      <nav aria-label={d.common.filter} className="mb-4 flex flex-wrap gap-1">
-        {FILTERS.map((x) => (
-          <Link key={x} href={`?status=${x}`} aria-current={x === f ? "page" : undefined} className={`rounded-full px-3 py-1 text-sm ${x === f ? "bg-ink-900 text-white" : "bg-white text-ink-700 ring-1 ring-ink-200 hover:bg-ink-50"}`}>
-            {x === "ALL" ? d.common.all : x === "OPEN" ? d.civic.open : d.enums.WorkOrderStatus[x]}
-          </Link>
-        ))}
-      </nav>
+      {field ? (
+        <nav aria-label={d.common.filter} className="mb-4 flex flex-wrap gap-1">
+          {FILTERS.map((x) => (
+            <Link key={x} href={`?status=${x}`} aria-current={x === f ? "page" : undefined} className={`rounded-full px-3 py-1 text-sm ${x === f ? "bg-ink-900 text-white" : "bg-white text-ink-700 ring-1 ring-ink-200 hover:bg-ink-50"}`}>
+              {x === "ALL" ? d.common.all : x === "OPEN" ? d.civic.open : d.enums.WorkOrderStatus[x]}
+            </Link>
+          ))}
+        </nav>
+      ) : null}
       {field ? (
         <ul className="space-y-3">
           {rows.length === 0 ? <Card><EmptyState title={d.workOrders.empty} /></Card> : rows.map((o) => (
@@ -46,11 +57,26 @@ export default async function WorkOrdersPage({ params, searchParams }: { params:
         </ul>
       ) : (
         <Card>
-          {rows.length === 0 ? <EmptyState title={d.workOrders.empty} /> : (
-            <Table>
-              <thead><tr><Th>{d.workOrders.number}</Th><Th>{d.workOrders.kind}</Th><Th>{d.requests.customer}</Th><Th>{d.workOrders.scheduled}</Th><Th>{d.workOrders.team}</Th><Th>{d.workOrders.vehicle}</Th><Th>{d.common.status}</Th></tr></thead>
+          <TableToolbar sp={sp} d={d} locale={locale} q={s.q} active={s.filter} exportKind={ctx.permissions.has("reports.read") && !ctx.support ? "work-orders" : undefined}
+            filters={[
+              { value: null, label: d.common.all },
+              { value: "OPEN", label: d.civic.open },
+              ...(["PLANNED", "ASSIGNED", "IN_PROGRESS", "COMPLETED", "FAILED", "DISPUTED"] as const).map((x) => ({ value: x, label: d.enums.WorkOrderStatus[x] })),
+            ]} />
+          {page!.total === 0 ? <EmptyState title={d.table.noResults} /> : (
+            <Table scroll>
+              <thead><tr>
+                <SortTh sp={sp} col="number" label={d.workOrders.number} sort={s.sort} dir={s.dir} d={d} />
+                <Th className="sticky top-0 z-10 bg-ink-50">{d.workOrders.kind}</Th>
+                <Th className="sticky top-0 z-10 bg-ink-50">{d.requests.customer}</Th>
+                <SortTh sp={sp} col="scheduledDate" label={d.workOrders.scheduled} sort={s.sort} dir={s.dir} d={d} defaultDir="desc" />
+                <Th className="sticky top-0 z-10 bg-ink-50">{d.workOrders.team}</Th>
+                <Th className="sticky top-0 z-10 bg-ink-50">{d.workOrders.vehicle}</Th>
+                <SortTh sp={sp} col="priority" label={d.requests.priority} sort={s.sort} dir={s.dir} d={d} defaultDir="desc" />
+                <SortTh sp={sp} col="status" label={d.common.status} sort={s.sort} dir={s.dir} d={d} />
+              </tr></thead>
               <tbody>
-                {rows.map((o) => (
+                {page!.rows.map((o) => (
                   <tr key={o.id} className="hover:bg-ink-50/60">
                     <Td><Link href={`/${locale}/app/work-orders/${o.id}`} className="num font-medium text-ink-900 hover:underline">{o.number}</Link></Td>
                     <Td>{d.enums.WorkOrderKind[o.kind]}</Td>
@@ -58,12 +84,14 @@ export default async function WorkOrdersPage({ params, searchParams }: { params:
                     <Td>{formatDay(o.scheduledDate, locale)}</Td>
                     <Td>{o.team?.name ?? <span className="text-ink-500">{d.workOrders.unassigned}</span>}</Td>
                     <Td>{o.vehicle ? <span className="num">{o.vehicle.plateNumber}</span> : "—"}</Td>
+                    <Td><StatusBadge status={o.priority} label={d.enums.Priority[o.priority]} /></Td>
                     <Td><StatusBadge status={o.status} label={d.enums.WorkOrderStatus[o.status]} />{o.invoiceLine ? <div className="mt-1 text-xs text-ink-500">{d.workOrders.invoiced}</div> : null}</Td>
                   </tr>
                 ))}
               </tbody>
             </Table>
           )}
+          <Pagination sp={sp} d={d} locale={locale} page={page!.page} pages={page!.pages} total={page!.total} pageSize={page!.pageSize} />
         </Card>
       )}
     </>

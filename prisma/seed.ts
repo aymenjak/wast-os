@@ -5,6 +5,7 @@
  */
 import "dotenv/config";
 import { prisma } from "../server/db";
+import { hashPassword } from "../server/auth/password";
 import { registerOrganization, loadContext, inviteMember, acceptInvitation } from "../server/services/accounts";
 import { createCustomer, addServiceLocation, addContact } from "../server/services/customers";
 import { createContract, setContractStatus } from "../server/services/contracts";
@@ -28,6 +29,11 @@ async function main() {
     { code: "ENTERPRISE", name: "Enterprise", priceMonthly: "59900", priceYearly: "599000", maxUsers: -1, maxVehicles: -1, maxCustomers: -1, customerPortal: true, advancedReports: true, sortOrder: 3 },
   ]) {
     await prisma.plan.upsert({ where: { code: p.code }, create: p, update: p });
+  }
+
+  // Platform support staff (synthetic). No membership: sees a tenant only through a time-limited grant.
+  if (!(await prisma.user.findUnique({ where: { email: "support@nexvo.test" } }))) {
+    await prisma.user.create({ data: { email: "support@nexvo.test", name: "Support NEXVO", passwordHash: await hashPassword(PASSWORD), isPlatformStaff: true, locale: "ar" } });
   }
 
   if (await prisma.user.findUnique({ where: { email: "owner@demo-collecte.test" } })) {
@@ -158,7 +164,8 @@ async function main() {
   Field worker:    driver@demo-collecte.test
   Finance:         finance@demo-collecte.test
   Municipality:    civic@demo-apc.test
-  Customer portal: portal@demo-client.test`);
+  Customer portal: portal@demo-client.test
+  Support staff:   support@nexvo.test (console at /fr/support-console)`);
 }
 
 main().then(() => prisma.$disconnect()).catch(async (e) => { console.error(e); await prisma.$disconnect(); process.exit(1); });

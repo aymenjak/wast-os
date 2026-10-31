@@ -44,3 +44,22 @@ Whether production personal data may be hosted outside Algeria (and under what A
 2. Publish a privacy notice (ar/fr/en) linked from the report form and app footer.
 3. Implement retention jobs per the table above.
 4. Implement data-subject request procedure (access/erasure) — manual process documented first.
+
+## 6. AI features (optional, off by default)
+
+Enabled only when `ANTHROPIC_API_KEY` is set, and only after owner approval (cross-border transfer to the AI provider is a §4-type question).
+
+| Feature | Sent to the model | Never sent |
+|---------|-------------------|------------|
+| Civic triage suggestion | submitted category, description text, address hint, photo **count**, number of nearby open reports, UI language | reporter name/contact, photos, coordinates, tracking code |
+| Operations brief | aggregate KPIs (counts, rates, top failure reason) | customer names, addresses, invoices |
+
+Descriptions are free text written by citizens and may still contain personal data they typed (e.g. a phone number): the report form should warn citizens not to include personal details, and the processing must be listed in the privacy notice. Suggestions are stored (`AiSuggestion`) with the human accept/dismiss decision for quality review; nothing is applied automatically (D-12).
+
+## 7. Remote support access
+
+NEXVO staff see a customer's workspace only after an OWNER/ADMIN grants time-limited (1/4/24 h), revocable, read-only access with a reason. Every grant, revocation and session start/end is written to the customer's own audit log, which the customer can read on the Support page. Staff cannot export data during a support session.
+
+## 8. Online payments
+
+Card data is entered on Chargily's hosted page; NEXVO never sees card numbers. NEXVO stores the checkout id, amount, status and timestamps.

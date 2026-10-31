@@ -11,7 +11,7 @@ import { parse, email, requiredText } from "@/server/validation";
 import type { ActionState } from "@/lib/actions/state";
 
 async function limited(bucket: string, limit: number, windowMs: number): Promise<ActionState | null> {
-  const r = rateLimit(`${bucket}:${await clientIp()}`, limit, windowMs);
+  const r = await rateLimit(`${bucket}:${await clientIp()}`, limit, windowMs);
   return r.ok ? null : { ok: false, error: "errors.rateLimited", nonce: Date.now() };
 }
 

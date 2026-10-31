@@ -165,57 +165,97 @@
     "section": "شركة الجمع — المالك"
   },
   {
-    "file": "34-app-work-orders.png",
+    "file": "34-certificate.png",
+    "title": "شهادة جمع شهرية (للطباعة)",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "35-customers-table.png",
+    "title": "جدول الزبائن: بحث وفرز وتصدير Excel",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "36-support-ticket.png",
+    "title": "طلب دعم ومحادثة",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "37-support.png",
+    "title": "الدعم: طلبات، وإذن وصول مؤقت وسجل الدخول",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "38-support-console.png",
+    "title": "لوحة الدعم",
+    "section": "فريق دعم NEXVO"
+  },
+  {
+    "file": "39-support-console-ticket.png",
+    "title": "طلب من زبون مع إذن الوصول",
+    "section": "فريق دعم NEXVO"
+  },
+  {
+    "file": "40-support-view.png",
+    "title": "عرض الدعم للقراءة فقط (شريط واضح)",
+    "section": "فريق دعم NEXVO"
+  },
+  {
+    "file": "41-app-work-orders.png",
     "title": "عملي اليوم",
     "section": "السائق — على الهاتف"
   },
   {
-    "file": "35-m-work-order.png",
+    "file": "42-m-work-order.png",
     "title": "أمر العمل في الميدان",
     "section": "السائق — على الهاتف"
   },
   {
-    "file": "36-m-menu.png",
+    "file": "43-m-menu.png",
     "title": "القائمة على الهاتف",
     "section": "السائق — على الهاتف"
   },
   {
-    "file": "37-portal.png",
+    "file": "44-portal.png",
     "title": "بوابة الزبون",
     "section": "بوابة الزبون"
   },
   {
-    "file": "38-app-civic.png",
+    "file": "45-portal-certificate.png",
+    "title": "شهادة الجمع للزبون",
+    "section": "بوابة الزبون"
+  },
+  {
+    "file": "46-app-civic.png",
     "title": "النظرة المدنية",
     "section": "البلدية — NEXVO المدني"
   },
   {
-    "file": "39-app-civic-queue-status-ALL.png",
+    "file": "47-app-civic-queue-status-ALL.png",
     "title": "قائمة التحقق من البلاغات",
     "section": "البلدية — NEXVO المدني"
   },
   {
-    "file": "40-civic-report.png",
+    "file": "48-civic-report.png",
     "title": "مراجعة بلاغ وقرار",
     "section": "البلدية — NEXVO المدني"
   },
   {
-    "file": "41-app-civic-map.png",
+    "file": "49-app-civic-map.png",
     "title": "خريطة البلاغات",
     "section": "البلدية — NEXVO المدني"
   },
   {
-    "file": "42-civic-fleet.png",
+    "file": "50-civic-fleet.png",
     "title": "فرق البلدية",
     "section": "البلدية — NEXVO المدني"
   },
   {
-    "file": "43-m-home.png",
+    "file": "51-m-home.png",
     "title": "الصفحة الرئيسية على الهاتف",
     "section": "المواطن — على الهاتف"
   },
   {
-    "file": "44-m-report.png",
+    "file": "52-m-report.png",
     "title": "نموذج البلاغ على الهاتف",
     "section": "المواطن — على الهاتف"
   }

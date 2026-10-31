@@ -51,6 +51,8 @@ export async function orgAction(
 ): Promise<ActionState> {
   const locale = localeFrom(fd);
   const ctx = await requireOrg(locale);
+  // Defence in depth: a NEXVO support session is read-only whatever permissions it would otherwise have.
+  if (ctx.support) return { ok: false, error: "errors.support.readOnly", nonce: Date.now() };
   let result: string | void | ActionState;
   try {
     result = await fn(ctx, formToObject(fd), locale);

@@ -19,7 +19,14 @@
 | `APP_URL` | yes | used for invitation links |
 | `NEXT_PUBLIC_MAP_TILE_URL`, `NEXT_PUBLIC_MAP_ATTRIBUTION` | yes for production | contracted or self-hosted tiles (public OSM tiles are not allowed for production traffic) |
 | `SALES_EMAIL` | optional | contact-form recipient for the outbox worker |
-| **Never set in production:** `NEXVO_FAST_HASH`, `NEXVO_E2E`, `RATE_LIMIT_SCALE` | | test-only switches |
+| `CHARGILY_SECRET_KEY` | optional | enables online card payment (CIB/Edahabia) via Chargily Pay V2; also the webhook signing secret. Configure the webhook URL `${APP_URL}/api/webhooks/chargily` in the Chargily dashboard |
+| `CHARGILY_MODE` | optional | `test` (default) or `live`. **Switching to `live` changes payment behaviour: owner approval required** (AGENTS.md rule 8). Live mode requires an https `APP_URL` |
+| `ANTHROPIC_API_KEY` | optional | enables AI suggestions (civic triage, operations brief). Data sent is described in PRIVACY-AND-COMPLIANCE.md §6; **owner approval required before enabling for customers** |
+| **Never set in production:** `NEXVO_FAST_HASH`, `NEXVO_E2E`, `RATE_LIMIT_SCALE` | | test-only switches (`RATE_LIMIT_SCALE` is ignored unless `APP_URL` is localhost) |
+
+Housekeeping: call `purgeRateLimits()` (server/rate-limit.ts) from a periodic job to delete expired buckets.
+
+Platform support staff: set `User.isPlatformStaff = true` for NEXVO support agents only (no membership needed). They reach a tenant only through that tenant's grant.
 
 ## 3. Release procedure
 

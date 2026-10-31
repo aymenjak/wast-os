@@ -58,7 +58,13 @@ Rule: **pages and actions never query tenant data directly** except trivial look
 | Routing | `RoutingProvider` interface; default nearest-neighbour on haversine distance (planning aid, labelled as such) |
 | Maps | `NEXT_PUBLIC_MAP_TILE_URL` (default public OSM tiles = dev/pilot only, per OSMF policy); no geocoding dependency |
 | Notifications | Outbox table written inside business transactions; delivery worker not yet built (no email/SMS provider chosen) |
-| Rate limiting | Per-process fixed window on login/register/invite/contact/civic endpoints; must move to a shared store before multi-instance deployment |
+| Rate limiting | Shared fixed window in Postgres (`RateLimitBucket`, one atomic upsert) on login/register/invite/contact/civic/AI; works across instances |
+| CSP | `proxy.ts` generates a nonce per HTML request (`x-nonce` header → Next injects it into its scripts); root layout reads `headers()`, so pages render dynamically |
+| Online payment | `server/payments/chargily.ts`: hosted checkout (`PaymentCheckout` row) → signed webhook `/api/webhooks/chargily` → `applyPaymentTx` (same idempotent, row-locked path as manual payments) |
+| Remote support | `SupportTicket`/`SupportMessage`; `SupportAccessGrant` (expiry, revocation); `Session.supportGrantId` makes `resolveSession` build a read-only VIEWER context (`ctx.support`) from the grant instead of a membership; `/[locale]/support-console` for `User.isPlatformStaff` |
+| AI | `server/ai/provider.ts` (`AiProvider` interface; Claude implementation with structured output, server-side fallback, typed errors; test seam `setAiProvider`) → `server/services/ai.ts` (permissions, data minimisation, `AiSuggestion` log) |
+| Tables | URL state (`?q&sort&dir&page&size&filter`) parsed by `server/table.ts` (sort whitelist, clamped size) → `server/services/tables.ts` (tenant-scoped, server-side search/sort/pagination, accent-insensitive names via `nexvo_fold`) → `components/data-table.tsx` (aria-sort headers, search, filter chips, Excel/CSV, pagination) |
+| Documents | `server/exports.ts` (localized CSV/XLSX, RTL sheet for Arabic, `/api/exports/[kind]`); collection certificate (`collectionCertificate` + print view); receivables aging in `server/services/reports.ts` |
 
 ## 6. Map provider evaluation (summary)
 
@@ -71,7 +77,7 @@ Rule: **pages and actions never query tenant data directly** except trivial look
 
 ## 7. Known architectural limitations
 
-- In-memory rate limiter (single instance).
+- Rendering every page dynamically (needed for the CSP nonce) gives up static caching of public pages; acceptable at pilot scale.
 - No background worker (notifications stay in outbox; contract expiry is computed on read).
 - Local-disk storage in dev; production needs S3-compatible storage implementation of `StorageProvider`.
 - Cross-tenant civic contractor assignment not implemented (municipality assigns its own teams).

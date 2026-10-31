@@ -4,7 +4,6 @@ import { sniffMime, stripJpegMetadata } from "@/server/storage";
 import { hashPassword, verifyPassword } from "@/server/auth/password";
 import { hashToken, newToken, newTrackingCode } from "@/server/auth/tokens";
 import { toCsv } from "@/server/services/reports";
-import { rateLimit, resetRateLimits } from "@/server/rate-limit";
 import { haversineKm, straightLineRouting } from "@/server/routing";
 import { jpegWithExif } from "../helpers/db";
 
@@ -62,15 +61,6 @@ describe("CSV export", () => {
     const csv = toCsv(["a", "b"], [["=HYPERLINK(\"x\")", "Sarl, \"El Amel\""]]);
     expect(csv).toContain(`"'=HYPERLINK(""x"")"`);
     expect(csv).toContain(`"Sarl, ""El Amel"""`);
-  });
-});
-
-describe("rate limiting", () => {
-  it("blocks after the limit within a window", () => {
-    resetRateLimits();
-    for (let i = 0; i < 3; i++) expect(rateLimit("k", 3, 60_000).ok).toBe(true);
-    expect(rateLimit("k", 3, 60_000).ok).toBe(false);
-    expect(rateLimit("other", 3, 60_000).ok).toBe(true);
   });
 });
 

@@ -9,7 +9,7 @@ type Action = (s: ActionState, fd: FormData) => Promise<ActionState>;
 export function InlineAction({ action, hidden, label, variant = "secondary", size = "sm" }: { action: Action; hidden: Record<string, string>; label: ReactNode; variant?: "primary" | "secondary" | "danger" | "subtle"; size?: "sm" | "md" }) {
   return (
     <ActionForm action={action} hidden={hidden} className="inline-block">
-      <SubmitButton variant={variant} size={size}>{label}</SubmitButton>
+      <SubmitButton variant={variant} size={size} className="whitespace-nowrap">{label}</SubmitButton>
     </ActionForm>
   );
 }

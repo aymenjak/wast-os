@@ -5,7 +5,7 @@ import { businessDashboard, orgToday } from "@/server/services/reports";
 import { formatMinor, formatNumber, formatPercent } from "@/lib/i18n/format";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { Forbidden, PageHeader, Stat, MetricStrip } from "@/components/ui/misc";
-import { BarList } from "@/components/bar-list";
+import { RankedBars } from "@/components/charts/charts";
 import { buttonClass } from "@/components/ui/button";
 
 export default async function ReportsPage({ params, searchParams }: { params: Promise<{ locale: Locale }>; searchParams: Promise<{ from?: string; to?: string }> }) {
@@ -24,10 +24,10 @@ export default async function ReportsPage({ params, searchParams }: { params: Pr
         <div className="flex flex-col gap-1"><label htmlFor="from" className="text-xs font-medium text-ink-700">{d.common.from}</label><input id="from" name="from" type="date" defaultValue={from} className="h-9 rounded-md border border-ink-300 px-2 text-sm" /></div>
         <div className="flex flex-col gap-1"><label htmlFor="to" className="text-xs font-medium text-ink-700">{d.common.to}</label><input id="to" name="to" type="date" defaultValue={to} className="h-9 rounded-md border border-ink-300 px-2 text-sm" /></div>
         <button className={buttonClass("secondary", "sm", "h-9")}>{d.common.apply}</button>
-        <div className="ms-auto flex flex-wrap gap-2">
+        {ctx.support ? null : <div className="ms-auto flex flex-wrap gap-2">
           <a className={buttonClass("subtle", "sm", "h-9")} href={`/api/exports/work-orders?from=${from}&to=${to}`}><Download aria-hidden className="size-4" />{d.reportsPage.workOrdersCsv}</a>
           {ctx.permissions.has("invoices.read") ? <a className={buttonClass("subtle", "sm", "h-9")} href={`/api/exports/invoices?from=${from}&to=${to}`}><Download aria-hidden className="size-4" />{d.reportsPage.invoicesCsv}</a> : null}
-        </div>
+        </div>}
       </form>
       <MetricStrip>
         <Stat label={d.dashboard.completionRate} value={k.workOrders.completionRate == null ? "—" : formatPercent(k.workOrders.completionRate, locale)} />
@@ -38,11 +38,11 @@ export default async function ReportsPage({ params, searchParams }: { params: Pr
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader title={d.reportsPage.statusBreakdown} />
-          <CardBody>{statuses.length ? <BarList items={statuses.map(([s, n]) => ({ label: d.enums.WorkOrderStatus[s], value: n, display: formatNumber(n, locale) }))} /> : <p className="text-sm text-ink-500">{d.common.noData}</p>}</CardBody>
+          <CardBody>{statuses.length ? <RankedBars items={statuses.map(([s, n]) => ({ label: d.enums.WorkOrderStatus[s], value: n, display: formatNumber(n, locale) }))} /> : <p className="text-sm text-ink-500">{d.common.noData}</p>}</CardBody>
         </Card>
         <Card>
           <CardHeader title={d.dashboard.tonnage} />
-          <CardBody>{k.tonnage.length ? <BarList items={k.tonnage.map((x) => ({ label: x.name, value: x.netKgMinor, display: `${formatNumber(x.netKgMinor / 100 / 1000, locale, 3)} t` }))} /> : <p className="text-sm text-ink-500">{d.common.noData}</p>}</CardBody>
+          <CardBody>{k.tonnage.length ? <RankedBars items={k.tonnage.map((x) => ({ label: x.name, value: x.netKgMinor, display: `${formatNumber(x.netKgMinor / 100 / 1000, locale, 3)} t` }))} /> : <p className="text-sm text-ink-500">{d.common.noData}</p>}</CardBody>
         </Card>
       </div>
     </>

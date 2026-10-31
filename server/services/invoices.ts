@@ -248,7 +248,7 @@ const paymentSchema = z.object({
 type PaymentInput = z.infer<typeof paymentSchema> & { source: "MANUAL" | "WEBHOOK"; recordedById: string | null };
 
 /** Core payment application. Row lock + unique idempotency key make retries and races safe. */
-async function applyPaymentTx(tx: Tx, organizationId: string, invoiceId: string, p: PaymentInput) {
+export async function applyPaymentTx(tx: Tx, organizationId: string, invoiceId: string, p: PaymentInput) {
   const existing = await tx.payment.findUnique({ where: { organizationId_idempotencyKey: { organizationId, idempotencyKey: p.idempotencyKey } } });
   if (existing) {
     if (existing.invoiceId !== invoiceId || toMinor(existing.amount) !== toMinor(p.amount)) throw new DomainError("errors.payment.idempotencyConflict");

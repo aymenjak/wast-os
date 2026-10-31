@@ -25,6 +25,11 @@ model User {
   locale       String    @default("fr")
   createdAt    DateTime  @default(now()) @db.Timestamptz(3)
   disabledAt   DateTime? @db.Timestamptz(3)
+  /// NEXVO operator staff (support desk). Grants no tenant access by itself — see SupportAccessGrant.
+  isPlatformStaff Boolean @default(false)
+  /// Account lockout after repeated failed logins (credential-stuffing defence).
+  failedLogins    Int       @default(0)
+  lockedUntil     DateTime? @db.Timestamptz(3)
 
   sessions    Session[]
   memberships Membership[]
@@ -39,6 +44,8 @@ model Session {
   createdAt            DateTime @default(now()) @db.Timestamptz(3)
   lastSeenAt           DateTime @default(now()) @db.Timestamptz(3)
   userAgent            String?
+  /// Set when a platform staff member is inside a tenant through an active support grant.
+  supportGrantId       String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -113,6 +120,10 @@ model Organization {
   civicReports       CivicReport[]
   containers         Container[]
   containerMoves     ContainerMovement[]
+  paymentCheckouts   PaymentCheckout[]
+  supportTickets     SupportTicket[]
+  supportGrants      SupportAccessGrant[]
+  aiSuggestions      AiSuggestion[]
 }
 
 enum OrgRole {
@@ -838,6 +849,7 @@ model Invoice {
   contract     Contract?     @relation(fields: [organizationId, contractId], references: [organizationId, id])
   lines        InvoiceLine[]
   payments     Payment[]
+  checkouts    PaymentCheckout[]
 
   @@unique([organizationId, number])
   @@unique([organizationId, id])
@@ -1061,4 +1073,140 @@ model CivicReportEvent {
   report CivicReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
 
   @@index([reportId, createdAt])
+}
+
+// ───────────────────────────── Online payments ─────────────────────────────
+
+enum CheckoutStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELED
+  EXPIRED
+}
+
+/// One hosted checkout at a payment provider (Chargily Pay: CIB / Edahabia). The amount is
+/// fixed when created; the webhook is accepted only if it matches this row.
+model PaymentCheckout {
+  id             String         @id @default(cuid())
+  organizationId String
+  invoiceId      String
+  provider       String
+  externalId     String
+  amount         Decimal        @db.Decimal(14, 2)
+  currency       String
+  status         CheckoutStatus @default(PENDING)
+  checkoutUrl    String
+  livemode       Boolean        @default(false)
+  createdById    String
+  createdAt      DateTime       @default(now()) @db.Timestamptz(3)
+  settledAt      DateTime?      @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  invoice      Invoice      @relation(fields: [organizationId, invoiceId], references: [organizationId, id])
+
+  @@unique([provider, externalId])
+  @@index([organizationId, invoiceId])
+}
+
+// ───────────────────────────── Security ─────────────────────────────
+
+/// Shared fixed-window rate-limit counters (works across several app instances).
+model RateLimitBucket {
+  key     String   @id
+  count   Int
+  resetAt DateTime @db.Timestamptz(3)
+
+  @@index([resetAt])
+}
+
+// ───────────────────────────── Remote support ─────────────────────────────
+
+enum TicketStatus {
+  OPEN
+  WAITING_SUPPORT
+  WAITING_CUSTOMER
+  RESOLVED
+  CLOSED
+}
+
+enum TicketCategory {
+  QUESTION
+  BUG
+  BILLING
+  ACCESS
+  FEATURE
+}
+
+model SupportTicket {
+  id             String         @id @default(cuid())
+  organizationId String
+  number         String
+  subject        String
+  category       TicketCategory @default(QUESTION)
+  priority       Priority       @default(NORMAL)
+  status         TicketStatus   @default(WAITING_SUPPORT)
+  createdById    String
+  createdAt      DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime       @updatedAt @db.Timestamptz(3)
+
+  organization Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  messages     SupportMessage[]
+  grants       SupportAccessGrant[]
+
+  @@unique([organizationId, number])
+  @@index([status, updatedAt])
+}
+
+model SupportMessage {
+  id            String   @id @default(cuid())
+  ticketId      String
+  authorUserId  String
+  authorIsStaff Boolean  @default(false)
+  body          String
+  createdAt     DateTime @default(now()) @db.Timestamptz(3)
+
+  ticket SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId, createdAt])
+}
+
+/// Customer-granted, time-limited, read-only access for NEXVO support staff. Every use is audited.
+model SupportAccessGrant {
+  id             String    @id @default(cuid())
+  organizationId String
+  ticketId       String?
+  grantedById    String
+  reason         String
+  expiresAt      DateTime  @db.Timestamptz(3)
+  revokedAt      DateTime? @db.Timestamptz(3)
+  revokedById    String?
+  createdAt      DateTime  @default(now()) @db.Timestamptz(3)
+
+  organization Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  ticket       SupportTicket? @relation(fields: [ticketId], references: [id])
+
+  @@index([organizationId, expiresAt])
+}
+
+// ───────────────────────────── AI assistance ─────────────────────────────
+
+/// Every AI suggestion shown to a human, with the decision they took. AI never acts on its own.
+model AiSuggestion {
+  id             String   @id @default(cuid())
+  organizationId String
+  feature        String
+  entityType     String
+  entityId       String
+  model          String
+  output         Json
+  accepted       Boolean?
+  inputTokens    Int?
+  outputTokens   Int?
+  createdById    String
+  createdAt      DateTime @default(now()) @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, entityType, entityId])
 }

@@ -26,6 +26,9 @@ Features that roll-off and hauler tools advertise (S-56–S-58), and NEXVO's sta
 | Double-booking locks on containers | RollOS | 🟡 state machine prevents delivering a container that is not in the yard |
 | Live GPS/telematics | Starlight, Rubicon | ❌ |
 | Integrated billing | AMCS, Starlight | ✅ |
+| Online customer payment | hauler suites generally | 🟡 Chargily adapter, test mode (round 3) |
+| Searchable, exportable lists | common | ✅ round 3 (server-side tables, Excel/CSV) |
+| Service/collection certificates | common requirement for commercial customers | ✅ round 3 (monthly certificate, portal) |
 
 ## Positioning conclusions
 

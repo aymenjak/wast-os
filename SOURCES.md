@@ -83,6 +83,20 @@ Each source ID (S-xx) is referenced from `RESEARCH-DOSSIER.md` and `DECISIONS.md
 | S-66 | Prisma 7 docs + official agent skills (`prisma/skills`) | https://www.prisma.io/docs | A |
 | S-67 | PostGIS documentation | https://postgis.net/documentation/ | A |
 | S-68 | GOV.UK Design System, Carbon, Material 3 (patterns only) | https://design-system.service.gov.uk/ · https://carbondesignsystem.com/ · https://m3.material.io/ | A |
+| S-69 | ClearPoint Strategy, KPI dashboard best practices | https://clearpointstrategy.com/blog/kpi-dashboard-best-practices | C (vendor blog; design guidance only) |
+| S-70 | UXPin, dashboard design principles | https://www.uxpin.com/studio/blog/dashboard-design-principles/ | C |
+| S-71 | FusionCharts, dashboard design best practices | https://www.fusioncharts.com/blog/dashboard-design-best-practices/ | C |
+| S-72 | Domo, dashboard design examples and best practices | https://www.domo.com/de/learn/article/dashboard-design-examples-best-practices | C |
+| S-73 | Chargily Pay V2 API reference, create checkout | https://dev.chargily.com/pay-v2/api-reference/checkouts/create | A (official docs) |
+| S-74 | `@chargily/chargily-pay` 2.1.0 SDK source (MIT), read from the npm tarball: base URLs, checkout fields, statuses, webhook signature | https://www.npmjs.com/package/@chargily/chargily-pay | A (official SDK code) |
+| S-75 | WorkOS, support impersonation and delegated sessions | https://workos.com/blog/support-impersonation-delegated-sessions | B (vendor, practice description) |
+| S-76 | Ory, identity-level impersonation | https://www.ory.com/blog/identity-level-impersonation | B |
+| S-77 | Tines docs, impersonation | https://www.tines.com/docs/admin/impersonation/ | B |
+| S-78 | GoodData docs, impersonation | https://www.gooddata.com/docs/cloud/security-and-compliance/impersonation | B |
+| S-79 | Lightdash docs, support access | https://docs.lightdash.com/support/support-access | B |
+| S-80 | Trail of Bits skills repository (security skills, CC BY-SA) | https://github.com/trailofbits/skills | A (primary repository) |
+| S-81 | OWASP CSV Injection | https://owasp.org/www-community/attacks/CSV_Injection | A |
+| S-82 | Next.js 16 Content Security Policy guide (bundled docs) | `node_modules/next/dist/docs` | A |
 
 ## Sources not yet consulted (open items)
 

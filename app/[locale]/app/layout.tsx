@@ -11,6 +11,8 @@ import { Logo } from "@/components/ui/misc";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { CommandPalette } from "@/components/command-palette";
 import { logoutAction, switchOrgAction } from "@/app/actions/public";
+import { endSupportSessionAction } from "@/app/actions/support";
+import { formatDateTime } from "@/lib/i18n/format";
 
 export const dynamic = "force-dynamic";
 export const metadata = { robots: { index: false } };
@@ -59,6 +61,7 @@ export default async function AppLayout({ children, params }: { children: React.
           <div className="hidden flex-1 md:flex"><CommandPalette /></div>
           <div className="ms-auto flex items-center gap-4">
             <LanguageSwitcher className="hidden sm:flex" />
+            {session?.user.isPlatformStaff && !ctx.support ? <Link href={`/${locale}/support-console`} className="hidden text-sm font-medium text-ink-800 hover:underline md:inline">{d.nav.supportConsole}</Link> : null}
             <span className="hidden text-sm text-ink-700 md:inline">{ctx.userName}</span>
             <form action={logoutAction}>
               <input type="hidden" name="locale" value={locale} />
@@ -69,6 +72,15 @@ export default async function AppLayout({ children, params }: { children: React.
             </form>
           </div>
         </header>
+        {ctx.support ? (
+          <div role="status" className="flex flex-wrap items-center justify-between gap-3 bg-hivis-600 px-4 py-2 text-sm font-medium text-ink-950 sm:px-6">
+            <span>{d.support.banner.replace("{time}", formatDateTime(ctx.support.expiresAt, locale, ctx.org.timezone))}</span>
+            <form action={endSupportSessionAction}>
+              <input type="hidden" name="locale" value={locale} />
+              <button type="submit" className="rounded bg-ink-950 px-3 py-1 text-white">{d.support.endSession}</button>
+            </form>
+          </div>
+        ) : null}
         <main id="main" className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:py-8">{children}</main>
       </div>
     </div>

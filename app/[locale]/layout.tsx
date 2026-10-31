@@ -1,13 +1,10 @@
 import "../globals.css";
 import type { Metadata, Viewport } from "next";
 import { notFound } from "next/navigation";
+import { headers } from "next/headers";
 import { dirOf, isLocale, LOCALES } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n";
 import { I18nProvider } from "@/components/i18n-provider";
-
-export function generateStaticParams() {
-  return LOCALES.map((locale) => ({ locale }));
-}
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
@@ -26,6 +23,8 @@ export const viewport: Viewport = { themeColor: "#0b5d4f", width: "device-width"
 export default async function RootLayout({ children, params }: { children: React.ReactNode; params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
+  // Reading request headers renders per request, so Next.js can apply the CSP nonce (see proxy.ts).
+  await headers();
   const dict = getDictionary(locale);
   return (
     <html lang={locale} dir={dirOf(locale)}>

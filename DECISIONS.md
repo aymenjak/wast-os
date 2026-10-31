@@ -28,3 +28,11 @@ Format: decision · reason · evidence (S = source, T = test, A = assumption) ·
 | D-22 | 2026-10-31 | Add recurring schedules, containers, ops map, route sheet, command palette | Core features in hauler software (route sheets, container tracking, recurring routes) per competitor research | S-56–S-58 | Done |
 | D-23 | 2026-10-31 | Working week stored per organization, default Sun–Thu | Algerian weekend is Fri–Sat | — | Active |
 | D-24 | 2026-10-31 | `unaccent`-based search via `nexvo_fold()` | French names with accents must match unaccented typing | T operations | Done |
+| D-25 | 2026-10-31 | Online payment through Chargily Pay V2 hosted checkout (CIB/Edahabia), test mode by default; D-06 superseded for the adapter, **live mode needs owner approval** | Chargily is an Algerian gateway with a published SDK; hosted page keeps card data out of NEXVO | S-73, S-74, T payments-chargily | Active (test mode) |
+| D-26 | 2026-10-31 | Webhook marks paid only when amount and currency equal the stored checkout; over-settlement → reconcile flag | Never trust metadata or the browser | T payments-chargily | Active |
+| D-27 | 2026-10-31 | Remote support = customer-granted, time-limited, read-only access under the staff member's own identity; no "log in as" | Vendor practice (WorkOS, Ory, Tines, GoodData, Lightdash); accountability and consent | S-75–S-79, T support-access | Active |
+| D-28 | 2026-10-31 | AI is optional (off without key), advisory only, minimised input; no automatic triage or decisions | D-12; privacy; prompt-injection risk in citizen text | T ai-assist, PRIVACY §6 | Active |
+| D-29 | 2026-10-31 | Shared rate limiter and login lockout in Postgres; nonce CSP on all HTML (pages render dynamically) | Multi-instance safety; XSS defence in depth | T security-hardening, e2e platform | Done |
+| D-30 | 2026-10-31 | Server-side tables with URL state instead of a client table library | Tenant scoping and large lists stay on the server; shareable views | T security-hardening | Done |
+| D-31 | 2026-10-31 | XLSX via `write-excel-file`, not `exceljs` | `exceljs` dependency tree had advisories | npm audit | Done |
+| D-32 | 2026-10-31 | Dashboard colours from the `dataviz` validator (blue/red pair, one-hue aging ramp) | Previous pair failed colour-vision-deficiency separation | DESIGN-SYSTEM.md | Done |

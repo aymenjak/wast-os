@@ -12,6 +12,20 @@
 | `systematic-debugging` | obra/superpowers, MIT | Yes — used for the search wildcard bug (root cause before fix) |
 | `webapp-testing` | Anthropic | Reviewed, **not adopted**: it depends on bundled Python scripts to execute; the project already uses Playwright in TypeScript |
 
+### Round 3 (2026-10-31): dashboards, documents, AI, tables, security, payments, support
+
+| Need | Skill / source | Decision |
+|------|----------------|----------|
+| Overview dashboard, charts | `dataviz` (Anthropic, built in) | **Used.** Followed its procedure; ran `scripts/validate_palette.js` (old pair failed, new pair passes ΔE 23.8); mark specs, hover layer, table view (DESIGN-SYSTEM.md §Data visualisation) |
+| AI integration | `claude-api` (Anthropic, built in) | **Used.** Current model id, structured output with Zod, server-side fallback, refusal and typed-error handling, timeouts/retries. AI stays optional and advisory |
+| Reports and documents | `xlsx`, `pdf`, `docx` (Anthropic, built in) | Reviewed. They produce files in an agent session, not inside a web app. For in-app documents we used `write-excel-file` (XLSX, RTL), formula-safe CSV, and printable HTML (certificate, route sheet, invoice), which browsers print to PDF |
+| Tables | TanStack Table skills (community, listed on skill indexes) | Reviewed, **not installed**: they target client-side tables; NEXVO keeps data server-side (tenant scoping, large lists). The useful practices were applied: URL state, sort whitelist, server pagination, `aria-sort`, debounce-free GET search, exports |
+| Security / pentest | Trail of Bits [`trailofbits/skills`](https://github.com/trailofbits/skills) (CC BY-SA 4.0) | Read, **not installed** (plugin form with workflow scripts; trust policy forbids running third-party scripts unreviewed). Its `insecure-defaults` checklist was applied by hand (SECURITY.md §Insecure-defaults review), plus a manual review of the diff and a script that lists service functions lacking a permission check. The built-in `security-review` skill was not run this round |
+| Online payment | No published Chargily skill found | Built from the official SDK source and API reference (S-73, S-74) |
+| Remote support | No skill found | Built from documented vendor practice (S-75–S-79): customer grant, time limit, own identity, read-only, audit |
+
+No new third-party skill was vendored in round 3.
+
 ## Project skills
 
 | Skill | Responsibility |

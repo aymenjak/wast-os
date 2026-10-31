@@ -33,6 +33,7 @@ export function buildNav(ctx: OrgContext, d: Dictionary, locale: string): NavSec
 
   if (p("team.manage")) admin.items.push({ href: `${base}/team`, label: d.nav.team, icon: "Users" });
   if (p("settings.manage")) admin.items.push({ href: `${base}/settings`, label: d.nav.settings, icon: "Settings" });
+  if (!ctx.support) admin.items.push({ href: `${base}/support`, label: d.nav.support, icon: "LifeBuoy" });
 
   return [top, civic, ops, commercial, admin].filter((s) => s.items.length > 0);
 }

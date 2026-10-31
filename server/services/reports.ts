@@ -2,6 +2,7 @@ import { prisma } from "../db";
 import { requirePermission, type OrgContext } from "../context";
 import { dateOnly } from "../validation";
 import { toMinor } from "@/lib/money";
+import { NotFoundError } from "../domain/errors";
 
 /** "Today" in the organization's timezone, as YYYY-MM-DD. */
 export function orgToday(ctx: OrgContext, now = new Date()): string {
@@ -121,4 +122,53 @@ export async function dailyTrend(ctx: OrgContext, days = 14) {
     const of = (s: string) => rows.find((r) => r.scheduledDate.toISOString().slice(0, 10) === day && r.status === s)?._count ?? 0;
     return { day, completed: of("COMPLETED"), failed: of("FAILED") };
   });
+}
+
+export type AgingBucket = "NOT_DUE" | "D1_30" | "D31_60" | "D61_90" | "D90_PLUS";
+
+/** Open receivables grouped by days past due (org-local today). */
+export async function receivablesAging(ctx: OrgContext) {
+  requirePermission(ctx, "invoices.read");
+  const today = dateOnly(orgToday(ctx));
+  const open = await prisma.invoice.findMany({
+    where: { organizationId: ctx.org.id, status: { in: ["ISSUED", "PARTIALLY_PAID"] } },
+    select: { total: true, amountPaid: true, dueDate: true },
+  });
+  const buckets: Record<AgingBucket, { minor: number; count: number }> = {
+    NOT_DUE: { minor: 0, count: 0 }, D1_30: { minor: 0, count: 0 }, D31_60: { minor: 0, count: 0 }, D61_90: { minor: 0, count: 0 }, D90_PLUS: { minor: 0, count: 0 },
+  };
+  for (const i of open) {
+    const days = i.dueDate ? Math.floor((today.getTime() - i.dueDate.getTime()) / 86400_000) : 0;
+    const b: AgingBucket = days <= 0 ? "NOT_DUE" : days <= 30 ? "D1_30" : days <= 60 ? "D31_60" : days <= 90 ? "D61_90" : "D90_PLUS";
+    buckets[b].minor += toMinor(i.total) - toMinor(i.amountPaid);
+    buckets[b].count += 1;
+  }
+  return buckets;
+}
+
+/** Collection certificate data: completed collections for one customer in one month (YYYY-MM). */
+export async function collectionCertificate(ctx: OrgContext, customerId: string, month: string) {
+  if (!(ctx.permissions.has("customers.read") || (ctx.role === "CUSTOMER_PORTAL" && ctx.customerId === customerId))) requirePermission(ctx, "customers.read");
+  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) throw new Error("Invalid month");
+  const from = dateOnly(`${month}-01`);
+  const to = new Date(Date.UTC(Number(month.slice(0, 4)), Number(month.slice(5, 7)), 0));
+  const [org, customer, orders] = await Promise.all([
+    prisma.organization.findUniqueOrThrow({ where: { id: ctx.org.id } }),
+    prisma.customer.findFirst({ where: { id: customerId, organizationId: ctx.org.id } }),
+    prisma.workOrder.findMany({
+      where: { organizationId: ctx.org.id, customerId, status: "COMPLETED", scheduledDate: { gte: from, lte: to } },
+      include: { serviceLocation: { select: { label: true, addressLine: true } }, wasteCategory: true, weightTickets: true },
+      orderBy: { scheduledDate: "asc" },
+    }),
+  ]);
+  if (!customer) throw new NotFoundError("Customer");
+  const byCategory = new Map<string, { code: string; count: number; netKgMinor: number }>();
+  for (const w of orders) {
+    const code = w.wasteCategory?.code ?? "—";
+    const e = byCategory.get(code) ?? { code, count: 0, netKgMinor: 0 };
+    e.count += 1;
+    e.netKgMinor += w.weightTickets.reduce((s, t) => s + toMinor(t.netKg), 0);
+    byCategory.set(code, e);
+  }
+  return { org, customer, orders, from, to, byCategory: [...byCategory.values()], reference: `ATT-${customer.code.replace(/^CUS-/, "")}-${month.replace("-", "")}` };
 }

@@ -68,9 +68,9 @@ export function DescriptionList({ items, className }: { items: [ReactNode, React
 }
 
 /** Table primitives: semantic markup, start-aligned (RTL-aware), horizontal scroll on small screens. */
-export function Table({ children, className }: { children: ReactNode; className?: string }) {
+export function Table({ children, className, scroll }: { children: ReactNode; className?: string; scroll?: boolean }) {
   return (
-    <div className="overflow-x-auto">
+    <div className={scroll ? "max-h-[70vh] overflow-auto" : "overflow-x-auto"}>
       <table className={cn("w-full border-collapse text-sm", className)}>{children}</table>
     </div>
   );

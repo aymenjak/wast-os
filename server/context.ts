@@ -21,6 +21,8 @@ export type OrgContext = {
     civicSlaHours: number;
   };
   permissions: ReadonlySet<Permission>;
+  /** Present when a NEXVO staff member is inside the workspace through a support grant (read-only). */
+  support?: { grantId: string; expiresAt: Date };
 };
 
 export function buildContext(input: Omit<OrgContext, "permissions">): OrgContext {

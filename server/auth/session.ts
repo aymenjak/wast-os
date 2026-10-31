@@ -11,7 +11,8 @@ export const SESSION_COOKIE = "nexvo_session";
 export async function setSessionCookie(token: string) {
   (await cookies()).set(SESSION_COOKIE, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    // Fail closed: secure whenever we run in production OR are served over HTTPS.
+    secure: process.env.NODE_ENV === "production" || (process.env.APP_URL ?? "").startsWith("https://"),
     sameSite: "lax",
     path: "/",
     maxAge: SESSION_TTL_MS / 1000,

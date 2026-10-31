@@ -17,11 +17,19 @@ Reference: OWASP ASVS 4.x (S-62). This document records what is implemented and 
 | Injection | SQL / XSS / CSV formula | Prisma parameterized + tagged `$queryRaw`; React escaping; Leaflet popups HTML-escaped; CSV cells prefixed | unit CSV |
 | Abuse | Brute force, spam reports | Rate limits on login, register, invite, contact, civic submit/feedback | unit |
 | Clickjacking/MIME | — | `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`; `x-powered-by` removed | e2e |
+| XSS (defence in depth) | Injected script on HTML pages | Per-request nonce CSP in `proxy.ts`: `script-src 'self' 'nonce-…' 'strict-dynamic'`, `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`, `frame-ancestors 'none'`, map-tile origin only in `img-src`. `style-src 'unsafe-inline'` is kept (React style attributes, Leaflet) | e2e `platform.spec` (header, fresh nonce per request, no CSP console violations) |
+| Credential stuffing | Many passwords on one account | Lockout after 5 failures for 15 min; locked accounts still run the full hash (no timing oracle); same generic error; `user.locked` audited; counter reset on success | `security-hardening.test.ts` |
+| Abuse across instances | Per-process limits bypassed by scaling out | Rate limiter in Postgres (`RateLimitBucket`, one atomic upsert per check); `RATE_LIMIT_SCALE` honoured only when `APP_URL` is localhost (fail closed) | `security-hardening.test.ts` |
+| Online payments | Forged/replayed/underpaid "paid" events | Chargily webhook: HMAC-SHA256 over raw body, constant-time compare, 64 KB cap; checkout row locked `FOR UPDATE`; amount and currency must equal the checkout we created (metadata never trusted); idempotency key `chargily:<id>`; money for an already-settled invoice → `payment.reconcile_required` audit, never silently applied; live mode refuses to run without an https `APP_URL` | `payments-chargily.test.ts` (14) |
+| Remote support | Vendor staff overreach, silent access | Access only after the customer's OWNER/ADMIN grants it (1/4/24 h, reason, revocable); staff act under their own identity as read-only VIEWER; every mutating server action refused in support sessions (`orgAction` guard); exports blocked; revoke/expiry/lost staff flag end the session on the next request; all grant/session events in the customer's audit log | `support-access.test.ts` (11), e2e |
+| AI features | Prompt injection, data leakage, automated decisions | Off unless `ANTHROPIC_API_KEY` is set; citizen text wrapped as untrusted data; no names, contacts, photos or coordinates sent; brief uses aggregate KPIs only; output schema-validated; suggestions stored and never applied automatically; accept/dismiss audited and permission-checked | `ai-assist.test.ts` (7, fake provider) |
+| Bulk data extraction | Exports by the wrong role | Exports permission-checked per kind, tenant-scoped, audited, `Cache-Control: no-store`; CSV formula-neutralised; XLSX cells written as typed values (no formulas) | `security-hardening.test.ts` |
 
 ## Secrets
 
 - `.env` is git-ignored; `.env.example` holds placeholders only. No real credentials in the repo or seed (seed users are synthetic with a documented demo password — **never run the seed in production**; it refuses when `NODE_ENV=production`).
 - `PAYMENT_WEBHOOK_SECRET` must be ≥32 random bytes in production.
+- `CHARGILY_SECRET_KEY` (online payments) and `ANTHROPIC_API_KEY` (AI) are optional; each feature is disabled when its key is absent. `CHARGILY_MODE` defaults to `test`; only the literal `live` switches to real money.
 - `NEXVO_FAST_HASH` (weak hashing) is ignored when `NODE_ENV=production`. `NEXVO_E2E`/`RATE_LIMIT_SCALE` must never be set in production.
 
 ## Audit trail
@@ -30,13 +38,29 @@ Reference: OWASP ASVS 4.x (S-62). This document records what is implemented and 
 
 ## Dependency hygiene
 
-`npm audit --omit=dev` → 0 vulnerabilities (2026-10-30). Versions pinned exactly. Run `npm audit` in CI (see DEPLOYMENT.md).
+`npm audit --omit=dev` → 0 vulnerabilities (2026-10-30, re-run 2026-10-31). `exceljs` was rejected because its dependency tree had advisories; `write-excel-file` is used instead. Versions pinned exactly. Run `npm audit` in CI (see DEPLOYMENT.md).
+
+## Insecure-defaults review (2026-10-31)
+
+Checklist adapted from Trail of Bits' `insecure-defaults` skill (read, not installed — see `docs/skills/README.md`):
+
+| Check | Finding | Action |
+|-------|---------|--------|
+| Fallback secrets | None: `CHARGILY_SECRET_KEY`, `ANTHROPIC_API_KEY`, `PAYMENT_WEBHOOK_SECRET` have no defaults; missing → feature off / signature fails | — |
+| Fail-open | Live Chargily without https `APP_URL` would have produced relative callback URLs | Fixed: refuses (test) |
+| Test switches in prod | `RATE_LIMIT_SCALE` could have relaxed limits anywhere | Fixed: honoured only on localhost (test); `NEXVO_FAST_HASH` ignored in production |
+| Permissive access | `recordAiDecision` had no permission check; support sessions could have used any action their VIEWER role allowed | Fixed: permission + global read-only guard (tests) |
+| Debug leakage | Errors map to translatable codes; unexpected errors logged server-side only; webhook returns no detail | — |
+| Weak crypto | scrypt N=2^17, HMAC-SHA256, `timingSafeEqual`, 256-bit random tokens | — |
+| Default credentials | Seed users exist only in development; seed refuses in production | — |
+
+Also run: `npm audit --omit=dev` → 0 vulnerabilities (2026-10-31).
 
 ## Known gaps (must close before production)
 
-1. Rate limiter is per-process → shared store for multi-instance.
+1. ~~Per-process rate limiter~~ (done: Postgres) · ~~no CSP on HTML~~ (done: nonce CSP) · ~~no lockout~~ (done).
 2. No 2FA, no password reset flow (needs an email provider), no session list/revoke UI.
-3. No Content-Security-Policy on HTML pages yet (only on file responses) — add a nonce-based CSP.
+3. Lockout can be used to lock a known user out for 15 min (accepted trade-off; IP-based login limit also applies). Revisit with 2FA/captcha.
 4. No Postgres row-level security (defence in depth).
 5. No antivirus scanning of PDFs; PNG/WebP metadata not stripped (only JPEG).
 6. Audit log is in the same database and writable by the app role — export to append-only storage.

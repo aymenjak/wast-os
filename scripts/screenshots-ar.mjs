@@ -93,6 +93,40 @@ async function firstHref(page, path, selector) {
   await shot(p, "/ar/app/reports", "التقارير والتصدير", S);
   await shot(p, "/ar/app/team", "الفريق والدعوات", S);
   await shot(p, "/ar/app/settings", "الإعدادات", S);
+  if (cu) await shot(p, `${cu}/certificate`, "شهادة جمع شهرية (للطباعة)", S, { name: "certificate" });
+  await shot(p, "/ar/app/customers?sort=name&dir=asc&q=", "جدول الزبائن: بحث وفرز وتصدير Excel", S, { name: "customers-table", full: false });
+  // Support: open a request and grant 1 h read-only access (synthetic data).
+  await p.goto(base + "/ar/app/support", { waitUntil: "networkidle" });
+  await p.fill('input[name=subject]', "فاتورة أكتوبر لا تظهر (مثال)");
+  await p.fill('textarea[name=body]', "لا أجد فاتورة شهر أكتوبر في القائمة. (بيانات تجريبية)");
+  await p.locator("form:has(textarea[name=body]) button[type=submit]").first().click();
+  await p.waitForURL(/\/app\/support\/c/);
+  await shot(p, null, "طلب دعم ومحادثة", S, { name: "support-ticket" });
+  await p.goto(base + "/ar/app/support", { waitUntil: "networkidle" });
+  await p.fill('input[name=reason]', "مراجعة قائمة الفواتير");
+  await p.locator("form:has(input[name=reason]) button[type=submit]").click();
+  await p.waitForTimeout(800);
+  await shot(p, "/ar/app/support", "الدعم: طلبات، وإذن وصول مؤقت وسجل الدخول", S, { name: "support" });
+  await c.close();
+}
+
+// ── NEXVO support staff ──
+{
+  const c = await ctx(); const p = await c.newPage();
+  await p.goto(`${base}/ar/login`);
+  await p.fill('input[name=email]', "support@nexvo.test");
+  await p.fill('input[name=password]', PASSWORD);
+  await p.click('button[type=submit]');
+  await p.waitForLoadState("networkidle");
+  const S = "فريق دعم NEXVO";
+  await shot(p, "/ar/support-console", "لوحة الدعم", S, { name: "support-console" });
+  const t = await firstHref(p, "/ar/support-console", "a[href*='/support-console/c']");
+  if (t) {
+    await shot(p, t, "طلب من زبون مع إذن الوصول", S, { name: "support-console-ticket" });
+    await p.locator("form button[type=submit]").filter({ hasText: /عرض|فتح/ }).first().click();
+    await p.waitForURL(/\/ar\/app$/);
+    await shot(p, null, "عرض الدعم للقراءة فقط (شريط واضح)", S, { name: "support-view", full: false });
+  }
   await c.close();
 }
 
@@ -115,6 +149,7 @@ async function firstHref(page, path, selector) {
   const c = await ctx(); const p = await c.newPage();
   await login(p, "portal@demo-client.test");
   await shot(p, "/ar/portal", "بوابة الزبون", "بوابة الزبون");
+  await shot(p, "/ar/portal/certificate", "شهادة الجمع للزبون", "بوابة الزبون", { name: "portal-certificate" });
   await c.close();
 }
 

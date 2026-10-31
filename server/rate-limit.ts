@@ -1,28 +1,36 @@
+import { prisma } from "./db";
+
 /**
- * Fixed-window in-memory rate limiter.
- * Limitation: per-process only. A multi-instance deployment must swap this for a
- * shared store (Postgres or Redis) behind the same function signature — see SECURITY.md.
+ * Shared fixed-window rate limiter backed by Postgres, so limits hold across app instances.
+ * One atomic upsert per check: the window resets when it expires.
+ *
+ * Test suites may scale limits with RATE_LIMIT_SCALE, but only when the app is served from
+ * localhost (fail-closed: a production URL always uses the real limits).
  */
-const buckets = new Map<string, { count: number; resetAt: number }>();
-
-// E2E suites run many sign-ups from one IP; they may raise limits outside production only.
-const SCALE = process.env.NODE_ENV !== "production" || process.env.NEXVO_E2E === "1" ? Number(process.env.RATE_LIMIT_SCALE ?? 1) || 1 : 1;
-
-export function rateLimit(key: string, baseLimit: number, windowMs: number): { ok: boolean; retryAfterMs: number } {
-  const limit = baseLimit * SCALE;
-  const now = Date.now();
-  const bucket = buckets.get(key);
-  if (!bucket || bucket.resetAt <= now) {
-    buckets.set(key, { count: 1, resetAt: now + windowMs });
-    if (buckets.size > 10_000) {
-      for (const [k, b] of buckets) if (b.resetAt <= now) buckets.delete(k);
-    }
-    return { ok: true, retryAfterMs: 0 };
-  }
-  bucket.count += 1;
-  return bucket.count > limit ? { ok: false, retryAfterMs: bucket.resetAt - now } : { ok: true, retryAfterMs: 0 };
+function scale() {
+  const local = /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(process.env.APP_URL ?? "");
+  return local ? Number(process.env.RATE_LIMIT_SCALE ?? 1) || 1 : 1;
 }
 
-export function resetRateLimits() {
-  buckets.clear();
+export async function rateLimit(key: string, baseLimit: number, windowMs: number): Promise<{ ok: boolean; retryAfterMs: number }> {
+  const limit = baseLimit * scale();
+  const resetAt = new Date(Date.now() + windowMs);
+  const rows = await prisma.$queryRaw<{ count: number; resetAt: Date }[]>`
+    INSERT INTO "RateLimitBucket" ("key", "count", "resetAt") VALUES (${key}, 1, ${resetAt})
+    ON CONFLICT ("key") DO UPDATE SET
+      "count"   = CASE WHEN "RateLimitBucket"."resetAt" <= now() THEN 1 ELSE "RateLimitBucket"."count" + 1 END,
+      "resetAt" = CASE WHEN "RateLimitBucket"."resetAt" <= now() THEN EXCLUDED."resetAt" ELSE "RateLimitBucket"."resetAt" END
+    RETURNING "count", "resetAt"`;
+  const row = rows[0]!;
+  return row.count > limit ? { ok: false, retryAfterMs: row.resetAt.getTime() - Date.now() } : { ok: true, retryAfterMs: 0 };
+}
+
+/** Housekeeping: delete expired buckets (call from a periodic job). */
+export async function purgeRateLimits() {
+  await prisma.rateLimitBucket.deleteMany({ where: { resetAt: { lt: new Date() } } });
+}
+
+/** Test helper. */
+export async function resetRateLimits() {
+  await prisma.rateLimitBucket.deleteMany({});
 }
