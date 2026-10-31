@@ -60,6 +60,7 @@ export default async function Staff({ params, searchParams }: { params: Promise<
                     <Td className="space-x-2 text-end whitespace-nowrap rtl:space-x-reverse">
                       {u.id === s.user.id ? null : <>
                         {locked ? <InlineAction action={setUserAccessAction} hidden={{ userId: u.id, action: "unlock" }} label={d.platform.staff.unlock} /> : null}
+                        {u.totpEnabledAt ? <InlineAction action={setUserAccessAction} hidden={{ userId: u.id, action: "reset2fa" }} label={d.platform.staff.reset2fa} /> : null}
                         {u.disabledAt
                           ? <InlineAction action={setUserAccessAction} hidden={{ userId: u.id, action: "enable" }} label={d.platform.staff.enable} />
                           : <InlineAction action={setUserAccessAction} hidden={{ userId: u.id, action: "disable" }} label={d.platform.staff.disable} variant="danger" />}

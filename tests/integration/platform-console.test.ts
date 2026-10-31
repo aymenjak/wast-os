@@ -17,7 +17,7 @@ let supportId: string;
 let tenant: Awaited<ReturnType<typeof newOrg>>;
 let muni: Awaited<ReturnType<typeof newOrg>>;
 const mk = (email: string, role: "OWNER" | "ADMIN" | "SUPPORT") =>
-  prisma.user.create({ data: { email, name: email, passwordHash: "x", isPlatformStaff: true, platformRole: role } }).then((u) => u.id);
+  prisma.user.create({ data: { email, name: email, passwordHash: "x", isPlatformStaff: true, platformRole: role, totpEnabledAt: new Date() } }).then((u) => u.id);
 const st = (q: Record<string, string> = {}) => tableState(q, TENANT_SORTS, { sort: "createdAt", dir: "desc" });
 
 beforeAll(async () => {

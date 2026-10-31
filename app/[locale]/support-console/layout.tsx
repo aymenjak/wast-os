@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { getDictionary } from "@/lib/i18n";
 import { isLocale, type Locale } from "@/lib/i18n/config";
 import { requireUser } from "@/server/auth/session";
@@ -16,6 +16,7 @@ export default async function ConsoleLayout({ children, params }: { children: Re
   const locale: Locale = raw;
   const s = await requireUser(locale);
   if (!s.user.isPlatformStaff) notFound();
+  if (!s.user.totpEnabledAt) redirect(`/${locale}/account/security?required=1`);
   const d = getDictionary(locale);
   return (
     <div className="min-h-dvh">

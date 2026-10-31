@@ -19,10 +19,21 @@
 | `APP_URL` | yes | used for invitation links |
 | `NEXT_PUBLIC_MAP_TILE_URL`, `NEXT_PUBLIC_MAP_ATTRIBUTION` | yes for production | contracted or self-hosted tiles (public OSM tiles are not allowed for production traffic) |
 | `SALES_EMAIL` | optional | contact-form recipient for the outbox worker |
-| `CHARGILY_SECRET_KEY` | optional | enables online card payment (CIB/Edahabia) via Chargily Pay V2; also the webhook signing secret. Configure the webhook URL `${APP_URL}/api/webhooks/chargily` in the Chargily dashboard |
-| `CHARGILY_MODE` | optional | `test` (default) or `live`. **Switching to `live` changes payment behaviour: owner approval required** (AGENTS.md rule 8). Live mode requires an https `APP_URL` |
+| `APP_ENCRYPTION_KEY` | **yes** | 32 random bytes, base64. Encrypts 2FA secrets and organizations' payment keys. Back it up separately from the database; losing it makes those unreadable (users re-enroll 2FA, organizations re-enter keys) |
+| `CHARGILY_SECRET_KEY` | optional | **NEXVO's own** Chargily account, used only for paying NEXVO subscription invoices; webhook `${APP_URL}/api/webhooks/chargily`. Collection companies enter their own keys in Settings; their webhook is `${APP_URL}/api/webhooks/chargily/org/<organizationId>` (shown to them) |
+| `CHARGILY_MODE` | optional | `test` (default) or `live` for the platform account. **Switching to `live` changes payment behaviour: owner approval required** (AGENTS.md rule 8). Live mode requires an https `APP_URL` |
 | `ANTHROPIC_API_KEY` | optional | enables AI suggestions (civic triage, operations brief). Data sent is described in PRIVACY-AND-COMPLIANCE.md §6; **owner approval required before enabling for customers** |
 | **Never set in production:** `NEXVO_FAST_HASH`, `NEXVO_E2E`, `RATE_LIMIT_SCALE` | | test-only switches (`RATE_LIMIT_SCALE` is ignored unless `APP_URL` is localhost) |
+
+Daily jobs (cron or the hosting scheduler):
+
+```bash
+npm run billing:run      # NEXVO subscription invoices, dunning; idempotent
+```
+
+IoT: devices post to `${APP_URL}/api/iot/v1/ingest` with their device key (see the IoT page for a curl example). LoRaWAN network servers (e.g. ChirpStack, The Things Stack) need a small payload-formatter or HTTP integration that maps their uplink to this JSON; none is bundled yet.
+
+Lost 2FA device for a staff member: `npm run platform:reset-2fa -- <email>` (or an admin in /platform/staff).
 
 Housekeeping: call `purgeRateLimits()` (server/rate-limit.ts) from a periodic job to delete expired buckets.
 

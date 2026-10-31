@@ -49,3 +49,57 @@ export async function expectNoHorizontalOverflow(page: Page) {
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(overflow).toBeLessThanOrEqual(1);
 }
+
+// ── Two-step verification (same algorithm as server/auth/totp.ts) ──
+import { createHmac } from "node:crypto";
+function b32(s: string) {
+  const A = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+  let bits = 0, v = 0; const out: number[] = [];
+  for (const c of s.replace(/=+$/, "")) { v = (v << 5) | A.indexOf(c); bits += 5; if (bits >= 8) { out.push((v >>> (bits - 8)) & 255); bits -= 8; } }
+  return Buffer.from(out);
+}
+export function totpNow(secret: string, step = Math.floor(Date.now() / 30000)) {
+  const m = Buffer.alloc(8); m.writeBigUInt64BE(BigInt(step));
+  const h = createHmac("sha1", b32(secret)).update(m).digest();
+  const o = h[h.length - 1]! & 15;
+  return String((h.readUInt32BE(o) & 0x7fffffff) % 1_000_000).padStart(6, "0");
+}
+const lastStep = new Map<string, number>();
+/** A code for a step not used before (the server refuses replays), waiting for the next 30 s window if needed. */
+export async function freshTotp(page: Page, secret: string) {
+  let step = Math.floor(Date.now() / 30000);
+  if ((lastStep.get(secret) ?? -1) >= step) {
+    await page.waitForTimeout((step + 1) * 30000 - Date.now() + 300);
+    step = Math.floor(Date.now() / 30000);
+  }
+  lastStep.set(secret, step);
+  return totpNow(secret, step);
+}
+
+/** Enrolls the signed-in user in 2FA through the UI; returns the secret. */
+export async function enrollTotp(page: Page, locale = "en") {
+  await page.goto(`/${locale}/account/security`);
+  await page.locator("form button[type=submit]").first().click();
+  const secret = (await page.getByTestId("totp-secret").textContent())!.trim();
+  await page.locator('input[name="code"]').fill(await freshTotp(page, secret));
+  await page.locator("form:has(input[name=code]) button[type=submit]").click();
+  await expect(page.getByTestId("recovery-codes")).toBeVisible();
+  return secret;
+}
+
+/** Sign in, answering the second step when asked. */
+export async function signIn(page: Page, email: string, opts: { secret?: string; locale?: string } = {}) {
+  const locale = opts.locale ?? "en";
+  await page.context().clearCookies();
+  await page.goto(`/${locale}/login`);
+  await page.locator('input[name="email"]').fill(email);
+  await page.locator('input[name="password"]').fill(PASSWORD);
+  await page.locator('button[type="submit"]').click();
+  if (opts.secret) {
+    await page.waitForURL(/\/login\/2fa/);
+    await page.locator('input[name="code"]').fill(await freshTotp(page, opts.secret));
+    await page.locator('button[type="submit"]').click();
+  }
+  // Leaves the login page, or lands back on it with a reason (?suspended=1, ?no-org=1).
+  await page.waitForURL((u) => !/\/login(\/2fa)?$/.test(u.pathname) || /suspended|no-org/.test(u.search));
+}

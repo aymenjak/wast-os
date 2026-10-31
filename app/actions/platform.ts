@@ -4,6 +4,7 @@ import { formToObject, localeFrom, toActionError } from "@/server/action";
 import { requireUser } from "@/server/auth/session";
 import { rateLimit } from "@/server/rate-limit";
 import * as platform from "@/server/services/platform";
+import * as billing from "@/server/services/billing";
 import type { ActionState } from "@/lib/actions/state";
 
 const s = (v: unknown) => (typeof v === "string" ? v : "");
@@ -50,4 +51,19 @@ export async function setUserAccessAction(_: ActionState, fd: FormData) {
   const id = s(fd.get("userId"));
   const org = s(fd.get("organizationId"));
   return platformAction(fd, (u, i) => platform.setUserAccess(u, id, i), ["/platform/staff", ...(org ? [`/platform/tenants/${org}`] : [])]);
+}
+
+export async function updateBillingSettingsAction(_: ActionState, fd: FormData) {
+  return platformAction(fd, (u, i) => billing.updateBillingSettings(u, i), ["/platform/billing"]);
+}
+export async function runBillingAction(_: ActionState, fd: FormData) {
+  return platformAction(fd, (u) => billing.runBillingAsStaff(u), ["/platform/billing", "/platform"]);
+}
+export async function recordPlatformPaymentAction(_: ActionState, fd: FormData) {
+  const id = s(fd.get("invoiceId"));
+  return platformAction(fd, (u, i) => billing.recordPlatformPayment(u, id, i), ["/platform/billing"]);
+}
+export async function voidPlatformInvoiceAction(_: ActionState, fd: FormData) {
+  const id = s(fd.get("invoiceId"));
+  return platformAction(fd, (u, i) => billing.voidPlatformInvoice(u, id, i), ["/platform/billing"]);
 }

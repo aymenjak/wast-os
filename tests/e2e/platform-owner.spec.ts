@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { PASSWORD, register, sql, uid } from "./helpers";
+import { enrollTotp, register, signIn as login, sql, uid } from "./helpers";
 
 /** Platform owner controls organizations; members of a suspended organization are locked out. */
 test.describe.serial("platform owner console", () => {
@@ -8,30 +8,27 @@ test.describe.serial("platform owner console", () => {
   const ownerEmail = `pfowner-${id}@e2e.test`;
   const org = `Suspend Me ${id}`;
 
-  async function signIn(page: import("@playwright/test").Page, email: string) {
-    await page.context().clearCookies();
-    await page.goto("/en/login");
-    await page.locator('input[name="email"]').fill(email);
-    await page.locator('input[name="password"]').fill(PASSWORD);
-    await page.locator('button[type="submit"]').click();
-  }
+  let ownerSecret = "";
+  const signIn = (page: import("@playwright/test").Page, email: string) => login(page, email, { secret: email === ownerEmail ? ownerSecret || undefined : undefined });
 
   test("setup: a tenant and a platform owner", async ({ page }) => {
     await register(page, { org, email: tenantEmail });
     await register(page, { org: `Owner tmp ${id}`, email: ownerEmail });
     await sql(`UPDATE "User" SET "isPlatformStaff" = true, "platformRole" = 'OWNER' WHERE email = $1`, [ownerEmail]);
     await sql(`DELETE FROM "Membership" WHERE "userId" = (SELECT id FROM "User" WHERE email = $1)`, [ownerEmail]);
+    await page.goto("/en/platform");
+    await page.waitForURL(/account\/security\?required=1/);
+    ownerSecret = await enrollTotp(page);
   });
 
   test("tenant users get 404 on the platform console", async ({ page }) => {
     await signIn(page, tenantEmail);
-    await page.waitForURL(/\/app/);
     expect((await page.goto("/en/platform"))!.status()).toBe(404);
   });
 
   test("owner lands on the console, finds the organization, changes plan, suspends it", async ({ page }) => {
     await signIn(page, ownerEmail);
-    await page.waitForURL(/\/en\/platform$/);
+    await expect(page).toHaveURL(/\/en\/platform$/);
     await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
     await page.goto("/en/platform/tenants");
     await page.locator("#table-q").fill(id);
@@ -49,7 +46,7 @@ test.describe.serial("platform owner console", () => {
 
   test("members of the suspended organization are locked out with a clear message", async ({ page }) => {
     await signIn(page, tenantEmail);
-    await page.waitForURL(/suspended=1/);
+    await expect(page).toHaveURL(/suspended=1/);
     await expect(page.getByText("This workspace is suspended")).toBeVisible();
     await page.goto("/en/app/customers");
     await expect(page).toHaveURL(/suspended=1/);
@@ -57,12 +54,11 @@ test.describe.serial("platform owner console", () => {
 
   test("owner reactivates; access returns", async ({ page }) => {
     await signIn(page, ownerEmail);
-    await page.waitForURL(/\/platform/);
     await page.goto(`/en/platform/tenants?q=${id}`);
     await page.getByRole("link", { name: org }).click();
     await page.getByRole("button", { name: "Reactivate" }).click();
     await expect(page.getByRole("button", { name: "Suspend organization" })).toBeVisible();
     await signIn(page, tenantEmail);
-    await page.waitForURL(/\/en\/app$/);
+    await expect(page).toHaveURL(/\/en\/app$/);
   });
 });

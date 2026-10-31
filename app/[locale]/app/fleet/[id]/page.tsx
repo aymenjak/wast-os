@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { formatDateTime } from "@/lib/i18n/format";
 import { orgToday } from "@/server/services/reports";
 import type { Locale } from "@/lib/i18n/config";
 import { appPage, orNotFound } from "@/server/page";
@@ -40,6 +41,10 @@ export default async function VehicleDetail({ params }: { params: Promise<{ loca
                 [d.fleet.capacity, v.capacityKg ? formatNumber(v.capacityKg, locale) : null],
                 [d.fleet.odometer, v.odometerKm != null ? formatNumber(v.odometerKm, locale) : null],
                 [d.fleet.restrictions, v.restrictions],
+                [d.iot.lastPosition, v.lastPositionAt && v.lastLatitude && v.lastLongitude ? (
+                  <span key="gps"><a className="num hover:underline" target="_blank" rel="noopener noreferrer" href={`https://www.openstreetmap.org/?mlat=${v.lastLatitude}&mlon=${v.lastLongitude}#map=16/${v.lastLatitude}/${v.lastLongitude}`}>{v.lastLatitude.toString()}, {v.lastLongitude.toString()}</a>
+                    <span className="block text-xs text-ink-600">{formatDateTime(v.lastPositionAt, locale, ctx.org.timezone)}{v.lastSpeedKmh != null ? ` · ${v.lastSpeedKmh} km/h` : ""}</span></span>
+                ) : null],
               ]} />
             </CardBody>
           </Card>

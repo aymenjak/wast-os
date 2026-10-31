@@ -15,7 +15,7 @@ import { Disclosure } from "@/components/inline-action";
 import { RequestForm } from "@/components/forms/request-form";
 import { FeedbackForm } from "./feedback-form";
 import { PayOnline } from "@/components/pay-online";
-import { chargilyEnabled } from "@/server/payments/chargily";
+import { orgChargilyStatus } from "@/server/payments/chargily";
 
 export default async function PortalHome({ params, searchParams }: { params: Promise<{ locale: Locale }>; searchParams: Promise<{ payment?: string }> }) {
   const { locale, ctx, d } = await appPage(params);
@@ -25,7 +25,7 @@ export default async function PortalHome({ params, searchParams }: { params: Pro
   });
   const [requests, orders, invoices, cats] = await Promise.all([listRequests(ctx), listWorkOrders(ctx), listInvoices(ctx), wasteCategoryOptions(ctx)]);
   const { payment } = await searchParams;
-  const online = chargilyEnabled();
+  const online = (await orgChargilyStatus(ctx.org.id)).configured;
   const month = orgToday(ctx).slice(0, 7);
   const name = (x: { nameEn: string; nameFr: string; nameAr: string }) => (locale === "ar" ? x.nameAr : locale === "fr" ? x.nameFr : x.nameEn);
   return (

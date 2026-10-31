@@ -67,3 +67,11 @@ Card data is entered on Chargily's hosted page; NEXVO never sees card numbers. N
 ## 9. Platform operator access
 
 The company running NEXVO (platform OWNER/ADMIN) sees, for each organization: profile (name, contact, NIF/RC), subscription, members' names, emails and roles, usage counts and the last activity date. It does not see customers, contracts, invoices, photos or citizen reports. Every operator action (subscription, verification, suspension, account disable/enable/unlock, role changes) is audited; actions on an organization appear in that organization's own audit log. There is no delete button: removing an organization's data is a manual procedure requiring owner approval and a retention check.
+
+## 10. IoT and vehicle tracking
+
+GPS positions of vehicles reveal where drivers are during work: this is personal data about employees. Before enabling trackers an organization must inform its staff (purpose, retention, who can see it) under Law 18-07 and labour rules; NEXVO stores positions per organization only, shows the latest position to fleet managers, and has no retention job yet (to add: e.g. 90 days). Fill-level sensors carry no personal data.
+
+## 11. Two-step verification and payment keys
+
+TOTP secrets and organizations' payment keys are encrypted at rest (AES-256-GCM). Recovery codes are stored hashed.

@@ -6,6 +6,8 @@ import { DomainError, ForbiddenError, NotFoundError } from "../domain/errors";
 import { audit } from "../audit";
 import { applyPaymentTx } from "../services/invoices";
 import { fromMinor, toMinor } from "@/lib/money";
+import { decryptSecret, encryptSecret } from "../crypto";
+import { parse } from "../validation";
 
 /**
  * Chargily Pay V2 (CIB / Edahabia) adapter.
@@ -15,15 +17,70 @@ import { fromMinor, toMinor } from "@/lib/money";
  *  - checkout.status: pending | processing | paid | failed | canceled
  *  - webhook: header `signature` = hex(HMAC-SHA256(raw body, secret key))
  * Not yet verified against a live test account: minimum amount and decimal handling of `amount`.
+ *
+ * Money routing: an organization's customer payments use THAT organization's own Chargily account
+ * (encrypted key on Organization, per-organization webhook URL). The platform key in the environment
+ * (CHARGILY_SECRET_KEY) is used only for NEXVO's own subscription invoices (services/billing.ts).
  */
 export const PROVIDER = "chargily";
 const BASES = { test: "https://pay.chargily.net/test/api/v2", live: "https://pay.chargily.net/api/v2" } as const;
 
-export function chargilyEnabled() {
-  return !!process.env.CHARGILY_SECRET_KEY;
+export type ChargilyAccount = { secret: string; mode: "test" | "live" };
+
+/** NEXVO's own account (subscription billing only). */
+export function platformChargily(): ChargilyAccount | null {
+  const secret = process.env.CHARGILY_SECRET_KEY;
+  return secret ? { secret, mode: process.env.CHARGILY_MODE === "live" ? "live" : "test" } : null;
 }
-function mode(): "test" | "live" {
-  return process.env.CHARGILY_MODE === "live" ? "live" : "test";
+
+/** The organization's own merchant account, or null when not configured. */
+export async function orgChargily(organizationId: string): Promise<ChargilyAccount | null> {
+  const o = await prisma.organization.findUnique({ where: { id: organizationId }, select: { chargilySecretEnc: true, chargilyMode: true } });
+  if (!o?.chargilySecretEnc) return null;
+  return { secret: decryptSecret(o.chargilySecretEnc), mode: o.chargilyMode === "live" ? "live" : "test" };
+}
+
+export async function orgChargilyStatus(organizationId: string) {
+  const o = await prisma.organization.findUnique({ where: { id: organizationId }, select: { chargilySecretEnc: true, chargilyMode: true } });
+  return { configured: !!o?.chargilySecretEnc, mode: (o?.chargilyMode ?? "test") as "test" | "live" };
+}
+
+/** Owner/admin stores the organization's own Chargily secret key (write-only; never shown again). */
+export async function setOrgChargily(ctx: OrgContext, input: unknown) {
+  if (!hasPermission(ctx, "settings.manage")) throw new ForbiddenError("settings.manage");
+  const data = parse(z.object({ secretKey: z.string().trim().min(20).max(200).regex(/^\S+$/), mode: z.enum(["test", "live"]) }), input);
+  if (/^test_/.test(data.secretKey) && data.mode === "live") throw new DomainError("errors.payment.keyModeMismatch");
+  if (/^live_/.test(data.secretKey) && data.mode === "test") throw new DomainError("errors.payment.keyModeMismatch");
+  await prisma.$transaction(async (tx) => {
+    await tx.organization.update({ where: { id: ctx.org.id }, data: { chargilySecretEnc: encryptSecret(data.secretKey), chargilyMode: data.mode } });
+    await audit(tx, { organizationId: ctx.org.id, actorUserId: ctx.userId, action: "payment.provider_configured", entityType: "Organization", entityId: ctx.org.id, data: { provider: PROVIDER, mode: data.mode } });
+  });
+}
+
+export async function clearOrgChargily(ctx: OrgContext) {
+  if (!hasPermission(ctx, "settings.manage")) throw new ForbiddenError("settings.manage");
+  await prisma.$transaction(async (tx) => {
+    await tx.organization.update({ where: { id: ctx.org.id }, data: { chargilySecretEnc: null, chargilyMode: "test" } });
+    await audit(tx, { organizationId: ctx.org.id, actorUserId: ctx.userId, action: "payment.provider_removed", entityType: "Organization", entityId: ctx.org.id, data: { provider: PROVIDER } });
+  });
+}
+
+/** Creates a hosted checkout on the given account. */
+export async function chargilyCheckout(account: ChargilyAccount, body: Record<string, unknown>) {
+  const app = process.env.APP_URL ?? "";
+  // Fail closed: live payments need absolute https callback/webhook URLs.
+  if (account.mode === "live" && !app.startsWith("https://")) throw new DomainError("errors.payment.providerUnavailable");
+  const res = await fetchImpl(`${BASES[account.mode]}/checkouts`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${account.secret}`, "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(15_000),
+  });
+  if (!res.ok) {
+    console.error("[chargily] checkout creation failed", res.status);
+    throw new DomainError("errors.payment.providerUnavailable");
+  }
+  return z.object({ id: z.string().min(1), checkout_url: z.string().url(), livemode: z.boolean().optional() }).parse(await res.json());
 }
 
 type Fetch = typeof fetch;
@@ -38,7 +95,8 @@ export function setChargilyFetch(f: Fetch) {
  * only their own invoices; staff need payments.record.
  */
 export async function createInvoiceCheckout(ctx: OrgContext, invoiceId: string, locale: "ar" | "fr" | "en") {
-  if (!chargilyEnabled()) throw new DomainError("errors.payment.onlineDisabled");
+  const account = await orgChargily(ctx.org.id);
+  if (!account) throw new DomainError("errors.payment.onlineDisabled");
   const portal = ctx.role === "CUSTOMER_PORTAL";
   if (!portal && !hasPermission(ctx, "payments.record")) throw new ForbiddenError("payments.record");
   const inv = await prisma.invoice.findFirst({
@@ -50,33 +108,21 @@ export async function createInvoiceCheckout(ctx: OrgContext, invoiceId: string, 
   if (balanceMinor <= 0) throw new DomainError("errors.payment.invoiceNotOpen");
 
   const app = process.env.APP_URL ?? "";
-  // Fail closed: live payments need an absolute https callback/webhook URL.
-  if (mode() === "live" && !app.startsWith("https://")) throw new DomainError("errors.payment.providerUnavailable");
   const back = `${app}/${locale}/${portal ? "portal" : `app/invoices/${inv.id}`}`;
-  const res = await fetchImpl(`${BASES[mode()]}/checkouts`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${process.env.CHARGILY_SECRET_KEY}`, "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify({
-      amount: balanceMinor / 100,
-      currency: "dzd",
-      success_url: `${back}?payment=returned`,
-      failure_url: `${back}?payment=failed`,
-      webhook_endpoint: `${app}/api/webhooks/chargily`,
-      locale,
-      description: `${inv.number ?? inv.id}`,
-      metadata: { organizationId: ctx.org.id, invoiceId: inv.id },
-    }),
-    signal: AbortSignal.timeout(15_000),
+  const body = await chargilyCheckout(account, {
+    amount: balanceMinor / 100,
+    currency: "dzd",
+    success_url: `${back}?payment=returned`,
+    failure_url: `${back}?payment=failed`,
+    webhook_endpoint: `${app}/api/webhooks/chargily/org/${ctx.org.id}`,
+    locale,
+    description: `${inv.number ?? inv.id}`,
+    metadata: { kind: "invoice", organizationId: ctx.org.id, invoiceId: inv.id },
   });
-  if (!res.ok) {
-    console.error("[chargily] checkout creation failed", res.status);
-    throw new DomainError("errors.payment.providerUnavailable");
-  }
-  const body = z.object({ id: z.string().min(1), checkout_url: z.string().url(), livemode: z.boolean().optional() }).parse(await res.json());
   const checkout = await prisma.paymentCheckout.create({
     data: {
       organizationId: ctx.org.id, invoiceId: inv.id, provider: PROVIDER, externalId: body.id, amount: fromMinor(balanceMinor),
-      currency: "DZD", checkoutUrl: body.checkout_url, livemode: body.livemode ?? mode() === "live", createdById: ctx.userId,
+      currency: "DZD", checkoutUrl: body.checkout_url, livemode: body.livemode ?? account.mode === "live", createdById: ctx.userId,
     },
   });
   await audit(prisma, { organizationId: ctx.org.id, actorUserId: ctx.userId, action: "payment.checkout_created", entityType: "Invoice", entityId: inv.id, data: { provider: PROVIDER, checkoutId: checkout.id, amount: checkout.amount.toString() } });
@@ -90,7 +136,7 @@ export function verifyChargilySignature(raw: string, signature: string | null, s
   return expected.length === given.length && timingSafeEqual(expected, given);
 }
 
-const eventSchema = z.object({
+export const eventSchema = z.object({
   id: z.string().optional(),
   type: z.string(),
   data: z.object({ id: z.string().min(1), status: z.string(), amount: z.number(), currency: z.string() }).passthrough(),
@@ -100,12 +146,14 @@ const eventSchema = z.object({
  * Applies a verified webhook. The invoice is marked paid only when the event amount and currency match
  * the checkout we created (never trusting metadata alone). Replays have no second effect.
  */
-export async function handleChargilyWebhook(raw: string, signature: string | null) {
-  if (!verifyChargilySignature(raw, signature, process.env.CHARGILY_SECRET_KEY)) throw new ForbiddenError("webhook.signature");
+export async function handleChargilyWebhook(organizationId: string, raw: string, signature: string | null) {
+  // Verified with THIS organization's key; a checkout of another organization is never touched.
+  const account = await orgChargily(organizationId).catch(() => null);
+  if (!account || !verifyChargilySignature(raw, signature, account.secret)) throw new ForbiddenError("webhook.signature");
   const evt = eventSchema.parse(JSON.parse(raw));
   return prisma.$transaction(async (tx) => {
     const rows = await tx.$queryRaw<{ id: string }[]>`
-      SELECT "id" FROM "PaymentCheckout" WHERE "provider" = ${PROVIDER} AND "externalId" = ${evt.data.id} FOR UPDATE`;
+      SELECT "id" FROM "PaymentCheckout" WHERE "provider" = ${PROVIDER} AND "externalId" = ${evt.data.id} AND "organizationId" = ${organizationId} FOR UPDATE`;
     if (!rows[0]) return { outcome: "unknown_checkout" as const };
     const c = await tx.paymentCheckout.findUniqueOrThrow({ where: { id: rows[0].id } });
     if (c.status === "PAID") return { outcome: "duplicate" as const };

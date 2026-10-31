@@ -39,7 +39,7 @@ export default async function Tenant({ params }: { params: Promise<{ locale: Loc
             <CardHeader title={d.platform.tenant.subscription} />
             <CardBody>
               <SubscriptionForm organizationId={o.id} plans={plans.map((p) => ({ code: p.code, name: `${p.name} (${p.code})` }))}
-                current={o.subscription ? { planCode: o.subscription.planCode, status: o.subscription.status, end: o.subscription.currentPeriodEnd.toISOString().slice(0, 10) } : null} />
+                current={o.subscription ? { planCode: o.subscription.planCode, status: o.subscription.status, end: o.subscription.currentPeriodEnd.toISOString().slice(0, 10), cycle: o.subscription.billingCycle } : null} />
             </CardBody>
           </Card>
           <Card>

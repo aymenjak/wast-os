@@ -6,6 +6,9 @@
 import "dotenv/config";
 import { prisma } from "../server/db";
 import { hashPassword } from "../server/auth/password";
+import { encryptSecret } from "../server/crypto";
+/** Synthetic, published in README for the demo only. */
+export const DEMO_TOTP_SECRET = "NEXVODEMOTOTPSECRETAAAAAAAAAAAAA";
 import { registerOrganization, loadContext, inviteMember, acceptInvitation } from "../server/services/accounts";
 import { createCustomer, addServiceLocation, addContact } from "../server/services/customers";
 import { createContract, setContractStatus } from "../server/services/contracts";
@@ -32,14 +35,18 @@ async function main() {
   }
 
   // Platform operator accounts (synthetic). No membership: support sees a tenant only through a time-limited grant.
+  // Staff must use two-step verification; demo accounts share a PUBLIC synthetic TOTP secret (DEMO_TOTP_SECRET) — never reuse it.
+  const mfa = { totpSecretEnc: encryptSecret(DEMO_TOTP_SECRET), totpEnabledAt: new Date() };
   for (const [mail, name, role] of [["admin@nexvo.test", "Propriétaire NEXVO", "OWNER"], ["support@nexvo.test", "Support NEXVO", "SUPPORT"]] as const) {
     const existing = await prisma.user.findUnique({ where: { email: mail } });
-    if (!existing) await prisma.user.create({ data: { email: mail, name, passwordHash: await hashPassword(PASSWORD), isPlatformStaff: true, platformRole: role, locale: "ar" } });
-    else if (!existing.platformRole) await prisma.user.update({ where: { id: existing.id }, data: { isPlatformStaff: true, platformRole: role } });
+    if (!existing) await prisma.user.create({ data: { email: mail, name, passwordHash: await hashPassword(PASSWORD), isPlatformStaff: true, platformRole: role, locale: "ar", ...mfa } });
+    else if (!existing.totpEnabledAt) await prisma.user.update({ where: { id: existing.id }, data: { isPlatformStaff: true, platformRole: role, ...mfa } });
   }
+  // Billing stays OFF until the owner enters NEXVO's real legal details in the console.
 
   if (await prisma.user.findUnique({ where: { email: "owner@demo-collecte.test" } })) {
-    console.log("Seed data already present — plans refreshed, nothing else changed.");
+    await seedIotDemo();
+    console.log("Seed data already present — plans refreshed, IoT demo ensured, nothing else changed.");
     return;
   }
 
@@ -145,6 +152,8 @@ async function main() {
     await acceptInvitation({ token, name: "Mounia Démo", password: PASSWORD });
   }
 
+  await seedIotDemo();
+
   const plusSix = new Date(Date.now() + 6 * 86400_000).toISOString().slice(0, 10);
   await generateRecurringWorkOrders(dispatcher, { from: today, to: plusSix });
 
@@ -167,8 +176,31 @@ async function main() {
   Finance:         finance@demo-collecte.test
   Municipality:    civic@demo-apc.test
   Customer portal: portal@demo-client.test
-  Platform owner:  admin@nexvo.test (console at /fr/platform)
+  Platform owner:  admin@nexvo.test (console at /fr/platform; 2-step code from secret ${DEMO_TOTP_SECRET})
   Support staff:   support@nexvo.test (console at /fr/support-console)`);
+}
+
+/** Synthetic IoT demo: two fill sensors with 3 days of readings and one GPS tracker. Idempotent. */
+async function seedIotDemo() {
+  const owner = await prisma.user.findUnique({ where: { email: "owner@demo-collecte.test" }, include: { memberships: true } });
+  const orgId = owner?.memberships[0]?.organizationId;
+  if (!owner || !orgId || (await prisma.iotDevice.count({ where: { organizationId: orgId } }))) return;
+  const ctx = (await loadContext(owner.id, orgId))!;
+  const { registerDevice, authenticateDevice, ingest } = await import("../server/services/iot");
+  const containers = await prisma.container.findMany({ where: { organizationId: orgId }, take: 2, orderBy: { code: "asc" } });
+  const now = Date.now();
+  for (const [i, c] of containers.entries()) {
+    const { key } = await registerDevice(ctx, { kind: "FILL_SENSOR", name: `Capteur ${c.code}`, serial: `DEMO-FS-${i + 1}`, containerId: c.id });
+    const device = (await authenticateDevice(`Bearer ${key}`))!;
+    const start = i === 0 ? 30 : 10, rate = i === 0 ? 18 : 9; // % and %/day (synthetic)
+    const readings = Array.from({ length: 13 }, (_, h) => ({ measuredAt: new Date(now - (72 - h * 6) * 3600_000).toISOString(), fillPct: Math.min(100, Math.round(start + (rate * h * 6) / 24)), batteryPct: 80 - h, temperatureC: 22 }));
+    await ingest(device, { readings });
+  }
+  const vehicle = await prisma.vehicle.findFirst({ where: { organizationId: orgId }, orderBy: { plateNumber: "asc" } });
+  if (vehicle) {
+    const { key } = await registerDevice(ctx, { kind: "GPS_TRACKER", name: `GPS ${vehicle.plateNumber}`, serial: "DEMO-GPS-1", vehicleId: vehicle.id });
+    await ingest((await authenticateDevice(`Bearer ${key}`))!, { positions: [{ recordedAt: new Date(now - 5 * 60_000).toISOString(), lat: 35.6971, lng: -0.6308, speedKmh: 24, heading: 90 }] });
+  }
 }
 
 main().then(() => prisma.$disconnect()).catch(async (e) => { console.error(e); await prisma.$disconnect(); process.exit(1); });

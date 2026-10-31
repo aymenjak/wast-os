@@ -19,6 +19,25 @@ export async function setSessionCookie(token: string) {
   });
 }
 
+const CHALLENGE_COOKIE = "nexvo_2fa";
+
+/** Short-lived cookie holding the pending second-factor challenge (no session yet). */
+export async function setChallengeCookie(token: string) {
+  (await cookies()).set(CHALLENGE_COOKIE, token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production" || (process.env.APP_URL ?? "").startsWith("https://"),
+    sameSite: "lax",
+    path: "/",
+    maxAge: 600,
+  });
+}
+export async function challengeToken() {
+  return (await cookies()).get(CHALLENGE_COOKIE)?.value ?? null;
+}
+export async function clearChallengeCookie() {
+  (await cookies()).delete(CHALLENGE_COOKIE);
+}
+
 export async function clearSessionCookie() {
   (await cookies()).delete(SESSION_COOKIE);
 }

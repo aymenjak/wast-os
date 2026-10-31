@@ -2,6 +2,27 @@
 // Usage: node scripts/screenshots-ar.mjs [outDir]   (server on :3000 with seed data)
 import { chromium } from "playwright";
 import { mkdirSync, writeFileSync } from "node:fs";
+import { createHmac } from "node:crypto";
+
+// Demo staff use the PUBLIC synthetic secret from prisma/seed.ts.
+const DEMO_TOTP_SECRET = "NEXVODEMOTOTPSECRETAAAAAAAAAAAAA";
+function totp(secret, step = Math.floor(Date.now() / 30000)) {
+  const A = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567"; let bits = 0, v = 0; const key = [];
+  for (const c of secret) { v = (v << 5) | A.indexOf(c); bits += 5; if (bits >= 8) { key.push((v >>> (bits - 8)) & 255); bits -= 8; } }
+  const m = Buffer.alloc(8); m.writeBigUInt64BE(BigInt(step));
+  const h = createHmac("sha1", Buffer.from(key)).update(m).digest(); const o = h[h.length - 1] & 15;
+  return String((h.readUInt32BE(o) & 0x7fffffff) % 1000000).padStart(6, "0");
+}
+async function staffLogin(page, email) {
+  await page.goto(`${base}/ar/login`);
+  await page.fill('input[name=email]', email);
+  await page.fill('input[name=password]', PASSWORD);
+  await page.click('button[type=submit]');
+  await page.waitForURL(/\/login\/2fa/);
+  await page.fill('input[name=code]', totp(DEMO_TOTP_SECRET));
+  await page.click('button[type=submit]');
+  await page.waitForURL(/\/(platform|support-console)/);
+}
 
 const out = process.argv[2] ?? "docs/screenshots/ar";
 const base = process.env.BASE_URL ?? "http://localhost:3000";
@@ -94,6 +115,10 @@ async function firstHref(page, path, selector) {
   await shot(p, "/ar/app/team", "الفريق والدعوات", S);
   await shot(p, "/ar/app/settings", "الإعدادات", S);
   if (cu) await shot(p, `${cu}/certificate`, "شهادة جمع شهرية (للطباعة)", S, { name: "certificate" });
+  await shot(p, "/ar/app/iot", "المستشعرات وأجهزة التتبع: تنبيهات وتوقّع الامتلاء", S, { name: "iot" });
+  const ctIot = await firstHref(p, "/ar/app/iot", "a[href*='/app/containers/c']");
+  if (ctIot) await shot(p, ctIot, "حاوية بمستشعر: القراءات والتوقّع", S, { name: "container-iot" });
+  await shot(p, "/ar/app/billing", "اشتراك المؤسسة وفواتير NEXVO", S, { name: "billing" });
   await shot(p, "/ar/app/customers?sort=name&dir=asc&q=", "جدول الزبائن: بحث وفرز وتصدير Excel", S, { name: "customers-table", full: false });
   // Support: open a request and grant 1 h read-only access (synthetic data).
   await p.goto(base + "/ar/app/support", { waitUntil: "networkidle" });
@@ -113,17 +138,16 @@ async function firstHref(page, path, selector) {
 // ── Platform owner ──
 {
   const c = await ctx(); const p = await c.newPage();
-  await p.goto(`${base}/ar/login`);
-  await p.fill('input[name=email]', "admin@nexvo.test");
-  await p.fill('input[name=password]', PASSWORD);
-  await p.click('button[type=submit]');
-  await p.waitForURL(/\/ar\/platform/);
+  await staffLogin(p, "admin@nexvo.test");
   const S = "مالك المنصة";
+  await shot(p, null, "التحقق بخطوتين مفعّل لفريق المنصة", S, { name: "platform-login-ok", full: false });
   await shot(p, "/ar/platform", "لوحة مالك المنصة", S, { name: "platform" });
   await shot(p, "/ar/platform/tenants", "كل المؤسسات: بحث وفلاتر", S, { name: "platform-tenants" });
   const t = await firstHref(p, "/ar/platform/tenants", "a[href*='/platform/tenants/c']");
   if (t) await shot(p, t, "مؤسسة: الاشتراك والأعضاء والإيقاف", S, { name: "platform-tenant" });
   await shot(p, "/ar/platform/plans", "الباقات والأسعار والحدود", S, { name: "platform-plans" });
+  await shot(p, "/ar/platform/billing", "فوترة اشتراكات NEXVO", S, { name: "platform-billing" });
+  await shot(p, "/ar/account/security", "أمان الحساب: التحقق بخطوتين", S, { name: "account-security" });
   await shot(p, "/ar/platform/staff?q=demo", "فريق المنصة والحسابات", S, { name: "platform-staff" });
   await shot(p, "/ar/platform/audit", "سجل التدقيق", S, { name: "platform-audit" });
   await c.close();
@@ -132,11 +156,8 @@ async function firstHref(page, path, selector) {
 // ── NEXVO support staff ──
 {
   const c = await ctx(); const p = await c.newPage();
-  await p.goto(`${base}/ar/login`);
-  await p.fill('input[name=email]', "support@nexvo.test");
-  await p.fill('input[name=password]', PASSWORD);
-  await p.click('button[type=submit]');
-  await p.waitForLoadState("networkidle");
+  await new Promise((r) => setTimeout(r, 31000 - (Date.now() % 30000))); // next TOTP window (codes are single-use per user anyway)
+  await staffLogin(p, "support@nexvo.test");
   const S = "فريق دعم NEXVO";
   await shot(p, "/ar/support-console", "لوحة الدعم", S, { name: "support-console" });
   const t = await firstHref(p, "/ar/support-console", "a[href*='/support-console/c']");

@@ -6,12 +6,16 @@ import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/badge";
 import { DescriptionList, Forbidden, PageHeader } from "@/components/ui/misc";
 import { SettingsForm } from "./settings-form";
+import { ChargilyForm } from "@/components/billing-forms";
+import { orgChargilyStatus } from "@/server/payments/chargily";
+import { Badge } from "@/components/ui/badge";
 
 export default async function SettingsPage({ params }: { params: Promise<{ locale: Locale }> }) {
   const { locale, ctx, d } = await appPage(params);
   if (!ctx.permissions.has("settings.manage")) return <Forbidden message={d.errors.forbiddenPage} />;
   const org = await getOrganization(ctx);
   const sub = org.subscription;
+  const pay = await orgChargilyStatus(ctx.org.id);
   return (
     <>
       <PageHeader title={d.settings.title} />
@@ -25,6 +29,12 @@ export default async function SettingsPage({ params }: { params: Promise<{ local
               <p className="text-ink-600">{d.settings.verificationHint}</p>
             </CardBody>
           </Card>
+          {ctx.org.kind === "SERVICE_PROVIDER" ? (
+            <Card>
+              <CardHeader title={d.billing.chargilyTitle} description={d.billing.chargilyLead} action={pay.configured ? <Badge tone={pay.mode === "live" ? "success" : "info"}>{pay.mode === "live" ? d.billing.modeLive : d.billing.modeTest}</Badge> : <Badge tone="neutral">{d.mfa.off}</Badge>} />
+              <CardBody><ChargilyForm configured={pay.configured} mode={pay.mode} /></CardBody>
+            </Card>
+          ) : null}
           {sub ? (
             <Card>
               <CardHeader title={d.settings.subscription} />

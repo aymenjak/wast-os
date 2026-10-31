@@ -6,6 +6,7 @@ import { audit } from "../audit";
 import { parse } from "../validation";
 import { findPossibleDuplicates } from "./civic";
 import { businessDashboard, orgToday } from "./reports";
+import { iotKpis } from "./iot";
 import { AiUnavailableError, getAiProvider } from "../ai/provider";
 import type { Prisma } from "@/lib/generated/prisma/client";
 
@@ -84,6 +85,17 @@ export async function operationsBrief(ctx: OrgContext, locale: "ar" | "fr" | "en
     overdueInvoices: k.receivables.overdueCount,
     tonnage30dTonnes: k.tonnage.reduce((s, t) => s + t.netKgMinor, 0) / 100 / 1000,
   };
+  // IoT aggregates (counts only): lets the brief flag bins about to overflow or a possible bin fire.
+  const iot = await iotKpis(ctx);
+  if (iot.devices > 0) {
+    Object.assign(kpis, {
+      iotDevices: iot.devices,
+      binsAtOrNearThreshold48h: iot.binsFullWithin48h,
+      openFillAlerts: iot.openAlerts.FILL_HIGH ?? 0,
+      openFireRiskAlerts: iot.openAlerts.FIRE_RISK ?? 0,
+      sensorsLowBattery: iot.openAlerts.BATTERY_LOW ?? 0,
+    });
+  }
   const res = await run(() => provider().operationsBrief({ locale, kpis }));
   await prisma.aiSuggestion.create({
     data: { organizationId: ctx.org.id, feature: "ops_brief", entityType: "Organization", entityId: ctx.org.id, model: res.model, output: res.output as Prisma.InputJsonValue, inputTokens: res.inputTokens, outputTokens: res.outputTokens, createdById: ctx.userId },

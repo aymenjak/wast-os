@@ -13,6 +13,7 @@ import type { WorkOrderAction } from "@/server/domain/work-order-machine";
 import type { ContractStatus, VehicleStatus } from "@/lib/generated/prisma/enums";
 import * as schedules from "@/server/services/schedules";
 import * as containers from "@/server/services/containers";
+import * as iot from "@/server/services/iot";
 import { globalSearch, type SearchHit } from "@/server/services/search";
 import { requireOrg } from "@/server/auth/session";
 import { isLocale } from "@/lib/i18n/config";
@@ -205,4 +206,17 @@ export async function searchAction(query: string, locale: string): Promise<Searc
   const l = isLocale(locale) ? locale : "fr";
   const ctx = await requireOrg(l);
   return globalSearch(ctx, String(query ?? ""), l);
+}
+
+// ── IoT ──
+export async function registerDeviceAction(_: ActionState, fd: FormData): Promise<ActionState> {
+  let key = "";
+  const r = await orgAction(fd, async (ctx, input) => void (key = (await iot.registerDevice(ctx, input)).key), { revalidate: ["/app/iot"] });
+  return r.ok ? { ...r, data: { key } } : r;
+}
+export async function revokeDeviceAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, (ctx) => iot.revokeDevice(ctx, s(fd.get("deviceId"))), { revalidate: ["/app/iot"] });
+}
+export async function resolveAlertAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, (ctx) => iot.resolveAlert(ctx, s(fd.get("alertId"))), { revalidate: ["/app/iot"] });
 }

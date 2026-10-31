@@ -18,6 +18,8 @@ export default defineConfig({
       NEXVO_FAST_HASH: "1",
       UPLOAD_DIR: "./.data/test-uploads",
       PAYMENT_WEBHOOK_SECRET: "test-webhook-secret-0123456789",
+      // Synthetic 32-byte key for tests only.
+      APP_ENCRYPTION_KEY: "dGVzdC1vbmx5LWtleS0wMTIzNDU2Nzg5YWJjZGVmMDE=",
     },
   },
 });

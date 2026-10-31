@@ -28,7 +28,20 @@
 | M Command palette search | integration (tenant + permission scoping, accent-insensitive, LIKE wildcards literal); e2e (Ctrl+K → result → navigate) |
 | J ar/fr/en desktop & mobile | e2e `i18n-a11y` (lang/dir, translated H1, axe WCAG 2.2 AA serious/critical = 0 on 6 public pages × 3 locales with reduced motion, no overflow at 360 px); screenshots in `docs/screenshots` reviewed |
 
-## Recorded results (2026-10-31, platform owner console)
+## Recorded results (2026-10-31, 2FA, subscription billing, per-organization payments, IoT)
+
+| Suite | Result |
+|-------|--------|
+| `npx vitest run` | **19 files, 189 tests passed** |
+| `npx playwright test` | **38 passed** (3.0 min) |
+| `npx tsc --noEmit` / `npx next build` | 0 errors / success |
+| `npm audit --omit=dev` | 0 vulnerabilities (after adding `qrcode`) |
+
+New: `mfa.test.ts` (10), `totp-crypto.test.ts` (8, RFC 6238 vectors + AES-GCM tamper), `billing.test.ts` (13), `iot.test.ts` (12), `fill-forecast.test.ts` (4), Chargily tests extended (per-organization keys and webhooks). E2E `billing-iot.spec` (5): device registration → HTTPS ingest → alert; owner configures and runs billing → organization opens its invoice → payment recorded; user enables 2FA, wrong code refused, correct code signs in. Existing staff flows now enroll 2FA.
+
+Defects found by tests and fixed: recovery codes vanished right after enabling 2FA (server refresh replaced the form — users would never have seen them); the Chargily money-routing error (D-37) found in design review; Arabic nav label mixing scripts; forecast text shown for a bin already above threshold.
+
+## Earlier results (2026-10-31, platform owner console)
 
 | Suite | Result |
 |-------|--------|

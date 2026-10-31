@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { PASSWORD, register, sql, uid } from "./helpers";
+import { PASSWORD, enrollTotp, register, sql, uid } from "./helpers";
 
 /** Security headers, server-side tables, documents and remote support through the real UI. */
 test("HTML responses carry a nonce-based CSP and no CSP violations on load", async ({ page }) => {
@@ -83,6 +83,10 @@ test.describe.serial("tables, certificate, remote support", () => {
     await register(page, { org: `Staff tmp ${id}`, email: staff });
     await sql(`UPDATE "User" SET "isPlatformStaff" = true, "platformRole" = 'SUPPORT' WHERE email = $1`, [staff]);
     await sql(`DELETE FROM "Membership" WHERE "userId" = (SELECT id FROM "User" WHERE email = $1)`, [staff]);
+    // Staff without two-step verification are sent to enroll first.
+    await page.goto("/en/support-console");
+    await page.waitForURL(/account\/security\?required=1/);
+    await enrollTotp(page);
     await page.goto("/en/support-console");
     await page.getByRole("link", { name: new RegExp(subject) }).click();
     await page.getByRole("button", { name: "Open read-only view" }).click();

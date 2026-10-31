@@ -4,7 +4,7 @@ import { addMember, isoDay, newOrg, resetDb } from "../helpers/db";
 import { prisma } from "@/server/db";
 import { createCustomer } from "@/server/services/customers";
 import { addManualLine, createDraftInvoice, getInvoice, issueInvoice, recordPayment } from "@/server/services/invoices";
-import { createInvoiceCheckout, handleChargilyWebhook, setChargilyFetch, verifyChargilySignature } from "@/server/payments/chargily";
+import { clearOrgChargily, createInvoiceCheckout, handleChargilyWebhook, setChargilyFetch, setOrgChargily, verifyChargilySignature } from "@/server/payments/chargily";
 import type { OrgContext } from "@/server/context";
 
 /** Online payment (Chargily Pay V2) — fake HTTP, real database. */
@@ -27,7 +27,6 @@ const paidEvent = (externalId: string, amount: number, currency = "dzd") =>
   JSON.stringify({ id: `evt_${externalId}`, type: "checkout.paid", data: { id: externalId, status: "paid", amount, currency } });
 
 beforeAll(async () => {
-  process.env.CHARGILY_SECRET_KEY = KEY;
   process.env.APP_URL = "http://localhost:3000";
   setChargilyFetch(async (url, init) => {
     n++;
@@ -39,10 +38,9 @@ beforeAll(async () => {
   other = (await newOrg()).ctx;
   customerId = (await createCustomer(ctx, { name: "Client A" })).id;
   invoiceId = await openInvoice(ctx, customerId);
+  await setOrgChargily(ctx, { secretKey: KEY, mode: "test" });
 });
-afterAll(() => {
-  delete process.env.CHARGILY_SECRET_KEY;
-});
+afterAll(() => setChargilyFetch((...a) => fetch(...a)));
 
 describe("checkout creation", () => {
   it("creates a checkout for the open balance, in test mode, with our webhook URL", async () => {
@@ -50,14 +48,15 @@ describe("checkout creation", () => {
     expect(r.url).toMatch(/^https:\/\/pay\.chargily\.net\/test\//);
     expect(lastRequest!.url).toBe("https://pay.chargily.net/test/api/v2/checkouts");
     expect(lastRequest!.auth).toBe(`Bearer ${KEY}`);
-    expect(lastRequest!.body).toMatchObject({ amount: 11900, currency: "dzd", locale: "ar", webhook_endpoint: "http://localhost:3000/api/webhooks/chargily" });
+    expect(lastRequest!.body).toMatchObject({ amount: 11900, currency: "dzd", locale: "ar", webhook_endpoint: `http://localhost:3000/api/webhooks/chargily/org/${ctx.org.id}` });
     const row = await prisma.paymentCheckout.findFirstOrThrow({ where: { externalId: "chk_1" } });
     expect(row.amount.toString()).toBe("11900");
     expect(row.organizationId).toBe(ctx.org.id);
   });
 
   it("another tenant cannot create a checkout for this invoice", async () => {
-    await expect(createInvoiceCheckout(other, invoiceId, "fr")).rejects.toThrow(/not found|NotFound/i);
+    await expect(createInvoiceCheckout(other, invoiceId, "fr")).rejects.toThrow();
+    expect(await prisma.paymentCheckout.count({ where: { organizationId: other.org.id } })).toBe(0);
   });
 
   it("portal users can pay only their own customer's invoices", async () => {
@@ -79,15 +78,31 @@ describe("checkout creation", () => {
   });
 
   it("live mode refuses to run without an https APP_URL", async () => {
-    process.env.CHARGILY_MODE = "live";
+    await setOrgChargily(ctx, { secretKey: "sk_synthetic_live_0123456789", mode: "live" });
     await expect(createInvoiceCheckout(ctx, invoiceId, "fr")).rejects.toThrow("errors.payment.providerUnavailable");
-    delete process.env.CHARGILY_MODE;
+    await setOrgChargily(ctx, { secretKey: KEY, mode: "test" });
   });
 
-  it("is disabled when no secret key is configured", async () => {
-    delete process.env.CHARGILY_SECRET_KEY;
+  it("the key is stored encrypted, only admins set it, and key/mode mismatch is refused", async () => {
+    const o = await prisma.organization.findUniqueOrThrow({ where: { id: ctx.org.id } });
+    expect(o.chargilySecretEnc).not.toContain(KEY);
+    const driver = await addMember(ctx, "FIELD_WORKER");
+    await expect(setOrgChargily(driver, { secretKey: KEY, mode: "test" })).rejects.toThrow();
+    await expect(setOrgChargily(ctx, { secretKey: "live_sk_synthetic_0123456789", mode: "test" })).rejects.toThrow("errors.payment.keyModeMismatch");
+  });
+
+  it("each organization pays into its own account: another tenant's checkouts use their key, not ours", async () => {
+    await setOrgChargily(other, { secretKey: "test_sk_other_tenant_987654321", mode: "test" });
+    const otherCustomer = await createCustomer(other, { name: "Client autre" });
+    await createInvoiceCheckout(other, await openInvoice(other, otherCustomer.id), "fr");
+    expect(lastRequest!.auth).toBe("Bearer test_sk_other_tenant_987654321");
+    expect(String(lastRequest!.body.webhook_endpoint)).toContain(`/org/${other.org.id}`);
+  });
+
+  it("is disabled when the organization has no key", async () => {
+    await clearOrgChargily(ctx);
     await expect(createInvoiceCheckout(ctx, invoiceId, "fr")).rejects.toThrow("errors.payment.onlineDisabled");
-    process.env.CHARGILY_SECRET_KEY = KEY;
+    await setOrgChargily(ctx, { secretKey: KEY, mode: "test" });
   });
 });
 
@@ -103,25 +118,33 @@ describe("webhook", () => {
 
   it("rejects unsigned events", async () => {
     const raw = paidEvent("chk_1", 11900);
-    await expect(handleChargilyWebhook(raw, "0".repeat(64))).rejects.toThrow();
+    await expect(handleChargilyWebhook(ctx.org.id, raw, "0".repeat(64))).rejects.toThrow();
     expect((await getInvoice(ctx, invoiceId)).amountPaid.toString()).toBe("0");
   });
 
   it("an amount that does not match the checkout is not applied", async () => {
     const raw = paidEvent("chk_1", 100);
-    expect(await handleChargilyWebhook(raw, sign(raw))).toEqual({ outcome: "amount_mismatch" });
+    expect(await handleChargilyWebhook(ctx.org.id, raw, sign(raw))).toEqual({ outcome: "amount_mismatch" });
     expect((await getInvoice(ctx, invoiceId)).amountPaid.toString()).toBe("0");
     expect(await prisma.auditEvent.count({ where: { action: "payment.checkout_mismatch" } })).toBe(1);
   });
 
+  it("an event signed with our key cannot settle it through another organization's endpoint", async () => {
+    const raw = paidEvent("chk_1", 11900);
+    await expect(handleChargilyWebhook(other.org.id, raw, sign(raw))).rejects.toThrow();
+    const otherSig = createHmac("sha256", "test_sk_other_tenant_987654321").update(raw).digest("hex");
+    expect(await handleChargilyWebhook(other.org.id, raw, otherSig)).toEqual({ outcome: "unknown_checkout" });
+    expect((await getInvoice(ctx, invoiceId)).amountPaid.toString()).toBe("0");
+  });
+
   it("unknown checkouts are ignored", async () => {
     const raw = paidEvent("chk_does_not_exist", 11900);
-    expect(await handleChargilyWebhook(raw, sign(raw))).toEqual({ outcome: "unknown_checkout" });
+    expect(await handleChargilyWebhook(ctx.org.id, raw, sign(raw))).toEqual({ outcome: "unknown_checkout" });
   });
 
   it("a paid event settles the invoice once; replays have no second effect", async () => {
     const raw = paidEvent("chk_1", 11900);
-    const results = await Promise.all([handleChargilyWebhook(raw, sign(raw)), handleChargilyWebhook(raw, sign(raw))]);
+    const results = await Promise.all([handleChargilyWebhook(ctx.org.id, raw, sign(raw)), handleChargilyWebhook(ctx.org.id, raw, sign(raw))]);
     expect(results.map((r) => r.outcome).sort()).toEqual(["applied", "duplicate"]);
     const inv = await getInvoice(ctx, invoiceId);
     expect(inv.status).toBe("PAID");
@@ -137,7 +160,7 @@ describe("webhook", () => {
     const chk = await prisma.paymentCheckout.findFirstOrThrow({ where: { invoiceId: inv2 } });
     await recordPayment(ctx, inv2, { amount: "1190", method: "BANK_TRANSFER", receivedAt: isoDay(0), idempotencyKey: "manual-transfer-0001" });
     const raw = paidEvent(chk.externalId, 1190);
-    expect(await handleChargilyWebhook(raw, sign(raw))).toEqual({ outcome: "reconcile_required" });
+    expect(await handleChargilyWebhook(ctx.org.id, raw, sign(raw))).toEqual({ outcome: "reconcile_required" });
     expect((await getInvoice(ctx, inv2)).amountPaid.toString()).toBe("1190");
     expect(await prisma.auditEvent.count({ where: { action: "payment.reconcile_required" } })).toBe(1);
   });
@@ -147,7 +170,7 @@ describe("webhook", () => {
     await createInvoiceCheckout(ctx, inv3, "fr");
     const chk = await prisma.paymentCheckout.findFirstOrThrow({ where: { invoiceId: inv3 } });
     const raw = JSON.stringify({ type: "checkout.failed", data: { id: chk.externalId, status: "failed", amount: 595, currency: "dzd" } });
-    expect(await handleChargilyWebhook(raw, sign(raw))).toEqual({ outcome: "recorded" });
+    expect(await handleChargilyWebhook(ctx.org.id, raw, sign(raw))).toEqual({ outcome: "recorded" });
     expect((await prisma.paymentCheckout.findUniqueOrThrow({ where: { id: chk.id } })).status).toBe("FAILED");
     expect((await getInvoice(ctx, inv3)).amountPaid.toString()).toBe("0");
   });

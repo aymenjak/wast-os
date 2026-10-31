@@ -120,6 +120,7 @@ export async function listGrants(ctx: OrgContext) {
 async function requireStaff(userId: string) {
   const u = await prisma.user.findUnique({ where: { id: userId } });
   if (!u?.isPlatformStaff || u.disabledAt) throw new ForbiddenError("support.staff");
+  if (!u.totpEnabledAt) throw new DomainError("errors.mfa.requiredForStaff");
   return u;
 }
 

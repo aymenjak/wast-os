@@ -8,6 +8,10 @@ import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/badge";
 import { DescriptionList, PageHeader } from "@/components/ui/misc";
 import { MoveForm } from "../forms";
+import { containerTelemetry } from "@/server/services/iot";
+import { Meter } from "@/components/charts/charts";
+import { ColumnChart } from "@/components/charts/column-chart";
+import { CHART } from "@/components/charts/palette";
 
 export default async function ContainerDetail({ params }: { params: Promise<{ locale: Locale; id: string }> }) {
   const { locale, ctx, d } = await appPage(params);
@@ -18,6 +22,14 @@ export default async function ContainerDetail({ params }: { params: Promise<{ lo
     ? await prisma.serviceLocation.findMany({ where: { organizationId: ctx.org.id, active: true }, select: { id: true, label: true, customer: { select: { name: true } } }, orderBy: { customer: { name: "asc" } } })
     : [];
   const days = daysOnSite(c.placedAt);
+  const tel = await containerTelemetry(ctx, c.id);
+  // Daily maximum fill for the chart (one column per day with data).
+  const daily = new Map<string, number>();
+  for (const r of tel.readings) if (r.fillPct !== null) {
+    const k = new Intl.DateTimeFormat("en-CA", { timeZone: ctx.org.timezone, month: "2-digit", day: "2-digit" }).format(r.measuredAt);
+    daily.set(k, Math.max(daily.get(k) ?? 0, r.fillPct));
+  }
+  const last = [...tel.readings].reverse().find((r) => r.fillPct !== null);
   return (
     <>
       <PageHeader
@@ -47,6 +59,16 @@ export default async function ContainerDetail({ params }: { params: Promise<{ lo
               ) : null}
             </CardBody>
           </Card>
+          {tel.readings.length ? (
+            <Card>
+              <CardHeader title={d.iot.readings} description={d.iot.threshold.replace("{pct}", String(tel.threshold))} />
+              <CardBody className="space-y-4">
+                {last ? <Meter value={last.fillPct!} max={100} label={d.iot.fill} display={`\u2068${last.fillPct} %\u2069`} /> : null}
+                <p className="text-sm text-ink-700">{last && last.fillPct! >= tel.threshold ? d.iot.atThreshold : tel.forecast?.thresholdAt ? d.iot.reachesAt.replace("{pct}", String(tel.threshold)).replace("{date}", formatDateTime(tel.forecast.thresholdAt, locale, ctx.org.timezone)).replace("{rate}", String(tel.forecast.ratePctPerDay)) : d.iot.noForecast}</p>
+                <ColumnChart ariaLabel={d.iot.readings} height={120} showMax columns={[...daily.entries()].map(([k, v]) => ({ key: k, label: k, segments: [{ name: d.iot.fill, value: v, color: v >= tel.threshold ? CHART.failed : CHART.single, display: `${v} %` }] }))} />
+              </CardBody>
+            </Card>
+          ) : null}
         </div>
         <Card>
           <CardHeader title={d.containers.history} />

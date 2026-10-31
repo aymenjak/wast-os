@@ -16,7 +16,7 @@ beforeAll(async () => {
   await resetDb();
   owner = (await newOrg()).ctx;
   other = (await newOrg()).ctx;
-  staffId = (await prisma.user.create({ data: { email: "staff@nexvo.test", name: "Support", passwordHash: "x", isPlatformStaff: true, platformRole: "SUPPORT" } })).id;
+  staffId = (await prisma.user.create({ data: { email: "staff@nexvo.test", name: "Support", passwordHash: "x", isPlatformStaff: true, platformRole: "SUPPORT", totpEnabledAt: new Date() } })).id;
   staffToken = await createSessionRecord(prisma, staffId, null);
 });
 

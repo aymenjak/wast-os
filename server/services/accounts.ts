@@ -137,8 +137,13 @@ export async function login(input: unknown, meta: { userAgent?: string } = {}) {
   }
   if (!user || !ok || locked || user.disabledAt) throw new DomainError("errors.auth.invalidCredentials");
   if (user.failedLogins > 0 || user.lockedUntil) await prisma.user.update({ where: { id: user.id }, data: { failedLogins: 0, lockedUntil: null } });
+  // Two-factor users get a short-lived challenge instead of a session.
+  if (user.totpEnabledAt) {
+    const { createLoginChallenge } = await import("./mfa");
+    return { token: null, challengeToken: await createLoginChallenge(user.id, meta.userAgent), user };
+  }
   const token = await createSessionRecord(prisma, user.id, user.memberships[0]?.organizationId ?? null, meta.userAgent);
-  return { token, user };
+  return { token, challengeToken: null, user };
 }
 
 export async function logout(token: string) {
@@ -201,9 +206,9 @@ export async function loadContext(userId: string, organizationId: string): Promi
  * Read-only context for NEXVO staff inside a customer workspace. Valid only while the grant is
  * active and the user is still platform staff; otherwise the support session is cleared.
  */
-async function loadSupportContext(user: { id: string; name: string; isPlatformStaff: boolean }, grantId: string, sessionId: string): Promise<OrgContext | null> {
+async function loadSupportContext(user: { id: string; name: string; isPlatformStaff: boolean; totpEnabledAt: Date | null }, grantId: string, sessionId: string): Promise<OrgContext | null> {
   const grant = await prisma.supportAccessGrant.findUnique({ where: { id: grantId }, include: { organization: true } });
-  if (!user.isPlatformStaff || !grant || grant.revokedAt || grant.expiresAt <= new Date()) {
+  if (!user.isPlatformStaff || !user.totpEnabledAt || !grant || grant.revokedAt || grant.expiresAt <= new Date()) {
     await prisma.session.update({ where: { id: sessionId }, data: { supportGrantId: null, activeOrganizationId: null } });
     return null;
   }

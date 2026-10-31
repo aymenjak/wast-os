@@ -29,12 +29,44 @@ model User {
   isPlatformStaff Boolean @default(false)
   /// Platform role (OWNER > ADMIN > SUPPORT). Set iff isPlatformStaff (CHECK constraint).
   platformRole    PlatformRole?
+  /// TOTP second factor: secret encrypted with APP_ENCRYPTION_KEY; enabled once confirmed with a valid code.
+  totpSecretEnc   String?
+  totpEnabledAt   DateTime? @db.Timestamptz(3)
+  /// Last accepted TOTP time step (replay protection).
+  totpLastStep    Int?
+  recoveryCodes   RecoveryCode[]
+  loginChallenges LoginChallenge[]
   /// Account lockout after repeated failed logins (credential-stuffing defence).
   failedLogins    Int       @default(0)
   lockedUntil     DateTime? @db.Timestamptz(3)
 
   sessions    Session[]
   memberships Membership[]
+}
+
+model RecoveryCode {
+  id        String    @id @default(cuid())
+  userId    String
+  codeHash  String    @unique
+  usedAt    DateTime? @db.Timestamptz(3)
+  createdAt DateTime  @default(now()) @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+/// Password accepted, second factor pending. Short-lived; only the token hash is stored.
+model LoginChallenge {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  attempts  Int      @default(0)
+  expiresAt DateTime @db.Timestamptz(3)
+  userAgent String?
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 enum PlatformRole {
@@ -102,10 +134,20 @@ model Organization {
   /// Set by the platform operator; members lose access while set. Data is kept.
   suspendedAt        DateTime?          @db.Timestamptz(3)
   suspendedReason    String?
+  /// True when the suspension was applied automatically for unpaid NEXVO invoices (lifted automatically on payment).
+  suspendedByBilling Boolean            @default(false)
+  /// The organization's OWN Chargily merchant account (encrypted). Customer payments go to the organization, never to NEXVO.
+  chargilySecretEnc  String?
+  chargilyMode       String             @default("test")
 
   memberships        Membership[]
   invitations        Invitation[]
   subscription       Subscription?
+  platformInvoices   PlatformInvoice[]
+  iotDevices         IotDevice[]
+  sensorReadings     SensorReading[]
+  vehiclePositions   VehiclePosition[]
+  iotAlerts          IotAlert[]
   branches           Branch[]
   serviceZones       ServiceZone[]
   customers          Customer[]
@@ -222,10 +264,174 @@ model Subscription {
   planCode         String
   status           SubscriptionStatus @default(TRIAL)
   currentPeriodEnd DateTime           @db.Timestamptz(3)
+  billingCycle     BillingCycle       @default(MONTHLY)
   createdAt        DateTime           @default(now()) @db.Timestamptz(3)
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   plan         Plan         @relation(fields: [planCode], references: [code])
+}
+
+enum BillingCycle {
+  MONTHLY
+  YEARLY
+}
+
+enum PlatformInvoiceStatus {
+  ISSUED
+  PAID
+  VOID
+}
+
+/// NEXVO's own invoices to organizations for their subscription.
+model PlatformInvoice {
+  id                 String                @id @default(cuid())
+  number             String                @unique
+  organizationId     String
+  planCode           String
+  cycle              BillingCycle
+  periodStart        DateTime              @db.Date
+  periodEnd          DateTime              @db.Date
+  subtotal           Decimal               @db.Decimal(14, 2)
+  taxRateBps         Int
+  taxTotal           Decimal               @db.Decimal(14, 2)
+  total              Decimal               @db.Decimal(14, 2)
+  currency           String                @default("DZD")
+  status             PlatformInvoiceStatus @default(ISSUED)
+  issueDate          DateTime              @db.Date
+  dueDate            DateTime              @db.Date
+  paidAt             DateTime?             @db.Timestamptz(3)
+  paymentMethod      String?
+  paymentReference   String?
+  voidReason         String?
+  checkoutExternalId String?               @unique
+  checkoutUrl        String?
+  /// Issuer and customer legal details frozen at issue time.
+  issuer             Json
+  billTo             Json
+  createdAt          DateTime              @default(now()) @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, periodStart])
+  @@index([status, dueDate])
+}
+
+/// Singleton (id = 1): NEXVO's billing configuration, edited by the platform owner.
+model PlatformBillingSettings {
+  id                  Int      @id @default(1)
+  enabled             Boolean  @default(false)
+  issuerName          String?
+  issuerAddress       String?
+  issuerTaxId         String?
+  issuerTradeRegister String?
+  issuerStatId        String?
+  taxRateBps          Int      @default(1900)
+  dueDays             Int      @default(15)
+  autoSuspend         Boolean  @default(false)
+  graceDays           Int      @default(15)
+  /// Gapless invoice sequence, incremented under a row lock.
+  lastInvoiceSeq      Int      @default(0)
+  updatedAt           DateTime @default(now()) @updatedAt @db.Timestamptz(3)
+}
+
+// ───────────────────────────── IoT ─────────────────────────────
+
+enum DeviceKind {
+  FILL_SENSOR
+  GPS_TRACKER
+}
+
+enum IotAlertKind {
+  FILL_HIGH
+  BATTERY_LOW
+  FIRE_RISK
+}
+
+/// A sensor or tracker. Authenticates with a per-device key (only its SHA-256 is stored).
+model IotDevice {
+  id             String     @id @default(cuid())
+  organizationId String
+  kind           DeviceKind
+  name           String
+  serial         String
+  keyHash        String     @unique
+  keyPrefix      String
+  containerId    String?
+  vehicleId      String?
+  lastSeenAt     DateTime?  @db.Timestamptz(3)
+  batteryPct     Int?
+  revokedAt      DateTime?  @db.Timestamptz(3)
+  createdById    String
+  createdAt      DateTime   @default(now()) @db.Timestamptz(3)
+
+  organization Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  container    Container?        @relation(fields: [organizationId, containerId], references: [organizationId, id])
+  vehicle      Vehicle?          @relation(fields: [organizationId, vehicleId], references: [organizationId, id])
+  readings     SensorReading[]
+  positions    VehiclePosition[]
+  alerts       IotAlert[]
+
+  @@unique([organizationId, serial])
+  @@unique([organizationId, id])
+}
+
+model SensorReading {
+  id             String    @id @default(cuid())
+  organizationId String
+  deviceId       String
+  containerId    String?
+  fillPct        Int?
+  temperatureC   Decimal?  @db.Decimal(5, 1)
+  batteryPct     Int?
+  measuredAt     DateTime  @db.Timestamptz(3)
+  receivedAt     DateTime  @default(now()) @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  device       IotDevice    @relation(fields: [organizationId, deviceId], references: [organizationId, id], onDelete: Cascade)
+  container    Container?   @relation(fields: [organizationId, containerId], references: [organizationId, id])
+
+  @@unique([deviceId, measuredAt])
+  @@index([organizationId, containerId, measuredAt])
+}
+
+model VehiclePosition {
+  id             String   @id @default(cuid())
+  organizationId String
+  deviceId       String
+  vehicleId      String
+  latitude       Decimal  @db.Decimal(9, 6)
+  longitude      Decimal  @db.Decimal(9, 6)
+  speedKmh       Int?
+  heading        Int?
+  recordedAt     DateTime @db.Timestamptz(3)
+  receivedAt     DateTime @default(now()) @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  device       IotDevice    @relation(fields: [organizationId, deviceId], references: [organizationId, id], onDelete: Cascade)
+  vehicle      Vehicle      @relation(fields: [organizationId, vehicleId], references: [organizationId, id])
+
+  @@unique([deviceId, recordedAt])
+  @@index([organizationId, vehicleId, recordedAt])
+}
+
+model IotAlert {
+  id             String       @id @default(cuid())
+  organizationId String
+  kind           IotAlertKind
+  deviceId       String
+  containerId    String?
+  value          Decimal      @db.Decimal(6, 1)
+  openedAt       DateTime     @default(now()) @db.Timestamptz(3)
+  resolvedAt     DateTime?    @db.Timestamptz(3)
+  resolvedById   String?
+  /// Set when it was resolved automatically (e.g. fill level dropped after collection).
+  autoResolved   Boolean      @default(false)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  device       IotDevice    @relation(fields: [organizationId, deviceId], references: [organizationId, id], onDelete: Cascade)
+  container    Container?   @relation(fields: [organizationId, containerId], references: [organizationId, id])
+
+  @@index([organizationId, resolvedAt])
 }
 
 // ───────────────────────────── Geography ─────────────────────────────
@@ -589,9 +795,17 @@ model Vehicle {
   odometerKm     Int?
   createdAt      DateTime      @default(now()) @db.Timestamptz(3)
 
+  /// Latest GPS fix from a tracker (denormalised for lists and the map).
+  lastLatitude   Decimal?      @db.Decimal(9, 6)
+  lastLongitude  Decimal?      @db.Decimal(9, 6)
+  lastPositionAt DateTime?     @db.Timestamptz(3)
+  lastSpeedKmh   Int?
+
   organization Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   maintenance  VehicleMaintenance[]
   workOrders   WorkOrder[]
+  devices      IotDevice[]
+  positions    VehiclePosition[]
 
   @@unique([organizationId, plateNumber])
   @@unique([organizationId, id])
@@ -790,9 +1004,17 @@ model Container {
   notes             String?
   createdAt         DateTime        @default(now()) @db.Timestamptz(3)
 
+  /// Fill level (percent) at which an IoT alert opens. Latest reading is denormalised for lists.
+  fillThresholdPct  Int             @default(80)
+  lastFillPct       Int?
+  lastFillAt        DateTime?       @db.Timestamptz(3)
+
   organization    Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   serviceLocation ServiceLocation?    @relation(fields: [organizationId, serviceLocationId], references: [organizationId, id])
   movements       ContainerMovement[]
+  devices         IotDevice[]
+  readings        SensorReading[]
+  alerts          IotAlert[]
 
   @@unique([organizationId, code])
   @@unique([organizationId, id])

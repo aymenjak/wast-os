@@ -22,6 +22,7 @@ const RANK: Record<PlatformRole, number> = { SUPPORT: 1, ADMIN: 2, OWNER: 3 };
 export async function requirePlatform(userId: string, min: PlatformRole) {
   const u = await prisma.user.findUnique({ where: { id: userId } });
   if (!u?.platformRole || u.disabledAt || RANK[u.platformRole] < RANK[min]) throw new ForbiddenError(`platform.${min.toLowerCase()}`);
+  if (!u.totpEnabledAt) throw new DomainError("errors.mfa.requiredForStaff");
   return u;
 }
 
@@ -142,6 +143,7 @@ const subscriptionSchema = z.object({
   planCode: requiredText(32),
   status: z.enum(["TRIAL", "ACTIVE", "PAST_DUE", "CANCELLED"]),
   currentPeriodEnd: isoDate,
+  billingCycle: z.enum(["MONTHLY", "YEARLY"]).default("MONTHLY"),
 });
 
 /** Manual subscription management (no automatic billing of the platform itself yet). */
@@ -155,8 +157,8 @@ export async function changeSubscription(userId: string, orgId: string, input: u
     const before = org.subscription;
     await tx.subscription.upsert({
       where: { organizationId: org.id },
-      create: { organizationId: org.id, planCode: data.planCode, status: data.status, currentPeriodEnd: end },
-      update: { planCode: data.planCode, status: data.status, currentPeriodEnd: end },
+      create: { organizationId: org.id, planCode: data.planCode, status: data.status, currentPeriodEnd: end, billingCycle: data.billingCycle },
+      update: { planCode: data.planCode, status: data.status, currentPeriodEnd: end, billingCycle: data.billingCycle },
     });
     await audit(tx, {
       organizationId: org.id, actorUserId: userId, action: "platform.subscription_changed", entityType: "Organization", entityId: org.id,
@@ -255,7 +257,7 @@ export async function findUserAccount(userId: string, q: string) {
   if (term.length < 3) return [];
   return prisma.user.findMany({
     where: { email: containsInsensitive(term) },
-    select: { id: true, name: true, email: true, disabledAt: true, lockedUntil: true, platformRole: true, createdAt: true, memberships: { select: { role: true, status: true, organization: { select: { id: true, name: true } } } } },
+    select: { id: true, name: true, email: true, disabledAt: true, lockedUntil: true, platformRole: true, createdAt: true, totpEnabledAt: true, memberships: { select: { role: true, status: true, organization: { select: { id: true, name: true } } } } },
     take: 20,
     orderBy: { email: "asc" },
   });
@@ -264,13 +266,17 @@ export async function findUserAccount(userId: string, q: string) {
 /** Disable (all sessions revoked) / enable / unlock an account. Owners can only be disabled by another owner. */
 export async function setUserAccess(userId: string, targetId: string, input: unknown) {
   const actor = await requirePlatform(userId, "ADMIN");
-  const { action } = parse(z.object({ action: z.enum(["disable", "enable", "unlock"]) }), input);
+  const { action } = parse(z.object({ action: z.enum(["disable", "enable", "unlock", "reset2fa"]) }), input);
   const target = await prisma.user.findUnique({ where: { id: targetId } });
   if (!target) throw new NotFoundError("User");
   if (target.id === userId) throw new DomainError("errors.platform.notSelf");
   if (target.platformRole && RANK[target.platformRole] >= RANK[actor.platformRole!] && actor.platformRole !== "OWNER") throw new ForbiddenError("platform.owner");
   if (action === "disable" && target.platformRole === "OWNER" && (await prisma.user.count({ where: { platformRole: "OWNER", disabledAt: null } })) <= 1) {
     throw new DomainError("errors.platform.lastOwner");
+  }
+  if (action === "reset2fa") {
+    const { resetMfa } = await import("./mfa");
+    return resetMfa(target.id, userId);
   }
   await prisma.$transaction(async (tx) => {
     if (action === "disable") {
@@ -290,7 +296,7 @@ export async function setUserAccess(userId: string, targetId: string, input: unk
 export async function platformAudit(userId: string) {
   await requirePlatform(userId, "ADMIN");
   const events = await prisma.auditEvent.findMany({
-    where: { OR: [{ action: { startsWith: "platform." } }, { action: { startsWith: "support." } }, { action: "user.locked" }] },
+    where: { OR: [{ action: { startsWith: "platform." } }, { action: { startsWith: "support." } }, { action: "user.locked" }, { action: { startsWith: "user.mfa" } }] },
     orderBy: { createdAt: "desc" },
     take: 200,
     include: { organization: { select: { id: true, name: true } } },

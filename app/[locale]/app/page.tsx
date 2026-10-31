@@ -7,8 +7,9 @@ import { homeFor } from "@/server/navigation";
 import { businessDashboard, dailyTrend, orgToday, receivablesAging, type AgingBucket } from "@/server/services/reports";
 import { contractsDueForRenewal } from "@/server/services/contracts";
 import { aiEnabled } from "@/server/services/ai";
+import { iotKpis } from "@/server/services/iot";
 import { prisma } from "@/server/db";
-import { formatDay, formatMinor, formatNumber, formatPercent } from "@/lib/i18n/format";
+import { formatDateTime, formatDay, formatMinor, formatNumber, formatPercent } from "@/lib/i18n/format";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { EmptyState, MetricStrip, PageHeader, Stat } from "@/components/ui/misc";
 import { ColumnChart } from "@/components/charts/column-chart";
@@ -30,7 +31,7 @@ export default async function Dashboard({ params }: { params: Promise<{ locale: 
   const to = orgToday(ctx);
   const from = new Date(new Date(`${to}T00:00:00Z`).getTime() - 29 * 86400_000).toISOString().slice(0, 10);
   const canInvoices = ctx.permissions.has("invoices.read");
-  const [k, renewals, counts, trend, aging] = await Promise.all([
+  const [k, renewals, counts, trend, aging, iot] = await Promise.all([
     businessDashboard(ctx, { from, to }),
     contractsDueForRenewal(ctx),
     Promise.all([
@@ -41,6 +42,7 @@ export default async function Dashboard({ params }: { params: Promise<{ locale: 
     ]),
     dailyTrend(ctx, 14),
     canInvoices ? receivablesAging(ctx) : Promise.resolve(null),
+    iotKpis(ctx),
   ]);
   const [nCustomers, nContracts, nTeams, nRequests] = counts;
   const onboarding = [
@@ -177,6 +179,21 @@ export default async function Dashboard({ params }: { params: Promise<{ locale: 
             ))}
           </dl>
         </section>
+      ) : null}
+
+      {iot.devices > 0 ? (
+        <Card className="mt-6">
+          <CardHeader title={d.iot.forecastTitle} description={d.iot.forecastLead} action={<Link className="text-sm font-medium text-ink-800 hover:underline" href={`/${locale}/app/iot`}>{d.nav.iot}</Link>} />
+          <CardBody className="grid gap-4 md:grid-cols-2">
+            {iot.forecasts.slice(0, 6).map((f) => (
+              <div key={f.id}>
+                <Meter value={f.lastFillPct ?? 0} max={100} label={<><span className="num font-medium">{f.code}</span> <span className="text-ink-600">{f.serviceLocation?.customer.name}</span></>} display={`\u2068${f.lastFillPct ?? "—"} %\u2069`} />
+                <p className="mt-1 text-xs text-ink-600">{(f.lastFillPct ?? 0) >= f.fillThresholdPct ? d.iot.atThreshold : f.forecast?.thresholdAt ? d.iot.reachesAt.replace("{pct}", String(f.fillThresholdPct)).replace("{date}", formatDateTime(f.forecast.thresholdAt, locale, ctx.org.timezone)).replace("{rate}", String(f.forecast.ratePctPerDay)) : d.iot.noForecast}</p>
+              </div>
+            ))}
+            {(iot.openAlerts.FIRE_RISK ?? 0) > 0 ? <p role="alert" className="rounded-md bg-danger-100 px-3 py-2 text-sm font-semibold text-danger-700 md:col-span-2">{d.iot.alertKinds.FIRE_RISK}: {iot.openAlerts.FIRE_RISK}</p> : null}
+          </CardBody>
+        </Card>
       ) : null}
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">

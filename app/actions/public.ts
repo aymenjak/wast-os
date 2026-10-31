@@ -3,7 +3,8 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { prisma } from "@/server/db";
 import { rateLimit } from "@/server/rate-limit";
-import { clientIp, clearSessionCookie, sessionToken, setSessionCookie, userAgent } from "@/server/auth/session";
+import { challengeToken, clearChallengeCookie, clientIp, clearSessionCookie, sessionToken, setChallengeCookie, setSessionCookie, userAgent } from "@/server/auth/session";
+import { completeLoginChallenge } from "@/server/services/mfa";
 import { acceptInvitation, login, logout, registerOrganization, switchOrganization, resolveSession } from "@/server/services/accounts";
 import { citizenFeedback, submitCivicReport } from "@/server/services/civic";
 import { formToObject, localeFrom, toActionError } from "@/server/action";
@@ -15,20 +16,50 @@ async function limited(bucket: string, limit: number, windowMs: number): Promise
   return r.ok ? null : { ok: false, error: "errors.rateLimited", nonce: Date.now() };
 }
 
+/** Where a freshly signed-in user lands. */
+async function landingFor(locale: string, token: string, platformRole: string | null) {
+  const s = await resolveSession(token);
+  if (s?.ctx?.role === "CUSTOMER_PORTAL") return `/${locale}/portal`;
+  if (s?.ctx) return `/${locale}/app`;
+  if (platformRole === "OWNER" || platformRole === "ADMIN") return `/${locale}/platform`;
+  if (platformRole === "SUPPORT") return `/${locale}/support-console`;
+  return `/${locale}/login?${s?.suspended ? "suspended" : "no-org"}=1`;
+}
+
 export async function loginAction(_: ActionState, fd: FormData): Promise<ActionState> {
   const locale = localeFrom(fd);
   const blocked = await limited("login", 10, 15 * 60_000);
   if (blocked) return blocked;
-  let destination = `/${locale}/app`;
+  let destination: string;
   try {
-    const { token, user } = await login(formToObject(fd), { userAgent: await userAgent() });
-    await setSessionCookie(token);
-    const s = await resolveSession(token);
-    if (s?.ctx?.role === "CUSTOMER_PORTAL") destination = `/${locale}/portal`;
-    else if (!s?.ctx && (user.platformRole === "OWNER" || user.platformRole === "ADMIN")) destination = `/${locale}/platform`;
-    else if (!s?.ctx && user.platformRole === "SUPPORT") destination = `/${locale}/support-console`;
-    else if (!s?.ctx) destination = `/${locale}/login?${s?.suspended ? "suspended" : "no-org"}=1`;
+    const r = await login(formToObject(fd), { userAgent: await userAgent() });
+    if (r.challengeToken) {
+      await setChallengeCookie(r.challengeToken);
+      destination = `/${locale}/login/2fa`;
+    } else {
+      await setSessionCookie(r.token!);
+      destination = await landingFor(locale, r.token!, r.user.platformRole);
+    }
   } catch (e) {
+    return toActionError(e);
+  }
+  redirect(destination);
+}
+
+export async function secondFactorAction(_: ActionState, fd: FormData): Promise<ActionState> {
+  const locale = localeFrom(fd);
+  const blocked = await limited("mfa", 20, 15 * 60_000);
+  if (blocked) return blocked;
+  const challenge = await challengeToken();
+  if (!challenge) redirect(`/${locale}/login`);
+  let destination: string;
+  try {
+    const { token, user } = await completeLoginChallenge(challenge, String(fd.get("code") ?? ""), await userAgent());
+    await clearChallengeCookie();
+    await setSessionCookie(token);
+    destination = await landingFor(locale, token, user.platformRole);
+  } catch (e) {
+    if (e instanceof Error && "code" in e && (e as { code: string }).code === "errors.mfa.challengeExpired") await clearChallengeCookie();
     return toActionError(e);
   }
   redirect(destination);

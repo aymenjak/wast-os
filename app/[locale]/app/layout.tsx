@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { prisma } from "@/server/db";
 import { notFound, redirect } from "next/navigation";
 import { LogOut } from "lucide-react";
 import { getDictionary } from "@/lib/i18n";
@@ -27,6 +28,10 @@ export default async function AppLayout({ children, params }: { children: React.
   const session = await currentSession();
   const orgs = session ? await listUserOrganizations(session.user.id) : [];
   const nav = buildNav(ctx, d, locale);
+  // Owners/admins are warned about unpaid NEXVO invoices before any suspension.
+  const pastDue = ctx.permissions.has("settings.manage") && !ctx.support
+    ? (await prisma.subscription.findUnique({ where: { organizationId: ctx.org.id }, select: { status: true } }))?.status === "PAST_DUE"
+    : false;
 
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-[240px_1fr]">
@@ -63,7 +68,7 @@ export default async function AppLayout({ children, params }: { children: React.
             <LanguageSwitcher className="hidden sm:flex" />
             {(session?.user.platformRole === "OWNER" || session?.user.platformRole === "ADMIN") && !ctx.support ? <Link href={`/${locale}/platform`} className="hidden text-sm font-medium text-ink-800 hover:underline md:inline">{d.nav.platform}</Link> : null}
             {session?.user.isPlatformStaff && !ctx.support ? <Link href={`/${locale}/support-console`} className="hidden text-sm font-medium text-ink-800 hover:underline md:inline">{d.nav.supportConsole}</Link> : null}
-            <span className="hidden text-sm text-ink-700 md:inline">{ctx.userName}</span>
+            {ctx.support ? <span className="hidden text-sm text-ink-700 md:inline">{ctx.userName}</span> : <Link href={`/${locale}/account/security`} className="hidden text-sm text-ink-700 hover:underline md:inline" title={d.mfa.title}>{ctx.userName}</Link>}
             <form action={logoutAction}>
               <input type="hidden" name="locale" value={locale} />
               <button type="submit" className="inline-flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm text-ink-700 hover:bg-ink-100">
@@ -80,6 +85,12 @@ export default async function AppLayout({ children, params }: { children: React.
               <input type="hidden" name="locale" value={locale} />
               <button type="submit" className="rounded bg-ink-950 px-3 py-1 text-white">{d.support.endSession}</button>
             </form>
+          </div>
+        ) : null}
+        {pastDue ? (
+          <div role="alert" className="flex flex-wrap items-center justify-between gap-3 bg-danger-100 px-4 py-2 text-sm text-danger-700 print:hidden">
+            <span>{d.billing.pastDueBanner}</span>
+            <Link href={`/${locale}/app/billing`} className="font-semibold underline">{d.billing.payNow}</Link>
           </div>
         ) : null}
         <main id="main" className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:py-8">{children}</main>

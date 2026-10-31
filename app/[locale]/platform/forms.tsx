@@ -15,18 +15,21 @@ export function VerificationForm({ organizationId, status }: { organizationId: s
   );
 }
 
-export function SubscriptionForm({ organizationId, plans, current }: { organizationId: string; plans: { code: string; name: string }[]; current: { planCode: string; status: string; end: string } | null }) {
+export function SubscriptionForm({ organizationId, plans, current }: { organizationId: string; plans: { code: string; name: string }[]; current: { planCode: string; status: string; end: string; cycle: string } | null }) {
   const { t } = useI18n();
   return (
-    <ActionForm action={changeSubscriptionAction} hidden={{ organizationId }} className="grid gap-3 sm:grid-cols-3" successMessage={t("common.saved")}>
+    <ActionForm action={changeSubscriptionAction} hidden={{ organizationId }} className="grid gap-3 sm:grid-cols-4" successMessage={t("common.saved")}>
       <Field label={t("platform.tenants.plan")} name="planCode">
         {(p) => <Select {...p} defaultValue={current?.planCode ?? plans[0]?.code}>{plans.map((x) => <option key={x.code} value={x.code}>{x.name}</option>)}</Select>}
       </Field>
       <Field label={t("common.status")} name="status">
         {(p) => <Select {...p} defaultValue={current?.status ?? "TRIAL"}>{(["TRIAL", "ACTIVE", "PAST_DUE", "CANCELLED"] as const).map((v) => <option key={v} value={v}>{t(`enums.SubscriptionStatus.${v}`)}</option>)}</Select>}
       </Field>
+      <Field label={t("billing.cycle")} name="billingCycle">
+        {(p) => <Select {...p} defaultValue={current?.cycle ?? "MONTHLY"}>{(["MONTHLY", "YEARLY"] as const).map((v) => <option key={v} value={v}>{t(`billing.cycles.${v}`)}</option>)}</Select>}
+      </Field>
       <Field label={t("platform.tenant.periodEnd")} name="currentPeriodEnd">{(p) => <Input {...p} type="date" required defaultValue={current?.end} />}</Field>
-      <div className="sm:col-span-3"><SubmitButton>{t("platform.tenant.save")}</SubmitButton></div>
+      <div className="sm:col-span-4"><SubmitButton>{t("platform.tenant.save")}</SubmitButton></div>
     </ActionForm>
   );
 }

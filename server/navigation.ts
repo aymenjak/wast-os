@@ -25,6 +25,7 @@ export function buildNav(ctx: OrgContext, d: Dictionary, locale: string): NavSec
   if (p("workorders.read") && ctx.role !== "FIELD_WORKER") ops.items.push({ href: `${base}/work-orders`, label: d.nav.workOrders, icon: "Wrench" });
   if (p("fleet.read")) ops.items.push({ href: `${base}/fleet`, label: d.nav.fleet, icon: "Truck" });
   if (p("fleet.read") && ctx.org.kind === "SERVICE_PROVIDER") ops.items.push({ href: `${base}/containers`, label: d.nav.containers, icon: "Box" });
+  if (p("fleet.read")) ops.items.push({ href: `${base}/iot`, label: d.nav.iot, icon: "Radio" });
 
   if (p("customers.read")) commercial.items.push({ href: `${base}/customers`, label: d.nav.customers, icon: "Building2" });
   if (p("contracts.read")) commercial.items.push({ href: `${base}/contracts`, label: d.nav.contracts, icon: "FileText" });
@@ -33,6 +34,7 @@ export function buildNav(ctx: OrgContext, d: Dictionary, locale: string): NavSec
 
   if (p("team.manage")) admin.items.push({ href: `${base}/team`, label: d.nav.team, icon: "Users" });
   if (p("settings.manage")) admin.items.push({ href: `${base}/settings`, label: d.nav.settings, icon: "Settings" });
+  if (p("settings.manage") && !ctx.support && ctx.org.kind === "SERVICE_PROVIDER") admin.items.push({ href: `${base}/billing`, label: d.nav.billing, icon: "CreditCard" });
   if (!ctx.support) admin.items.push({ href: `${base}/support`, label: d.nav.support, icon: "LifeBuoy" });
 
   return [top, civic, ops, commercial, admin].filter((s) => s.items.length > 0);
