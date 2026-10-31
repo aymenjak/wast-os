@@ -40,7 +40,7 @@ Platform owner console (organizations, subscriptions, verification, suspension, 
 
 - Platform: accountant review of NEXVO invoice layout, email delivery of invoices and dunning reminders, CSV export of tenants, passkeys.
 - IoT: GPS retention job, route replay, automatic collection proposals from forecasts (human-approved), MQTT for non-LoRa gateways.
-- Email: invitations and password reset through the outbox, PDF attachment once the invoice layout is validated.
+- Accountant validation of the invoice PDF layout; streaming answers for the assistant; MQTT gateways.
 - Contractor assignment: municipality → provider tenant work orders with SLA reporting.
 - Quotations and credit notes; live online payments (after merchant onboarding and owner approval).
 - Offline-tolerant field app (PWA queue).

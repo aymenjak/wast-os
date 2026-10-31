@@ -117,7 +117,7 @@ async function emailInvoice(tx: Tx, inv: { id: string; organizationId: string; n
   const r = await billingRecipients(tx, inv.organizationId);
   const link = `${process.env.APP_URL ?? ""}/${r.locale}/app/billing/${inv.id}`;
   const m = platformInvoiceEmail(r.locale, inv, link, reminder);
-  for (const to of r.to) await enqueueEmail(tx, { organizationId: inv.organizationId, to, type: reminder ? "platform.invoice_reminder" : "platform.invoice_issued", ...m });
+  for (const to of r.to) await enqueueEmail(tx, { organizationId: inv.organizationId, to, type: reminder ? "platform.invoice_reminder" : "platform.invoice_issued", ...m, attachment: { kind: "platformInvoice", id: inv.id, organizationId: inv.organizationId } });
 }
 
 /** Brings PAST_DUE / billing suspension back in line with what is actually overdue. */

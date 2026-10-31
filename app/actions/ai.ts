@@ -47,3 +47,31 @@ export async function aiFeedbackAction(suggestionId: string, accepted: boolean, 
     throw e;
   }
 }
+
+// ── Assistant (chat) ──
+import { deleteConversation, sendChatMessage, setAiChatEnabled } from "@/server/services/ai-chat";
+import { orgAction } from "@/server/action";
+import type { ActionState } from "@/lib/actions/state";
+
+export async function sendChatAction(conversationId: string | null, message: string, locale: string): Promise<{ ok: true; conversationId: string; reply: string; toolsUsed: string[] } | { ok: false; error: string }> {
+  const ctx = await requireOrg(loc(locale));
+  if (ctx.support) return { ok: false, error: "errors.support.readOnly" };
+  if (!(await rateLimit(`ai-chat:${ctx.userId}`, 60, 3600_000)).ok) return { ok: false, error: "errors.rateLimited" };
+  try {
+    return { ok: true, ...(await sendChatMessage(ctx, { conversationId: conversationId ?? undefined, message: String(message ?? "") }, loc(locale))) };
+  } catch (e) {
+    if (e instanceof DomainError) return { ok: false, error: e.code };
+    throw e;
+  }
+}
+
+export async function deleteConversationAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, async (ctx) => {
+    await deleteConversation(ctx, String(fd.get("conversationId") ?? ""));
+    return "/app/assistant";
+  });
+}
+
+export async function setAiChatAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, (ctx) => setAiChatEnabled(ctx, fd.get("enabled") === "true"), { revalidate: ["/app/settings", "/app/assistant"] });
+}

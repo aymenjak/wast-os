@@ -28,7 +28,20 @@
 | M Command palette search | integration (tenant + permission scoping, accent-insensitive, LIKE wildcards literal); e2e (Ctrl+K → result → navigate) |
 | J ar/fr/en desktop & mobile | e2e `i18n-a11y` (lang/dir, translated H1, axe WCAG 2.2 AA serious/critical = 0 on 6 public pages × 3 locales with reduced motion, no overflow at 360 px); screenshots in `docs/screenshots` reviewed |
 
-## Recorded results (2026-10-31, LoRaWAN, live vehicle map, email)
+## Recorded results (2026-10-31, fixes + AI assistant)
+
+| Suite | Result |
+|-------|--------|
+| `npx vitest run` | **21 files, 211 tests passed** (3 consecutive runs of the new file) |
+| `npx playwright test` | **41 passed** |
+| `npx tsc --noEmit` / `npx next build` | 0 errors / success |
+| `npm audit --omit=dev` | 0 vulnerabilities (playwright-core 1.63.0 added) |
+
+`fixes-and-assistant.test.ts` (12): password reset (no enumeration, single use, old link invalidated, sessions/lockout cleared, body redacted, expiry); invitation email with redaction; citizen emails only for email contacts; real PDF (`%PDF-`) tenant/portal-scoped and attached to the email; retention; assistant opt-in, role/tenant-scoped tools, invalid input, private conversations, audit without content; **CLI smoke** (real `npm run retention:run` / `outbox:work`). E2E `reset-assistant.spec` (2). Visual check: Arabic invoice PDF rendered to PNG and reviewed (shaping and RTL correct).
+
+Defects found and fixed: `npm run billing:run` crashed (shipped in the previous round) because shared modules import `server-only` — tests had hidden it; two order-dependent tests (same-millisecond emails) and one hydration race in an e2e test.
+
+## Earlier results (2026-10-31, LoRaWAN, live vehicle map, email)
 
 | Suite | Result |
 |-------|--------|

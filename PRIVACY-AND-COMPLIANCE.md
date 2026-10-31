@@ -79,3 +79,7 @@ TOTP secrets and organizations' payment keys are encrypted at rest (AES-256-GCM)
 ## 12. Email
 
 Invoice emails contain the invoice details (customer name, amounts, line descriptions) and go only to the address the user enters or the customer's recorded email; NEXVO billing emails go to the organization's owners/admins and contact address. Sent messages stay in the `Notification` table (retention job to add). The SMTP provider processes these messages: choose one with an acceptable data-protection position (see §4).
+
+## 13. AI assistant and retention (implemented)
+
+The assistant is off until an organization's owner/admin turns it on in Settings; then the question and the records needed to answer (e.g. customer names and invoice balances) are sent to Anthropic. Conversations are visible only to their author and deleted after 90 days. The retention job (`npm run retention:run`) now deletes GPS positions after 90 days, sensor readings after 400 days, sent emails after 180 days and expired sessions/tokens (configurable; to confirm with a lawyer).

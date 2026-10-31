@@ -104,8 +104,8 @@ describe("email", () => {
     const driver = await addMember(a, "FIELD_WORKER");
     await expect(sendInvoiceEmail(driver, d.id, {})).rejects.toThrow();
     expect(await sendInvoiceEmail(a, d.id, { message: "Merci <img src=x onerror=alert(1)>" })).toMatchObject({ to: "client@example.test", queued: true });
-    expect(await processOutbox()).toMatchObject({ sent: 1, failed: 0 });
-    const m = sent.at(-1)!;
+    expect(await processOutbox()).toMatchObject({ failed: 0 });
+    const m = sent.find((x) => x.to === "client@example.test")!;
     expect(m.to).toBe("client@example.test");
     expect(m.html).not.toContain("<script>");
     expect(m.html).not.toContain("<img");

@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { pdfEnabled } from "@/server/pdf";
+import { buttonClass } from "@/components/ui/button";
 import type { Locale } from "@/lib/i18n/config";
 import { appPage, orNotFound } from "@/server/page";
 import { getInvoice } from "@/server/services/invoices";
@@ -38,7 +40,7 @@ export default async function InvoiceDetail({ params, searchParams }: { params: 
           eyebrow={<Link href={`/${locale}/app/invoices`} className="hover:underline">{d.invoices.title}</Link>}
           title={<span className="num">{inv.number ?? d.invoices.draft}</span>}
           description={inv.customer.name}
-          actions={<><StatusBadge status={inv.status} label={d.enums.InvoiceStatus[inv.status]} /><PrintButton /></>}
+          actions={<><StatusBadge status={inv.status} label={d.enums.InvoiceStatus[inv.status]} />{pdfEnabled() && inv.status !== "DRAFT" ? <a className={buttonClass("secondary", "sm")} href={`/api/invoices/${inv.id}/pdf`}>{d.billing.downloadPdf}</a> : null}<PrintButton /></>}
         />
       </div>
       {payment === "returned" ? <p role="status" className="mb-4 rounded-md bg-info-100 px-4 py-3 text-sm text-info-700 print:hidden">{d.payOnline.returned}</p> : null}

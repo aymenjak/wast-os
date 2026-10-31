@@ -86,6 +86,7 @@ const fr: Dictionary = {
     support: "Assistance",
     billing: "Abonnement",
     iot: "Capteurs et GPS",
+    assistant: "Assistant",
     platform: "Plateforme",
     supportConsole: "Console d'assistance",
     settings: "Paramètres",
@@ -222,6 +223,7 @@ const fr: Dictionary = {
     inviteInvalid: "Cette invitation est invalide ou a expiré. Demandez-en une nouvelle à votre administrateur.",
     accept: "Accepter l'invitation",
     noOrganization: "Votre compte n'est encore membre d'aucune organisation.",
+    forgot: "Mot de passe oublié ?", forgotTitle: "Réinitialiser le mot de passe", forgotLead: "Saisissez l'e-mail du compte. S'il existe, nous envoyons un lien valable 30 minutes.", forgotSend: "Envoyer le lien", forgotSent: "Si un compte existe pour cet e-mail, un lien de réinitialisation arrive. Consultez votre boîte de réception.", newPassword: "Nouveau mot de passe", resetTitle: "Choisir un nouveau mot de passe", resetLead: "Toutes vos autres sessions seront déconnectées.", resetSave: "Enregistrer le mot de passe", resetDone: "Mot de passe modifié. Connectez-vous avec le nouveau.",
     suspended: "Cet espace est suspendu. Contactez NEXVO pour rétablir l'accès.",
   },
   dashboard: {
@@ -624,7 +626,7 @@ const fr: Dictionary = {
       custom: "Valeur invalide.",
       past: "La date ne peut pas être passée.",
     },
-    auth: { emailTaken: "Un compte existe déjà pour cet e-mail. Connectez-vous.", invalidCredentials: "E-mail ou mot de passe incorrect." },
+    auth: { emailTaken: "Un compte existe déjà pour cet e-mail. Connectez-vous.", invalidCredentials: "E-mail ou mot de passe incorrect.", resetInvalid: "Ce lien de réinitialisation est invalide ou a expiré." },
     team: {
       roleNotAllowed: "Ce rôle ne peut pas être attribué ici.",
       alreadyMember: "Cette personne est déjà membre.",
@@ -676,7 +678,7 @@ const fr: Dictionary = {
     },
     schedule: { range: "Choisissez une période de {max} jours au plus." },
     container: { codeTaken: "Un conteneur porte déjà ce code." },
-    ai: { disabled: "L'assistance IA n'est pas configurée.", refusal: "L'IA a refusé cette demande.", failed: "Le service d'IA est indisponible. Réessayez plus tard." },
+    ai: { disabled: "L'assistance IA n'est pas configurée.", refusal: "L'IA a refusé cette demande.", failed: "Le service d'IA est indisponible. Réessayez plus tard.", chatDisabled: "L'assistant est désactivé pour cette organisation." },
     support: { closed: "Cette demande est fermée.", noGrant: "Le client n'a pas accordé d'accès à l'assistance.", readOnly: "La vue support est en lecture seule." },
     email: { invoiceNotIssued: "Seules les factures émises peuvent être envoyées.", noRecipient: "Aucune adresse e-mail pour ce client." },
     iot: { serialExists: "Un appareil avec ce numéro de série existe déjà." },
@@ -872,6 +874,7 @@ const fr: Dictionary = {
     back: "Retour",
   },
   billing: {
+    downloadPdf: "Télécharger le PDF",
     title: "Abonnement et factures", lead: "Votre offre NEXVO et les factures que NEXVO vous adresse.",
     invoices: "Factures", noInvoices: "Aucune facture pour l'instant.", period: "Période", price: "Prix (HT)", nextInvoice: "Prochaine facture le",
     overdue: "En retard", status: { ISSUED: "À payer", PAID: "Payée", VOID: "Annulée" },
@@ -908,6 +911,7 @@ const fr: Dictionary = {
     readings: "Mesures du capteur (14 jours)", threshold: "Seuil d'alerte : {pct} %", vehiclesTracked: "Véhicules avec GPS",
   },
   email: {
+    invitationSubject: "Invitation à rejoindre {org} sur NEXVO", invitationIntro: "{org} vous invite dans son espace NEXVO.", invitationCta: "Accepter l'invitation", linkExpires: "Ce lien expire dans 7 jours et ne fonctionne qu'une fois.", ignoreIfUnexpected: "Si vous n'attendiez pas cet e-mail, ignorez-le.", resetSubject: "Réinitialisez votre mot de passe NEXVO", resetIntro: "Une réinitialisation du mot de passe de votre compte NEXVO a été demandée.", resetCta: "Choisir un nouveau mot de passe", resetExpires: "Ce lien ne fonctionne qu'une fois et expire dans 30 minutes.", civicSubject: "Votre signalement {code} : mise à jour", civicIntro: "{municipality} a mis à jour le signalement que vous avez envoyé.", civicCode: "Code de suivi", civicStatus: "Statut", civicCta: "Suivre le signalement", civicFooter: "Vous recevez ce message car vous avez laissé votre e-mail en signalant.",
     sendInvoice: "Envoyer par e-mail", to: "Destinataire", message: "Message (facultatif)", send: "Envoyer la facture",
     noCustomerEmail: "Ce client n'a pas d'adresse e-mail ; saisissez-en une.",
     queued: "En file d'envoi pour {to}.", queuedNoSmtp: "En file pour {to}. L'envoi d'e-mails n'est pas encore configuré (SMTP) : il partira dès qu'il le sera.",
@@ -915,6 +919,15 @@ const fr: Dictionary = {
     reminderSubject: "Rappel : la facture NEXVO {number} est en retard", reminderIntro: "Cette facture a dépassé son échéance. Merci de la régler pour garder l'accès à votre espace.",
     viewInvoice: "Voir la facture", footer: "Vous recevez cet e-mail en tant que propriétaire ou administrateur d'un espace NEXVO.",
     customerInvoiceSubject: "Facture {number} de {org}", customerInvoiceIntro: "Veuillez trouver ci-dessous votre facture de {org}.", footerCustomer: "Envoyé par {org} avec NEXVO.",
+  },
+  assistant: {
+    title: "Assistant", name: "Assistant NEXVO", lead: "Posez vos questions sur vos opérations, factures et capteurs. Lecture seule : il ne modifie jamais rien.",
+    empty: "Posez une question avec vos mots, ou essayez :", suggestions: "Qu'est-ce qui est prévu aujourd'hui ?|Quelles factures sont en retard ?|Quels bacs seront bientôt pleins ?|Résume les 30 derniers jours",
+    placeholder: "Votre question…", send: "Envoyer", thinking: "Consultation de vos données…", you: "Vous", sources: "Données utilisées", newChat: "Nouvelle conversation", history: "Conversations", delete: "Supprimer la conversation",
+    disclaimer: "Les réponses viennent de vos données via un modèle d'IA et peuvent contenir des erreurs. Vérifiez les chiffres importants dans l'application.",
+    tools: { get_operations_summary: "synthèse des opérations", search_records: "recherche", list_work_orders: "ordres de travail", list_overdue_invoices: "factures en retard", list_pending_requests: "demandes en attente", get_sensor_status: "capteurs" },
+    platformOff: "L'assistant IA n'est pas encore disponible sur cette plateforme.", orgOff: "L'assistant est désactivé pour votre organisation. Un propriétaire ou administrateur peut l'activer dans les Paramètres.",
+    settingsTitle: "Assistant IA", settingsLead: "Activé, les questions de votre équipe et les données nécessaires pour y répondre sont envoyées au fournisseur d'IA (Anthropic). Lecture seule ; conversations conservées 90 jours.", enable: "Activer l'assistant", disable: "Désactiver l'assistant",
   },
   certificate: {
     title: "Attestation de collecte",

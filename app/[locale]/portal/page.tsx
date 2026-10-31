@@ -1,4 +1,5 @@
 import type { Locale } from "@/lib/i18n/config";
+import { pdfEnabled } from "@/server/pdf";
 import { appPage } from "@/server/page";
 import { prisma } from "@/server/db";
 import { listRequests } from "@/server/services/requests";
@@ -26,6 +27,7 @@ export default async function PortalHome({ params, searchParams }: { params: Pro
   const [requests, orders, invoices, cats] = await Promise.all([listRequests(ctx), listWorkOrders(ctx), listInvoices(ctx), wasteCategoryOptions(ctx)]);
   const { payment } = await searchParams;
   const online = (await orgChargilyStatus(ctx.org.id)).configured;
+  const pdf = pdfEnabled();
   const month = orgToday(ctx).slice(0, 7);
   const name = (x: { nameEn: string; nameFr: string; nameAr: string }) => (locale === "ar" ? x.nameAr : locale === "fr" ? x.nameFr : x.nameEn);
   return (
@@ -67,7 +69,7 @@ export default async function PortalHome({ params, searchParams }: { params: Pro
             {invoices.length === 0 ? <EmptyState title={d.invoices.empty} /> : (
               <Table>
                 <thead><tr><Th>{d.invoices.number}</Th><Th>{d.invoices.dueDate}</Th><Th numeric>{d.invoices.balance}</Th><Th>{d.common.status}</Th>{online ? <Th /> : null}</tr></thead>
-                <tbody>{invoices.map((i) => <tr key={i.id}><Td><span className="num">{i.number}</span></Td><Td>{formatDay(i.dueDate, locale)}</Td><Td numeric><span className="num">{formatMoney((toMinor(i.total) - toMinor(i.amountPaid)) / 100, locale, i.currency)}</span></Td><Td><StatusBadge status={i.status} label={d.enums.InvoiceStatus[i.status]} /></Td>{online ? <Td>{i.status === "ISSUED" || i.status === "PARTIALLY_PAID" ? <PayOnline invoiceId={i.id} size="sm" /> : null}</Td> : null}</tr>)}</tbody>
+                <tbody>{invoices.map((i) => <tr key={i.id}><Td>{pdf ? <a className="num font-medium text-brand-700 hover:underline" href={`/api/invoices/${i.id}/pdf`}>{i.number}</a> : <span className="num">{i.number}</span>}</Td><Td>{formatDay(i.dueDate, locale)}</Td><Td numeric><span className="num">{formatMoney((toMinor(i.total) - toMinor(i.amountPaid)) / 100, locale, i.currency)}</span></Td><Td><StatusBadge status={i.status} label={d.enums.InvoiceStatus[i.status]} /></Td>{online ? <Td>{i.status === "ISSUED" || i.status === "PARTIALLY_PAID" ? <PayOnline invoiceId={i.id} size="sm" /> : null}</Td> : null}</tr>)}</tbody>
               </Table>
             )}
           </Card>

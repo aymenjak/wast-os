@@ -30,6 +30,16 @@ Jobs (cron or the hosting scheduler):
 ```bash
 npm run billing:run      # daily: NEXVO subscription invoices, dunning; idempotent; also flushes the outbox
 npm run outbox:work      # every minute: delivers queued emails (no-op without SMTP_URL)
+npm run retention:run    # daily: GPS (90 d), sensor readings (400 d), sent emails (180 d), AI chats (90 d), expired sessions/tokens
+```
+
+Retention windows: `GPS_RETENTION_DAYS`, `SENSOR_RETENTION_DAYS`, `EMAIL_RETENTION_DAYS`, `AI_CHAT_RETENTION_DAYS` (defaults above, pending legal review).
+
+PDF: set `CHROMIUM_PATH` to a Chromium/Chrome binary (e.g. the distro package `chromium`) to enable invoice PDFs and PDF attachments; without it, print view only.
+
+All CLI scripts run with `--conditions=react-server` (set in package.json) because shared modules are guarded by `server-only`.
+
+```bash
 ```
 
 Email: set `SMTP_URL` (e.g. `smtps://user:password@smtp.provider.dz:465`) and `MAIL_FROM` (e.g. `NEXVO <factures@your-domain.dz>`), with SPF/DKIM for that domain. Without `SMTP_URL` emails stay queued and are sent once it is configured. **Turning on email = external communication: owner approval required** (AGENTS rule 8).

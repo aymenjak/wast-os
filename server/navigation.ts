@@ -35,6 +35,7 @@ export function buildNav(ctx: OrgContext, d: Dictionary, locale: string): NavSec
   if (p("team.manage")) admin.items.push({ href: `${base}/team`, label: d.nav.team, icon: "Users" });
   if (p("settings.manage")) admin.items.push({ href: `${base}/settings`, label: d.nav.settings, icon: "Settings" });
   if (p("settings.manage") && !ctx.support && ctx.org.kind === "SERVICE_PROVIDER") admin.items.push({ href: `${base}/billing`, label: d.nav.billing, icon: "CreditCard" });
+  if (!ctx.support && ctx.role !== "CUSTOMER_PORTAL") top.items.push({ href: `${base}/assistant`, label: d.nav.assistant, icon: "Bot" });
   if (!ctx.support) admin.items.push({ href: `${base}/support`, label: d.nav.support, icon: "LifeBuoy" });
 
   return [top, civic, ops, commercial, admin].filter((s) => s.items.length > 0);

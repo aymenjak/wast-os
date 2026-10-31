@@ -5,6 +5,7 @@ import { prisma } from "@/server/db";
 import { rateLimit } from "@/server/rate-limit";
 import { challengeToken, clearChallengeCookie, clientIp, clearSessionCookie, sessionToken, setChallengeCookie, setSessionCookie, userAgent } from "@/server/auth/session";
 import { completeLoginChallenge } from "@/server/services/mfa";
+import { requestPasswordReset, resetPassword } from "@/server/services/password-reset";
 import { acceptInvitation, login, logout, registerOrganization, switchOrganization, resolveSession } from "@/server/services/accounts";
 import { citizenFeedback, submitCivicReport } from "@/server/services/civic";
 import { formToObject, localeFrom, toActionError } from "@/server/action";
@@ -157,4 +158,30 @@ export async function trackLookupAction(fd: FormData) {
   const locale = localeFrom(fd);
   const code = String(fd.get("code") ?? "").trim().toUpperCase().replace(/\s+/g, "");
   redirect(`/${locale}/civic/track/${encodeURIComponent(code)}`);
+}
+
+export async function forgotPasswordAction(_: ActionState, fd: FormData): Promise<ActionState> {
+  const blocked = await limited("forgot", 5, 60 * 60_000);
+  if (blocked) return blocked;
+  const input = formToObject(fd);
+  const emailKey = String(input.email ?? "").trim().toLowerCase();
+  if (emailKey && !(await rateLimit(`forgot-email:${emailKey}`, 3, 60 * 60_000)).ok) return { ok: true, nonce: Date.now() };
+  try {
+    await requestPasswordReset({ ...input, locale: localeFrom(fd) });
+  } catch (e) {
+    return toActionError(e);
+  }
+  return { ok: true, nonce: Date.now() };
+}
+
+export async function resetPasswordAction(_: ActionState, fd: FormData): Promise<ActionState> {
+  const locale = localeFrom(fd);
+  const blocked = await limited("reset", 10, 60 * 60_000);
+  if (blocked) return blocked;
+  try {
+    await resetPassword(formToObject(fd));
+  } catch (e) {
+    return toActionError(e);
+  }
+  redirect(`/${locale}/login?reset=1`);
 }

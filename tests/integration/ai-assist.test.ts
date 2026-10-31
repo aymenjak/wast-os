@@ -16,6 +16,9 @@ const fake: AiProvider = {
     if (mode === "refusal") throw new AiUnavailableError("refusal");
     return { output: { category: "OVERFLOWING_BIN", priority: "HIGH", likelyDuplicate: false, rationale: "Bin overflowing", publicNoteDraft: "Merci" }, model: "fake", inputTokens: 10, outputTokens: 5 };
   },
+  async chat() {
+    return { text: "", toolsUsed: [], model: "fake", inputTokens: 0, outputTokens: 0 };
+  },
   async operationsBrief(input) {
     seen.brief.push(input);
     return { output: { headline: "Calm day", points: ["0 overdue"] }, model: "fake", inputTokens: 10, outputTokens: 5 };

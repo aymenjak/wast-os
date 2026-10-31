@@ -9,6 +9,7 @@ import { newTrackingCode } from "../auth/tokens";
 import { IMAGE_TYPES, storeUpload, type StoredFile } from "../storage";
 import { latitude, longitude, optionalText, parse } from "../validation";
 import type { CivicReportStatus } from "@/lib/generated/prisma/enums";
+import { notifyCitizen } from "./work-orders";
 
 const DUPLICATE_RADIUS_M = 75;
 const DUPLICATE_WINDOW_DAYS = 14;
@@ -258,11 +259,7 @@ export async function reviewCivicReport(ctx: OrgContext, reportId: string, input
       data: { reportId: r.id, fromStatus: r.status, toStatus: data.to, actorType: "USER", actorUserId: ctx.userId, publicNote: data.publicNote },
     });
     await audit(tx, { organizationId: ctx.org.id, actorUserId: ctx.userId, action: "civic.reviewed", entityType: "CivicReport", entityId: r.id, data: { from: r.status, to: data.to, reason: data.reason ?? null } });
-    if (r.reporterContact) {
-      await tx.notification.create({
-        data: { organizationId: ctx.org.id, channel: "EMAIL", recipient: r.reporterContact, type: "civic.status_changed", payload: { trackingCode: r.trackingCode, status: data.to } },
-      });
-    }
+    await notifyCitizen(tx, ctx.org.id, r.reporterContact, r.trackingCode, data.to, "civic.status_changed");
     return data.to;
   });
 }

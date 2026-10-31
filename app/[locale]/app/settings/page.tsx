@@ -7,6 +7,8 @@ import { StatusBadge } from "@/components/ui/badge";
 import { DescriptionList, Forbidden, PageHeader } from "@/components/ui/misc";
 import { SettingsForm } from "./settings-form";
 import { ChargilyForm } from "@/components/billing-forms";
+import { AiChatToggle } from "@/components/ai-chat-toggle";
+import { chatAvailability } from "@/server/services/ai-chat";
 import { orgChargilyStatus } from "@/server/payments/chargily";
 import { Badge } from "@/components/ui/badge";
 
@@ -16,6 +18,7 @@ export default async function SettingsPage({ params }: { params: Promise<{ local
   const org = await getOrganization(ctx);
   const sub = org.subscription;
   const pay = await orgChargilyStatus(ctx.org.id);
+  const ai = await chatAvailability(ctx);
   return (
     <>
       <PageHeader title={d.settings.title} />
@@ -27,6 +30,12 @@ export default async function SettingsPage({ params }: { params: Promise<{ local
             <CardBody className="space-y-2 text-sm">
               <StatusBadge status={org.verificationStatus === "VERIFIED" ? "ACTIVE" : "PLANNED"} label={d.enums.VerificationStatus[org.verificationStatus]} />
               <p className="text-ink-600">{d.settings.verificationHint}</p>
+            </CardBody>
+          </Card>
+          <Card>
+            <CardHeader title={d.assistant.settingsTitle} description={d.assistant.settingsLead} action={<Badge tone={ai.organization ? "success" : "neutral"}>{ai.organization ? d.mfa.on : d.mfa.off}</Badge>} />
+            <CardBody className="space-y-2 text-sm">
+              {ai.platform ? <AiChatToggle enabled={ai.organization} /> : <p className="text-ink-600">{d.assistant.platformOff}</p>}
             </CardBody>
           </Card>
           {ctx.org.kind === "SERVICE_PROVIDER" ? (

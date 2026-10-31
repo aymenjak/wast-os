@@ -52,3 +52,26 @@ export function customerInvoiceEmail(
   const text = `${t.customerInvoiceIntro.replace("{org}", org.name)}\n${message ?? ""}\n${d.invoices.number}: ${inv.number}\n${d.invoices.total}: ${formatMinor(toMinor(inv.total.toString()), locale, inv.currency)}\n${inv.lines.map((x) => `- ${x.description}: ${formatMinor(toMinor(x.lineTotal.toString()), locale, inv.currency)}`).join("\n")}`;
   return { subject, html: layout(locale, subject, body, t.footerCustomer.replace("{org}", org.name)), text };
 }
+
+export function invitationEmail(l: string, org: string, link: string) {
+  const locale = loc(l);
+  const t = getDictionary(locale).email;
+  const subject = t.invitationSubject.replace("{org}", org);
+  const body = `<p>${esc(t.invitationIntro.replace("{org}", org))}</p>${button(link, t.invitationCta)}<p style="font-size:13px;color:#5a6b65">${esc(t.linkExpires)}</p>`;
+  return { subject, html: layout(locale, subject, body, t.ignoreIfUnexpected), text: `${t.invitationIntro.replace("{org}", org)}\n${link}\n${t.linkExpires}` };
+}
+
+export function passwordResetEmail(l: string, link: string) {
+  const locale = loc(l);
+  const t = getDictionary(locale).email;
+  const body = `<p>${esc(t.resetIntro)}</p>${button(link, t.resetCta)}<p style="font-size:13px;color:#5a6b65">${esc(t.resetExpires)}</p>`;
+  return { subject: t.resetSubject, html: layout(locale, t.resetSubject, body, t.ignoreIfUnexpected), text: `${t.resetIntro}\n${link}\n${t.resetExpires}` };
+}
+
+export function civicUpdateEmail(l: string, municipality: string, trackingCode: string, statusLabel: string, link: string) {
+  const locale = loc(l);
+  const t = getDictionary(locale).email;
+  const subject = t.civicSubject.replace("{code}", trackingCode);
+  const body = `<p>${esc(t.civicIntro.replace("{municipality}", municipality))}</p><table>${row(t.civicCode, esc(trackingCode))}${row(t.civicStatus, esc(statusLabel))}</table>${button(link, t.civicCta)}`;
+  return { subject, html: layout(locale, subject, body, t.civicFooter), text: `${t.civicIntro.replace("{municipality}", municipality)}\n${trackingCode}: ${statusLabel}\n${link}` };
+}

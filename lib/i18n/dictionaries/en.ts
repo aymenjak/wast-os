@@ -84,6 +84,7 @@ const en = {
     support: "Support",
     billing: "Subscription",
     iot: "Sensors & GPS",
+    assistant: "Assistant",
     platform: "Platform",
     supportConsole: "Support console",
     settings: "Settings",
@@ -220,6 +221,7 @@ const en = {
     inviteInvalid: "This invitation is invalid or has expired. Ask your administrator for a new one.",
     accept: "Accept invitation",
     noOrganization: "Your account is not a member of any organization yet.",
+    forgot: "Forgot your password?", forgotTitle: "Reset your password", forgotLead: "Enter your account email. If it exists, we send a link valid for 30 minutes.", forgotSend: "Send the link", forgotSent: "If an account exists for this email, a reset link is on its way. Check your inbox.", newPassword: "New password", resetTitle: "Choose a new password", resetLead: "All your other sessions will be signed out.", resetSave: "Save the new password", resetDone: "Password changed. Sign in with the new one.",
     suspended: "This workspace is suspended. Contact NEXVO to restore access.",
   },
   dashboard: {
@@ -622,7 +624,7 @@ const en = {
       custom: "Invalid value.",
       past: "Date cannot be in the past.",
     },
-    auth: { emailTaken: "An account already exists for this email. Sign in instead.", invalidCredentials: "Incorrect email or password." },
+    auth: { emailTaken: "An account already exists for this email. Sign in instead.", invalidCredentials: "Incorrect email or password.", resetInvalid: "This reset link is invalid or has expired." },
     team: {
       roleNotAllowed: "This role cannot be assigned here.",
       alreadyMember: "This person is already a member.",
@@ -674,7 +676,7 @@ const en = {
     },
     schedule: { range: "Choose a range of at most {max} days." },
     container: { codeTaken: "A container with this code already exists." },
-    ai: { disabled: "AI assistance is not configured.", refusal: "The AI declined this request.", failed: "The AI service is unavailable. Try again later." },
+    ai: { disabled: "AI assistance is not configured.", refusal: "The AI declined this request.", failed: "The AI service is unavailable. Try again later.", chatDisabled: "The assistant is turned off for this organization." },
     support: { closed: "This request is closed.", noGrant: "The customer has not granted support access.", readOnly: "Support view is read-only." },
     email: { invoiceNotIssued: "Only issued invoices can be emailed.", noRecipient: "No email address for this customer." },
     iot: { serialExists: "A device with this serial number already exists." },
@@ -870,6 +872,7 @@ const en = {
     back: "Back",
   },
   billing: {
+    downloadPdf: "Download PDF",
     title: "Subscription & invoices", lead: "Your NEXVO plan and the invoices NEXVO sends you.",
     invoices: "Invoices", noInvoices: "No invoices yet.", period: "Period", price: "Price (excl. VAT)", nextInvoice: "Next invoice on",
     overdue: "Overdue", status: { ISSUED: "To pay", PAID: "Paid", VOID: "Cancelled" },
@@ -906,6 +909,7 @@ const en = {
     readings: "Sensor readings (14 days)", threshold: "Alert threshold: {pct} %", vehiclesTracked: "Vehicles with GPS",
   },
   email: {
+    invitationSubject: "Invitation to join {org} on NEXVO", invitationIntro: "{org} invites you to its NEXVO workspace.", invitationCta: "Accept the invitation", linkExpires: "This link expires in 7 days and works once.", ignoreIfUnexpected: "If you did not expect this email, you can ignore it.", resetSubject: "Reset your NEXVO password", resetIntro: "Someone asked to reset the password of your NEXVO account.", resetCta: "Choose a new password", resetExpires: "This link works once and expires in 30 minutes.", civicSubject: "Your report {code}: update", civicIntro: "{municipality} has updated the report you submitted.", civicCode: "Tracking code", civicStatus: "Status", civicCta: "Follow the report", civicFooter: "You receive this because you left your email when reporting.",
     sendInvoice: "Send by email", to: "Recipient", message: "Message (optional)", send: "Send invoice",
     noCustomerEmail: "This customer has no email address; enter one.",
     queued: "Queued for {to}.", queuedNoSmtp: "Queued for {to}. Email delivery is not configured yet (SMTP), so it will be sent once it is.",
@@ -913,6 +917,15 @@ const en = {
     reminderSubject: "Reminder: NEXVO invoice {number} is overdue", reminderIntro: "This invoice is past its due date. Please pay it to keep access to your workspace.",
     viewInvoice: "View invoice", footer: "You receive this email as an owner or administrator of a NEXVO workspace.",
     customerInvoiceSubject: "Invoice {number} from {org}", customerInvoiceIntro: "Please find below your invoice from {org}.", footerCustomer: "Sent by {org} using NEXVO.",
+  },
+  assistant: {
+    title: "Assistant", name: "NEXVO Assistant", lead: "Ask questions about your operations, invoices and sensors. Read-only: it never changes anything.",
+    empty: "Ask a question in your own words, or try:", suggestions: "What is planned today?|Which invoices are overdue?|Which bins will be full soon?|Summarise the last 30 days",
+    placeholder: "Your question…", send: "Send", thinking: "Looking at your data…", you: "You", sources: "Data used", newChat: "New conversation", history: "Conversations", delete: "Delete conversation",
+    disclaimer: "Answers come from your data through an AI model and can contain mistakes. Check important figures in the app.",
+    tools: { get_operations_summary: "operations summary", search_records: "search", list_work_orders: "work orders", list_overdue_invoices: "overdue invoices", list_pending_requests: "pending requests", get_sensor_status: "sensors" },
+    platformOff: "The AI assistant is not available on this platform yet.", orgOff: "The assistant is turned off for your organization. An owner or administrator can turn it on in Settings.",
+    settingsTitle: "AI assistant", settingsLead: "When on, the questions of your team and the data needed to answer them are sent to the AI provider (Anthropic). Read-only; conversations kept 90 days.", enable: "Turn on the assistant", disable: "Turn off the assistant",
   },
   certificate: {
     title: "Collection certificate",

@@ -86,6 +86,7 @@ const ar: Dictionary = {
     support: "الدعم",
     billing: "الاشتراك",
     iot: "المستشعرات والتتبع",
+    assistant: "المساعد",
     platform: "المنصة",
     supportConsole: "منصة الدعم",
     settings: "الإعدادات",
@@ -221,6 +222,7 @@ const ar: Dictionary = {
     inviteInvalid: "هذه الدعوة غير صالحة أو منتهية. اطلب دعوة جديدة من المسؤول.",
     accept: "قبول الدعوة",
     noOrganization: "حسابك ليس عضوًا في أي مؤسسة بعد.",
+    forgot: "نسيت كلمة السر؟", forgotTitle: "إعادة تعيين كلمة السر", forgotLead: "أدخل بريد الحساب. إن وُجد، نرسل رابطًا صالحًا لمدة 30 دقيقة.", forgotSend: "إرسال الرابط", forgotSent: "إذا كان هناك حساب بهذا البريد، فرابط إعادة التعيين في طريقه إليك. تحقق من بريدك.", newPassword: "كلمة السر الجديدة", resetTitle: "اختر كلمة سر جديدة", resetLead: "سيتم إنهاء كل جلساتك الأخرى.", resetSave: "حفظ كلمة السر الجديدة", resetDone: "تم تغيير كلمة السر. سجّل الدخول بالجديدة.",
     suspended: "مساحة العمل هذه موقوفة. تواصل مع NEXVO لاستعادة الوصول.",
   },
   dashboard: {
@@ -623,7 +625,7 @@ const ar: Dictionary = {
       custom: "قيمة غير صالحة.",
       past: "لا يمكن أن يكون التاريخ في الماضي.",
     },
-    auth: { emailTaken: "يوجد حساب بهذا البريد الإلكتروني. سجّل الدخول.", invalidCredentials: "البريد الإلكتروني أو كلمة المرور غير صحيحة." },
+    auth: { emailTaken: "يوجد حساب بهذا البريد الإلكتروني. سجّل الدخول.", invalidCredentials: "البريد الإلكتروني أو كلمة المرور غير صحيحة.", resetInvalid: "رابط إعادة التعيين غير صالح أو منتهي الصلاحية." },
     team: {
       roleNotAllowed: "لا يمكن إسناد هذا الدور هنا.",
       alreadyMember: "هذا الشخص عضو بالفعل.",
@@ -675,7 +677,7 @@ const ar: Dictionary = {
     },
     schedule: { range: "اختر فترة لا تتجاوز {max} يومًا." },
     container: { codeTaken: "توجد حاوية بهذا الرمز." },
-    ai: { disabled: "المساعدة بالذكاء الاصطناعي غير مفعّلة.", refusal: "رفض الذكاء الاصطناعي هذا الطلب.", failed: "خدمة الذكاء الاصطناعي غير متاحة. أعد المحاولة لاحقًا." },
+    ai: { disabled: "المساعدة بالذكاء الاصطناعي غير مفعّلة.", refusal: "رفض الذكاء الاصطناعي هذا الطلب.", failed: "خدمة الذكاء الاصطناعي غير متاحة. أعد المحاولة لاحقًا.", chatDisabled: "المساعد متوقف في هذه المؤسسة." },
     support: { closed: "هذا الطلب مغلق.", noGrant: "لم يمنح الزبون إذن الوصول للدعم.", readOnly: "عرض الدعم للقراءة فقط." },
     email: { invoiceNotIssued: "لا تُرسل إلا الفواتير الصادرة.", noRecipient: "لا يوجد بريد إلكتروني لهذا الزبون." },
     iot: { serialExists: "يوجد جهاز بهذا الرقم التسلسلي مسبقًا." },
@@ -871,6 +873,7 @@ const ar: Dictionary = {
     back: "رجوع",
   },
   billing: {
+    downloadPdf: "تحميل PDF",
     title: "الاشتراك والفواتير", lead: "باقتك في NEXVO والفواتير التي ترسلها لك NEXVO.",
     invoices: "الفواتير", noInvoices: "لا توجد فواتير بعد.", period: "الفترة", price: "السعر (دون رسوم)", nextInvoice: "الفاتورة القادمة في",
     overdue: "متأخرة", status: { ISSUED: "للدفع", PAID: "مدفوعة", VOID: "ملغاة" },
@@ -907,6 +910,7 @@ const ar: Dictionary = {
     readings: "قراءات المستشعر (14 يومًا)", threshold: "عتبة التنبيه: {pct}%", vehiclesTracked: "مركبات بجهاز GPS",
   },
   email: {
+    invitationSubject: "دعوة للانضمام إلى {org} على NEXVO", invitationIntro: "تدعوك {org} إلى مساحة عملها على NEXVO.", invitationCta: "قبول الدعوة", linkExpires: "ينتهي هذا الرابط بعد 7 أيام ويعمل مرة واحدة.", ignoreIfUnexpected: "إن لم تكن تنتظر هذا البريد، تجاهله.", resetSubject: "إعادة تعيين كلمة سر NEXVO", resetIntro: "طُلبت إعادة تعيين كلمة سر حسابك على NEXVO.", resetCta: "اختيار كلمة سر جديدة", resetExpires: "يعمل هذا الرابط مرة واحدة وينتهي بعد 30 دقيقة.", civicSubject: "بلاغك {code}: تحديث", civicIntro: "قامت {municipality} بتحديث البلاغ الذي أرسلته.", civicCode: "رمز المتابعة", civicStatus: "الحالة", civicCta: "متابعة البلاغ", civicFooter: "تتلقى هذا لأنك تركت بريدك عند الإبلاغ.",
     sendInvoice: "إرسال بالبريد الإلكتروني", to: "المستلم", message: "رسالة (اختيارية)", send: "إرسال الفاتورة",
     noCustomerEmail: "لا يوجد بريد إلكتروني لهذا الزبون؛ أدخل عنوانًا.",
     queued: "أُضيفت إلى قائمة الإرسال إلى {to}.", queuedNoSmtp: "أُضيفت إلى القائمة لـ {to}. إرسال البريد غير مُعدّ بعد (SMTP)، وستُرسل فور إعداده.",
@@ -914,6 +918,15 @@ const ar: Dictionary = {
     reminderSubject: "تذكير: فاتورة NEXVO رقم {number} متأخرة", reminderIntro: "تجاوزت هذه الفاتورة تاريخ استحقاقها. يرجى تسديدها للحفاظ على الوصول إلى مساحة عملك.",
     viewInvoice: "عرض الفاتورة", footer: "تتلقى هذا البريد بصفتك مالكًا أو مديرًا لمساحة عمل في NEXVO.",
     customerInvoiceSubject: "فاتورة رقم {number} من {org}", customerInvoiceIntro: "تجدون أدناه فاتورتكم من {org}.", footerCustomer: "أُرسلت من {org} عبر NEXVO.",
+  },
+  assistant: {
+    title: "المساعد", name: "مساعد NEXVO", lead: "اسأل عن عملياتك وفواتيرك ومستشعراتك. للقراءة فقط: لا يغيّر أي شيء أبدًا.",
+    empty: "اطرح سؤالك بكلماتك، أو جرّب:", suggestions: "ما المبرمج اليوم؟|ما الفواتير المتأخرة؟|ما الحاويات التي ستمتلئ قريبًا؟|لخّص آخر 30 يومًا",
+    placeholder: "سؤالك…", send: "إرسال", thinking: "جارٍ الاطلاع على بياناتك…", you: "أنت", sources: "البيانات المستعملة", newChat: "محادثة جديدة", history: "المحادثات", delete: "حذف المحادثة",
+    disclaimer: "الإجابات مبنية على بياناتك عبر نموذج ذكاء اصطناعي وقد تحتوي أخطاء. تحقّق من الأرقام المهمة في التطبيق.",
+    tools: { get_operations_summary: "ملخص العمليات", search_records: "البحث", list_work_orders: "أوامر العمل", list_overdue_invoices: "الفواتير المتأخرة", list_pending_requests: "الطلبات المعلقة", get_sensor_status: "المستشعرات" },
+    platformOff: "المساعد الذكي غير متاح على هذه المنصة بعد.", orgOff: "المساعد متوقف في مؤسستك. يمكن للمالك أو المدير تفعيله من الإعدادات.",
+    settingsTitle: "المساعد الذكي", settingsLead: "عند تفعيله، تُرسل أسئلة فريقك والبيانات اللازمة للإجابة إلى مزوّد الذكاء الاصطناعي (Anthropic). للقراءة فقط؛ تُحفظ المحادثات 90 يومًا.", enable: "تفعيل المساعد", disable: "إيقاف المساعد",
   },
   certificate: {
     title: "شهادة جمع",

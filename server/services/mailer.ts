@@ -17,16 +17,30 @@ import type { Prisma } from "@/lib/generated/prisma/client";
 const MAX_ATTEMPTS = 5;
 type Db = Prisma.TransactionClient | typeof prisma;
 
-export async function enqueueEmail(db: Db, m: { organizationId: string | null; to: string; type: string; subject: string; html: string; text: string }) {
-  await db.notification.create({ data: { organizationId: m.organizationId, channel: "EMAIL", recipient: m.to, type: m.type, payload: { subject: m.subject, html: m.html, text: m.text } } });
+/** `sensitive` messages (links with secrets: invitations, password resets) have their body erased once sent. */
+export type Attachment = { kind: "invoice" | "platformInvoice"; id: string; organizationId: string };
+
+export async function enqueueEmail(db: Db, m: { organizationId: string | null; to: string; type: string; subject: string; html: string; text: string; sensitive?: boolean; attachment?: Attachment }) {
+  await db.notification.create({ data: { organizationId: m.organizationId, channel: "EMAIL", recipient: m.to, type: m.type, payload: { subject: m.subject, html: m.html, text: m.text, sensitive: !!m.sensitive, ...(m.attachment ? { attachment: m.attachment } : {}) } } });
 }
+
+/** PDF rendered at send time (never stored); without CHROMIUM_PATH the email goes without attachment. */
+async function renderAttachment(a: Attachment | undefined) {
+  const { pdfEnabled } = await import("../pdf");
+  if (!a || !pdfEnabled()) return undefined;
+  const docs = await import("../documents/invoice-pdf");
+  const r = a.kind === "invoice" ? await docs.renderTenantInvoicePdf(a.organizationId, a.id) : await docs.platformInvoicePdf(a.id, a.organizationId);
+  return [{ filename: r.filename, content: r.pdf, contentType: "application/pdf" }];
+}
+
+export const looksLikeEmail = (s: string | null | undefined): s is string => !!s && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
 
 export async function processOutbox(limit = 50) {
   const provider = getEmailProvider();
   const pending = await prisma.notification.count({ where: { channel: "EMAIL", sentAt: null, failedAt: null } });
   if (!provider) return { skipped: "not_configured" as const, sent: 0, failed: 0, pending };
   // Claim a batch atomically: concurrent workers never send the same message twice.
-  const batch = await prisma.$queryRaw<{ id: string; recipient: string; payload: { subject?: string; html?: string; text?: string }; attempts: number }[]>`
+  const batch = await prisma.$queryRaw<{ id: string; recipient: string; payload: { subject?: string; html?: string; text?: string; sensitive?: boolean; attachment?: Attachment }; attempts: number }[]>`
     UPDATE "Notification" SET "attempts" = "attempts" + 1, "nextAttemptAt" = now() + interval '10 minutes'
     WHERE "id" IN (
       SELECT "id" FROM "Notification"
@@ -37,8 +51,12 @@ export async function processOutbox(limit = 50) {
   let sent = 0, failed = 0;
   for (const m of batch) {
     try {
-      await provider.send({ to: m.recipient, subject: m.payload.subject ?? "", html: m.payload.html ?? "", text: m.payload.text ?? "" });
-      await prisma.notification.update({ where: { id: m.id }, data: { sentAt: new Date(), lastError: null } });
+      const attachments = await renderAttachment(m.payload.attachment);
+      await provider.send({ to: m.recipient, subject: m.payload.subject ?? "", html: m.payload.html ?? "", text: m.payload.text ?? "", attachments });
+      await prisma.notification.update({
+        where: { id: m.id },
+        data: { sentAt: new Date(), lastError: null, ...(m.payload.sensitive ? { payload: { subject: m.payload.subject ?? "", redacted: true } } : {}) },
+      });
       sent++;
     } catch (e) {
       const last = m.attempts >= MAX_ATTEMPTS;
@@ -66,7 +84,7 @@ export async function sendInvoiceEmail(ctx: OrgContext, invoiceId: string, input
   if (!to) throw new DomainError("errors.email.noRecipient");
   const m = customerInvoiceEmail(org.defaultLocale, { name: org.legalName ?? org.name, email: org.email, phone: org.phone }, { ...inv, number: inv.number }, data.message);
   await prisma.$transaction(async (tx) => {
-    await enqueueEmail(tx, { organizationId: ctx.org.id, to, type: "invoice.sent", ...m });
+    await enqueueEmail(tx, { organizationId: ctx.org.id, to, type: "invoice.sent", ...m, attachment: { kind: "invoice", id: inv.id, organizationId: ctx.org.id } });
     await audit(tx, { organizationId: ctx.org.id, actorUserId: ctx.userId, action: "invoice.emailed", entityType: "Invoice", entityId: inv.id, data: { to } });
   });
   return { to, queued: true, deliveryConfigured: !!getEmailProvider() };

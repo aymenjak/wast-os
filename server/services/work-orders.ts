@@ -8,6 +8,7 @@ import { audit } from "../audit";
 import { DOCUMENT_TYPES, IMAGE_TYPES, storeUpload } from "../storage";
 import { dateOnly, isoDate, optionalText, parse } from "../validation";
 import { toMinor, fromMinor } from "@/lib/money";
+import type { CivicReportStatus as CivicStatus } from "@/lib/generated/prisma/enums";
 import type { WorkOrderStatus } from "@/lib/generated/prisma/enums";
 import type { Prisma } from "@/lib/generated/prisma/client";
 
@@ -175,11 +176,7 @@ async function syncCivicReport(tx: Tx, ctx: OrgContext, reportId: string, woStat
   await tx.civicReportEvent.create({
     data: { reportId: report.id, fromStatus: report.status, toStatus: target, actorType: "SYSTEM", actorUserId: ctx.userId },
   });
-  if (target === "RESOLVED" && report.reporterContact) {
-    await tx.notification.create({
-      data: { organizationId: report.organizationId, channel: "EMAIL", recipient: report.reporterContact, type: "civic.resolved", payload: { trackingCode: report.trackingCode } },
-    });
-  }
+  if (target === "RESOLVED") await notifyCitizen(tx, report.organizationId, report.reporterContact, report.trackingCode, "RESOLVED", "civic.resolved");
 }
 
 /** Customer (portal) confirms or disputes a completed collection. */
@@ -283,4 +280,16 @@ export async function getEvidenceForDownload(ctx: OrgContext, evidenceId: string
     requirePermission(ctx, "contracts.read");
   } else throw new NotFoundError("EvidenceFile");
   return ev;
+}
+
+/** Email to the citizen when the contact is an email address (phone numbers need an SMS provider, not built). */
+export async function notifyCitizen(tx: Prisma.TransactionClient, organizationId: string, contact: string | null, trackingCode: string, status: CivicStatus, type: string) {
+  const { enqueueEmail, looksLikeEmail } = await import("./mailer");
+  if (!looksLikeEmail(contact)) return;
+  const { civicUpdateEmail } = await import("../email/templates");
+  const { getDictionary } = await import("@/lib/i18n");
+  const org = await tx.organization.findUniqueOrThrow({ where: { id: organizationId }, select: { name: true, defaultLocale: true } });
+  const d = getDictionary(org.defaultLocale === "ar" || org.defaultLocale === "en" ? org.defaultLocale : "fr");
+  const m = civicUpdateEmail(org.defaultLocale, org.name, trackingCode, d.enums.CivicReportStatus[status], `${process.env.APP_URL ?? ""}/${org.defaultLocale}/civic/track/${trackingCode}`);
+  await enqueueEmail(tx, { organizationId, to: contact, type, ...m });
 }

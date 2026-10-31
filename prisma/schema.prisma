@@ -35,6 +35,7 @@ model User {
   /// Last accepted TOTP time step (replay protection).
   totpLastStep    Int?
   recoveryCodes   RecoveryCode[]
+  passwordResets  PasswordResetToken[]
   loginChallenges LoginChallenge[]
   /// Account lockout after repeated failed logins (credential-stuffing defence).
   failedLogins    Int       @default(0)
@@ -48,6 +49,20 @@ model RecoveryCode {
   id        String    @id @default(cuid())
   userId    String
   codeHash  String    @unique
+  usedAt    DateTime? @db.Timestamptz(3)
+  createdAt DateTime  @default(now()) @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+/// One-time password reset link (only the hash is stored; 30-minute lifetime).
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime  @db.Timestamptz(3)
   usedAt    DateTime? @db.Timestamptz(3)
   createdAt DateTime  @default(now()) @db.Timestamptz(3)
 
@@ -139,12 +154,15 @@ model Organization {
   /// The organization's OWN Chargily merchant account (encrypted). Customer payments go to the organization, never to NEXVO.
   chargilySecretEnc  String?
   chargilyMode       String             @default("test")
+  /// The in-app AI assistant sends this organization's data to the AI provider: an owner/admin must turn it on.
+  aiChatEnabled      Boolean            @default(false)
 
   memberships        Membership[]
   invitations        Invitation[]
   subscription       Subscription?
   platformInvoices   PlatformInvoice[]
   iotDevices         IotDevice[]
+  aiConversations    AiConversation[]
   iotIntegrations    IotIntegration[]
   sensorReadings     SensorReading[]
   vehiclePositions   VehiclePosition[]
@@ -333,6 +351,37 @@ model PlatformBillingSettings {
   /// Gapless invoice sequence, incremented under a row lock.
   lastInvoiceSeq      Int      @default(0)
   updatedAt           DateTime @default(now()) @updatedAt @db.Timestamptz(3)
+}
+
+// ───────────────────────────── AI assistant ─────────────────────────────
+
+model AiConversation {
+  id             String   @id @default(cuid())
+  organizationId String
+  userId         String
+  title          String
+  createdAt      DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime @default(now()) @updatedAt @db.Timestamptz(3)
+
+  organization Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  messages     AiChatMessage[]
+
+  @@unique([organizationId, id])
+  @@index([organizationId, userId, updatedAt])
+}
+
+model AiChatMessage {
+  id             String   @id @default(cuid())
+  organizationId String
+  conversationId String
+  role           String
+  content        String
+  toolsUsed      String[] @default([])
+  createdAt      DateTime @default(now()) @db.Timestamptz(3)
+
+  conversation AiConversation @relation(fields: [organizationId, conversationId], references: [organizationId, id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
 }
 
 // ───────────────────────────── IoT ─────────────────────────────

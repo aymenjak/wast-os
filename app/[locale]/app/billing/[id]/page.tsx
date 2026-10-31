@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { pdfEnabled } from "@/server/pdf";
+import { buttonClass } from "@/components/ui/button";
 import type { Locale } from "@/lib/i18n/config";
 import { appPage, orNotFound } from "@/server/page";
 import { organizationPlatformInvoice } from "@/server/services/billing";
@@ -24,7 +26,7 @@ export default async function PlatformInvoicePage({ params, searchParams }: { pa
     <article className="mx-auto max-w-3xl bg-white p-8 print:p-0">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3 print:hidden">
         <Link href={`/${locale}/app/billing`} className="text-sm text-ink-700 hover:underline">{d.billing.title}</Link>
-        <div className="flex gap-2">{inv.status === "ISSUED" && platformChargily() ? <PayPlatformInvoice invoiceId={inv.id} /> : null}<PrintButton /></div>
+        <div className="flex gap-2">{inv.status === "ISSUED" && platformChargily() ? <PayPlatformInvoice invoiceId={inv.id} /> : null}{pdfEnabled() ? <a className={buttonClass("secondary", "sm")} href={`/api/billing/invoices/${inv.id}/pdf`}>{d.billing.downloadPdf}</a> : null}<PrintButton /></div>
       </div>
       {sp.payment === "returned" ? <p role="status" className="mb-4 rounded-md bg-success-100 px-3 py-2 text-sm text-success-700 print:hidden">{d.payOnline.returned}</p> : null}
       {sp.payment === "failed" ? <p role="alert" className="mb-4 rounded-md bg-danger-100 px-3 py-2 text-sm text-danger-700 print:hidden">{d.payOnline.failed}</p> : null}

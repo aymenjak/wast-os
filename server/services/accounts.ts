@@ -339,15 +339,11 @@ export async function inviteMember(ctx: OrgContext, input: unknown) {
         expiresAt: new Date(Date.now() + INVITATION_TTL_MS),
       },
     });
-    await tx.notification.create({
-      data: {
-        organizationId: ctx.org.id,
-        channel: "EMAIL",
-        recipient: data.email,
-        type: "invitation",
-        payload: { invitationId: invitation.id, organization: ctx.org.name, token },
-      },
-    });
+    const { enqueueEmail } = await import("./mailer");
+    const { invitationEmail } = await import("../email/templates");
+    const org = await tx.organization.findUniqueOrThrow({ where: { id: ctx.org.id }, select: { defaultLocale: true } });
+    const m = invitationEmail(org.defaultLocale, ctx.org.name, `${process.env.APP_URL ?? ""}/${org.defaultLocale}/invite/${token}`);
+    await enqueueEmail(tx, { organizationId: ctx.org.id, to: data.email, type: "invitation", sensitive: true, ...m });
     await audit(tx, { organizationId: ctx.org.id, actorUserId: ctx.userId, action: "member.invited", entityType: "Invitation", entityId: invitation.id, data: { email: data.email, role: data.role } });
     return invitation;
   });
