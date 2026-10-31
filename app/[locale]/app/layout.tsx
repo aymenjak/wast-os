@@ -41,7 +41,7 @@ export default async function AppLayout({ children, params }: { children: React.
         </div>
       </aside>
       <div className="min-w-0">
-        <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-ink-200 bg-ink-50/95 px-4 backdrop-blur sm:px-6 print:hidden">
+        <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-ink-200 bg-ink-50 px-4 sm:px-6 print:hidden">
           <MobileNav sections={nav} />
           <div className="lg:hidden"><Logo withWordmark={false} /></div>
           {orgs.length > 1 ? (

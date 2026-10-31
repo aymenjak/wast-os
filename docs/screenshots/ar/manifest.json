@@ -1,0 +1,222 @@
+[
+  {
+    "file": "01-home.png",
+    "title": "الصفحة الرئيسية",
+    "section": "الموقع العام"
+  },
+  {
+    "file": "02-business.png",
+    "title": "لشركات الجمع",
+    "section": "الموقع العام"
+  },
+  {
+    "file": "03-civic.png",
+    "title": "للبلديات",
+    "section": "الموقع العام"
+  },
+  {
+    "file": "04-pricing.png",
+    "title": "الأسعار",
+    "section": "الموقع العام"
+  },
+  {
+    "file": "05-about.png",
+    "title": "من نحن والاتصال",
+    "section": "الموقع العام"
+  },
+  {
+    "file": "06-register.png",
+    "title": "إنشاء مساحة عمل",
+    "section": "الموقع العام"
+  },
+  {
+    "file": "07-login.png",
+    "title": "تسجيل الدخول",
+    "section": "الموقع العام"
+  },
+  {
+    "file": "08-civic-report.png",
+    "title": "الإبلاغ عن مشكلة (مواطن)",
+    "section": "الموقع العام"
+  },
+  {
+    "file": "09-civic-track.png",
+    "title": "متابعة بلاغ",
+    "section": "الموقع العام"
+  },
+  {
+    "file": "10-app.png",
+    "title": "لوحة النظرة العامة",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "11-command-palette.png",
+    "title": "البحث السريع (Ctrl+K)",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "12-app-requests-status-ALL.png",
+    "title": "طلبات الجمع",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "13-app-requests-new.png",
+    "title": "طلب جمع جديد",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "14-app-dispatch.png",
+    "title": "التخطيط وخريطة الجولات",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "15-route-sheet.png",
+    "title": "ورقة المسار للطباعة",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "16-app-work-orders-status-ALL.png",
+    "title": "أوامر العمل",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "17-work-order.png",
+    "title": "تفاصيل أمر عمل",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "18-app-fleet.png",
+    "title": "الأسطول والفرق",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "19-vehicle.png",
+    "title": "تفاصيل مركبة وسجل الصيانة",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "20-app-containers.png",
+    "title": "الحاويات",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "21-container.png",
+    "title": "تفاصيل حاوية وتنقلاتها",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "22-app-customers.png",
+    "title": "الزبائن",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "23-app-customers-new.png",
+    "title": "زبون جديد",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "24-customer.png",
+    "title": "ملف زبون",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "25-app-contracts.png",
+    "title": "العقود",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "26-contract-new.png",
+    "title": "عقد جديد مع أيام المرور",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "27-contract.png",
+    "title": "تفاصيل عقد",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "28-app-invoices.png",
+    "title": "الفواتير",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "29-invoice.png",
+    "title": "فاتورة مع المدفوعات",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "30-invoice-new.png",
+    "title": "فاتورة جديدة من الأعمال المنجزة",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "31-app-reports.png",
+    "title": "التقارير والتصدير",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "32-app-team.png",
+    "title": "الفريق والدعوات",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "33-app-settings.png",
+    "title": "الإعدادات",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "34-app-work-orders.png",
+    "title": "عملي اليوم",
+    "section": "السائق — على الهاتف"
+  },
+  {
+    "file": "35-m-work-order.png",
+    "title": "أمر العمل في الميدان",
+    "section": "السائق — على الهاتف"
+  },
+  {
+    "file": "36-m-menu.png",
+    "title": "القائمة على الهاتف",
+    "section": "السائق — على الهاتف"
+  },
+  {
+    "file": "37-portal.png",
+    "title": "بوابة الزبون",
+    "section": "بوابة الزبون"
+  },
+  {
+    "file": "38-app-civic.png",
+    "title": "النظرة المدنية",
+    "section": "البلدية — NEXVO المدني"
+  },
+  {
+    "file": "39-app-civic-queue-status-ALL.png",
+    "title": "قائمة التحقق من البلاغات",
+    "section": "البلدية — NEXVO المدني"
+  },
+  {
+    "file": "40-civic-report.png",
+    "title": "مراجعة بلاغ وقرار",
+    "section": "البلدية — NEXVO المدني"
+  },
+  {
+    "file": "41-app-civic-map.png",
+    "title": "خريطة البلاغات",
+    "section": "البلدية — NEXVO المدني"
+  },
+  {
+    "file": "42-civic-fleet.png",
+    "title": "فرق البلدية",
+    "section": "البلدية — NEXVO المدني"
+  },
+  {
+    "file": "43-m-home.png",
+    "title": "الصفحة الرئيسية على الهاتف",
+    "section": "المواطن — على الهاتف"
+  },
+  {
+    "file": "44-m-report.png",
+    "title": "نموذج البلاغ على الهاتف",
+    "section": "المواطن — على الهاتف"
+  }
+]

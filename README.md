@@ -19,7 +19,9 @@ npm run db:seed                 # synthetic demo data (refuses in production)
 npm run dev                     # http://localhost:3000 → /fr
 ```
 
-Demo logins after seeding (synthetic): `owner@demo-collecte.test`, `dispatch@…`, `driver@…`, `finance@demo-collecte.test`, `civic@demo-apc.test` — password `nexvo-demo-2026`.
+Demo logins after seeding (synthetic): `owner@demo-collecte.test`, `dispatch@…`, `driver@…`, `finance@demo-collecte.test`, `civic@demo-apc.test`, `portal@demo-client.test` (customer portal) — password `nexvo-demo-2026`.
+
+All screens in Arabic: `docs/screenshots/ar/` (44 screens, all roles, desktop and mobile; regenerate with `node scripts/screenshots-ar.mjs`).
 
 ## Tests
 

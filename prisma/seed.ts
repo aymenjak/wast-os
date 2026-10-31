@@ -131,6 +131,12 @@ async function main() {
     await recordPayment(finance, draft.id, { amount, method: "BANK_TRANSFER", receivedAt: new Date(Date.now() - 86400_000).toISOString().slice(0, 10), idempotencyKey: `seed-payment-${i}-0001` });
   }
 
+  // Customer-portal user (synthetic) for the first customer
+  {
+    const { token } = await inviteMember(owner, { email: "portal@demo-client.test", role: "CUSTOMER_PORTAL", customerId: custs[0]!.id });
+    await acceptInvitation({ token, name: "Mounia Démo", password: PASSWORD });
+  }
+
   const plusSix = new Date(Date.now() + 6 * 86400_000).toISOString().slice(0, 10);
   await generateRecurringWorkOrders(dispatcher, { from: today, to: plusSix });
 
@@ -151,7 +157,8 @@ async function main() {
   Dispatcher:      dispatch@demo-collecte.test
   Field worker:    driver@demo-collecte.test
   Finance:         finance@demo-collecte.test
-  Municipality:    civic@demo-apc.test`);
+  Municipality:    civic@demo-apc.test
+  Customer portal: portal@demo-client.test`);
 }
 
 main().then(() => prisma.$disconnect()).catch(async (e) => { console.error(e); await prisma.$disconnect(); process.exit(1); });
