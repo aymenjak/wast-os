@@ -99,6 +99,20 @@ const en = {
     switchOrg: "Switch organization",
   },
   home: {
+    marqueeLabel: "What NEXVO covers",
+    marquee: "Collection requests|Daily dispatch board|Live vehicles on the map|Photos and weighbridge tickets|Contracts and recurring rounds|Container tracking|Invoices with 19 % VAT|PDF invoices by email|CIB / Edahabia online payment|Fill-level sensors (LoRaWAN)|Bin fire alerts|AI assistant|Citizen reports for municipalities|Arabic, French, English|Two-step verification",
+    tour: {
+      title: "See the real product", lead: "These are screenshots of NEXVO itself, not mock-ups. Pick a screen.",
+      note: "real screen, synthetic demo data",
+      tabs: { dashboard: "Overview", iot: "Sensors", invoice: "Invoicing", field: "Field phone" },
+      captions: { dashboard: "Today's progress, 14-day trend, failures and tonnage at a glance.", iot: "Fill-level alerts, forecasts and devices — collections stay a human decision.", invoice: "Invoices built from completed work, with payments, PDF and email.", field: "Crews start, photograph, weigh and complete jobs from a basic Android phone." },
+    },
+    sensors: {
+      title: "Sensors that tell you which bins to empty",
+      body: "Connect fill-level sensors and GPS trackers directly or through ChirpStack or The Things Stack. NEXVO opens alerts, forecasts when each bin reaches its threshold, and the assistant answers questions about it in your language.",
+      points: "Alerts for full bins, low batteries and possible bin fires|Forecasts from each sensor's own readings, explained|Read-only AI assistant, turned on by your administrator",
+      demo: { fill: "Fill level", threshold: "Alert threshold", forecast: "Forecast: threshold reached this afternoon at the current rate.", q: "Which bins should we collect first today?", a: "BAC-1100-01 at Clinique Exemple is at 82 % (threshold 80 %). Two others reach theirs within 48 hours.", example: "Illustrative example with sample data." },
+    },
     eyebrow: "Waste operations, made traceable",
     title: "Run every collection from request to paid invoice.",
     lead:

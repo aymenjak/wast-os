@@ -101,6 +101,20 @@ const fr: Dictionary = {
     switchOrg: "Changer d'organisation",
   },
   home: {
+    marqueeLabel: "Ce que couvre NEXVO",
+    marquee: "Demandes de collecte|Planning quotidien|Véhicules en direct sur la carte|Photos et tickets de pesée|Contrats et tournées récurrentes|Suivi des conteneurs|Factures avec TVA 19 %|Factures PDF par e-mail|Paiement CIB / Edahabia|Capteurs de remplissage (LoRaWAN)|Alertes incendie de bac|Assistant IA|Signalements citoyens pour les communes|Arabe, français, anglais|Validation en deux étapes",
+    tour: {
+      title: "Voir le vrai produit", lead: "Ce sont des captures de NEXVO, pas des maquettes. Choisissez un écran.",
+      note: "écran réel, données de démonstration",
+      tabs: { dashboard: "Vue d'ensemble", iot: "Capteurs", invoice: "Facturation", field: "Téléphone terrain" },
+      captions: { dashboard: "Avancement du jour, tendance sur 14 jours, échecs et tonnage en un coup d'œil.", iot: "Alertes de remplissage, prévisions et appareils — la collecte reste une décision humaine.", invoice: "Factures issues du travail réalisé, avec paiements, PDF et e-mail.", field: "Les équipes démarrent, photographient, pèsent et terminent depuis un simple téléphone Android." },
+    },
+    sensors: {
+      title: "Des capteurs qui disent quels bacs vider",
+      body: "Connectez capteurs de remplissage et traceurs GPS directement ou via ChirpStack ou The Things Stack. NEXVO ouvre les alertes, prévoit quand chaque bac atteint son seuil, et l'assistant répond à vos questions dans votre langue.",
+      points: "Alertes bac plein, batterie faible et risque d'incendie|Prévisions à partir des mesures de chaque capteur, expliquées|Assistant IA en lecture seule, activé par votre administrateur",
+      demo: { fill: "Remplissage", threshold: "Seuil d'alerte", forecast: "Prévision : seuil atteint cet après-midi au rythme actuel.", q: "Quels bacs collecter en priorité aujourd'hui ?", a: "BAC-1100-01 à la Clinique Exemple est à 82 % (seuil 80 %). Deux autres atteignent le leur sous 48 heures.", example: "Exemple illustratif avec des données fictives." },
+    },
     eyebrow: "L'exploitation des déchets, enfin traçable",
     title: "Pilotez chaque collecte, de la demande à la facture payée.",
     lead:

@@ -59,7 +59,8 @@ export function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     {
-      source: "/((?!api|_next/static|_next/image|favicon.ico|icon.svg|robots.txt).*)",
+      // Pages only: never redirect API routes, Next assets or public files (anything with a file extension, e.g. /showcase/*.jpg).
+      source: "/((?!api|_next/static|_next/image|showcase/|favicon.ico|icon.svg|robots.txt|.*\\.(?:jpg|jpeg|png|webp|avif|svg|ico|txt|xml|woff2?)$).*)",
       missing: [
         { type: "header", key: "next-router-prefetch" },
         { type: "header", key: "purpose", value: "prefetch" },

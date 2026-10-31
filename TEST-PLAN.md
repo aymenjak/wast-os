@@ -28,6 +28,10 @@
 | M Command palette search | integration (tenant + permission scoping, accent-insensitive, LIKE wildcards literal); e2e (Ctrl+K → result → navigate) |
 | J ar/fr/en desktop & mobile | e2e `i18n-a11y` (lang/dir, translated H1, axe WCAG 2.2 AA serious/critical = 0 on 6 public pages × 3 locales with reduced motion, no overflow at 360 px); screenshots in `docs/screenshots` reviewed |
 
+## Recorded results (2026-10-31, home page)
+
+Vitest 211 passed, Playwright 41 passed (axe serious/critical = 0 and no horizontal overflow on the home page in ar/fr/en, reduced motion), build success, npm audit 0 (motion 14.9.0). Browser console: 0 errors on the home page after fixing the middleware redirect of `/showcase/*.jpg`.
+
 ## Recorded results (2026-10-31, fixes + AI assistant)
 
 | Suite | Result |

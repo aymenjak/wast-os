@@ -2,12 +2,24 @@ import { getDictionary } from "@/lib/i18n";
 import type { Locale } from "@/lib/i18n/config";
 import { ButtonLink } from "@/components/ui/button";
 import { RouteHero } from "@/components/route-hero";
+import { Reveal } from "@/components/home/reveal";
+import { SpotlightCard } from "@/components/home/spotlight-card";
+import { ProductTour } from "@/components/home/product-tour";
+import { SensorBin } from "@/components/home/sensor-bin";
+import { Marquee } from "@/components/home/marquee";
 
 export default async function Home({ params }: { params: Promise<{ locale: Locale }> }) {
   const { locale } = await params;
   const d = getDictionary(locale);
   const flow = [d.home.flow.request, d.home.flow.dispatch, d.home.flow.field, d.home.flow.invoice, d.home.flow.payment];
   const pillars = [d.home.pillars.evidence, d.home.pillars.mobile, d.home.pillars.bilingual, d.home.pillars.tenancy];
+  const shot = (name: string) => `/showcase/${locale}-${name}.jpg`;
+  const tour = [
+    { id: "dashboard", label: d.home.tour.tabs.dashboard, caption: d.home.tour.captions.dashboard, src: shot("dashboard"), width: 1700, height: 1063 },
+    { id: "iot", label: d.home.tour.tabs.iot, caption: d.home.tour.captions.iot, src: shot("iot"), width: 1700, height: 1063 },
+    { id: "invoice", label: d.home.tour.tabs.invoice, caption: d.home.tour.captions.invoice, src: shot("invoice"), width: 1700, height: 1063 },
+    { id: "field", label: d.home.tour.tabs.field, caption: d.home.tour.captions.field, src: shot("field"), width: 780, height: 1560, phone: true },
+  ];
 
   return (
     <>
@@ -31,6 +43,20 @@ export default async function Home({ params }: { params: Promise<{ locale: Local
         </div>
       </section>
 
+      <section className="bg-ink-900 py-6" aria-label={d.home.marqueeLabel}>
+        <Marquee items={d.home.marquee.split("|")} label={d.home.marqueeLabel} />
+      </section>
+
+      <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+        <Reveal>
+          <h2 className="max-w-2xl text-3xl leading-tight text-ink-950 sm:text-4xl">{d.home.tour.title}</h2>
+          <p className="mt-3 max-w-2xl text-ink-700">{d.home.tour.lead}</p>
+        </Reveal>
+        <Reveal delay={0.1} className="mt-8">
+          <ProductTour tabs={tour} label={d.home.tour.title} note={d.home.tour.note} />
+        </Reveal>
+      </section>
+
       <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
         <h2 className="max-w-2xl text-3xl leading-tight text-ink-950 sm:text-4xl">{d.home.flowTitle2}</h2>
         <p className="mt-3 max-w-2xl text-ink-700">{d.home.flowLead}</p>
@@ -51,14 +77,30 @@ export default async function Home({ params }: { params: Promise<{ locale: Local
       <section className="border-y border-ink-200 bg-white">
         <div className="mx-auto grid max-w-6xl gap-10 px-4 py-20 sm:px-6 lg:grid-cols-[1fr_1.4fr]">
           <h2 className="text-3xl leading-tight text-ink-950 sm:text-4xl">{d.home.pillarsTitle}</h2>
-          <dl className="grid gap-x-10 gap-y-8 sm:grid-cols-2">
-            {pillars.map((p) => (
-              <div key={p.title} className="border-t-2 border-ink-900 pt-3">
-                <dt className="font-bold text-ink-900">{p.title}</dt>
-                <dd className="mt-1.5 text-sm leading-relaxed text-ink-700">{p.body}</dd>
-              </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {pillars.map((p, i) => (
+              <Reveal key={p.title} delay={i * 0.08}>
+                <SpotlightCard className="h-full">
+                  <span aria-hidden className="mb-3 block h-1 w-10 rounded-full bg-hivis-600" />
+                  <h3 className="font-bold text-ink-900">{p.title}</h3>
+                  <p className="mt-1.5 text-sm leading-relaxed text-ink-700">{p.body}</p>
+                </SpotlightCard>
+              </Reveal>
             ))}
-          </dl>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-ink-50">
+        <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-20 sm:px-6 lg:grid-cols-[1fr_1.2fr]">
+          <Reveal>
+            <h2 className="text-3xl leading-tight text-ink-950 sm:text-4xl">{d.home.sensors.title}</h2>
+            <p className="mt-4 max-w-xl leading-relaxed text-ink-700">{d.home.sensors.body}</p>
+            <ul className="mt-5 space-y-2 text-sm text-ink-800">
+              {d.home.sensors.points.split("|").map((x) => <li key={x} className="flex gap-2"><span aria-hidden className="mt-1.5 size-2 shrink-0 rounded-full bg-hivis-600" />{x}</li>)}
+            </ul>
+          </Reveal>
+          <Reveal delay={0.1}><SensorBin t={d.home.sensors.demo} /></Reveal>
         </div>
       </section>
 

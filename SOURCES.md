@@ -100,6 +100,10 @@ Each source ID (S-xx) is referenced from `RESEARCH-DOSSIER.md` and `DECISIONS.md
 | S-83 | ChirpStack v4 source: `api/proto/integration/integration.proto` (UplinkEvent, DeviceInfo), `chirpstack/src/integration/http.rs` (`?event=` query, custom headers, JSON/protobuf), `api/rust/build.rs` (pbjson → camelCase JSON). Fetched from the `master` branch on 2026-10-31; the docs site (chirpstack.io) was not reachable from this environment | https://github.com/chirpstack/chirpstack | A (primary source code) |
 | S-84 | The Things Stack v3 source: `api/ttn/lorawan/v3/messages.proto` (ApplicationUp, ApplicationUplink), `identifiers.proto` (dev_eui hex marshaller), `applicationserver_web.proto` (webhook `headers`, `format`), `pkg/jsonpb` (`UseProtoNames: true`). Branch `v3.x`, commit 6d0ecc48 (2026-10-29); docs site not reachable from this environment | https://github.com/TheThingsNetwork/lorawan-stack | A (primary source code) |
 | S-85 | Nodemailer 10.3.1 (MIT-0) — SMTP transport | https://www.npmjs.com/package/nodemailer | A |
+| S-86 | Skiper UI docs (quick start: free components usable commercially with attribution; Pro without) — site not reachable from this environment; facts via search result summary only | https://skiper-ui.com/docs/quick-start | C (not read directly) |
+| S-87 | Vengence UI listing (premium React/Tailwind library; no official site found) | https://uiuxshowcase.com/resources/vengence-ui/ | C |
+| S-88 | Animmaster Lib (paid catalog of ~300 animated components, delivered via Google Drive) | https://animmasterlib.dev/ · https://xiry.app/resources/animmaster-lib | C (site blocked here) |
+| S-89 | Motion (motion.dev) 14.9.0, MIT — animation library used by Skiper UI | https://www.npmjs.com/package/motion | A |
 
 ## Sources not yet consulted (open items)
 
