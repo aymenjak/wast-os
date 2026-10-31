@@ -935,6 +935,7 @@ const fr: Dictionary = {
     customerInvoiceSubject: "Facture {number} de {org}", customerInvoiceIntro: "Veuillez trouver ci-dessous votre facture de {org}.", footerCustomer: "Envoyé par {org} avec NEXVO.",
   },
   assistant: {
+    demoBanner: "Mode démo local : les réponses sont assemblées à partir de vos vraies données par un script à mots-clés, pas par un modèle d'IA (aucune clé API configurée).",
     title: "Assistant", name: "Assistant NEXVO", lead: "Posez vos questions sur vos opérations, factures et capteurs. Lecture seule : il ne modifie jamais rien.",
     empty: "Posez une question avec vos mots, ou essayez :", suggestions: "Qu'est-ce qui est prévu aujourd'hui ?|Quelles factures sont en retard ?|Quels bacs seront bientôt pleins ?|Résume les 30 derniers jours",
     placeholder: "Votre question…", send: "Envoyer", thinking: "Consultation de vos données…", you: "Vous", sources: "Données utilisées", newChat: "Nouvelle conversation", history: "Conversations", delete: "Supprimer la conversation",

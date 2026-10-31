@@ -5,6 +5,12 @@ import { DomainError, ForbiddenError, NotFoundError } from "../domain/errors";
 import { audit } from "../audit";
 import { parse } from "../validation";
 import { AiUnavailableError, getAiProvider, type ChatTool } from "../ai/provider";
+import { demoProvider, demoProviderEnabled } from "../ai/demo-provider";
+
+/** The real provider when configured; the keyword demo stand-in only on localhost with AI_DEMO_PROVIDER=1. */
+function chatProvider() {
+  return getAiProvider() ?? (demoProviderEnabled() ? demoProvider : null);
+}
 import { businessDashboard, orgToday, receivablesAging } from "./reports";
 import { globalSearch } from "./search";
 import { iotKpis } from "./iot";
@@ -141,14 +147,14 @@ function systemPrompt(ctx: OrgContext, locale: "ar" | "fr" | "en") {
 
 async function assertChat(ctx: OrgContext) {
   if (ctx.role === "CUSTOMER_PORTAL" || ctx.support) throw new ForbiddenError("ai.chat");
-  if (!getAiProvider()) throw new DomainError("errors.ai.disabled");
+  if (!chatProvider()) throw new DomainError("errors.ai.disabled");
   const org = await prisma.organization.findUniqueOrThrow({ where: { id: ctx.org.id }, select: { aiChatEnabled: true } });
   if (!org.aiChatEnabled) throw new DomainError("errors.ai.chatDisabled");
 }
 
 export async function chatAvailability(ctx: OrgContext) {
   const org = await prisma.organization.findUniqueOrThrow({ where: { id: ctx.org.id }, select: { aiChatEnabled: true } });
-  return { platform: !!getAiProvider(), organization: org.aiChatEnabled, allowedRole: ctx.role !== "CUSTOMER_PORTAL" && !ctx.support };
+  return { platform: !!chatProvider(), demo: !getAiProvider() && demoProviderEnabled(), organization: org.aiChatEnabled, allowedRole: ctx.role !== "CUSTOMER_PORTAL" && !ctx.support };
 }
 
 export async function setAiChatEnabled(ctx: OrgContext, enabled: boolean) {
@@ -173,7 +179,7 @@ export async function sendChatMessage(ctx: OrgContext, input: unknown, locale: "
   const history = (await prisma.aiChatMessage.findMany({ where: { conversationId: conversation.id }, orderBy: { createdAt: "desc" }, take: HISTORY })).reverse();
   const tools = toolsFor(ctx);
   try {
-    const res = await getAiProvider()!.chat({
+    const res = await chatProvider()!.chat({
       system: systemPrompt(ctx, locale),
       history: history.map((m) => ({ role: m.role === "assistant" ? "assistant" : "user", content: m.content })),
       tools: tools.map(({ name, description, inputSchema }) => ({ name, description, inputSchema })),

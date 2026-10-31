@@ -933,6 +933,7 @@ const en = {
     customerInvoiceSubject: "Invoice {number} from {org}", customerInvoiceIntro: "Please find below your invoice from {org}.", footerCustomer: "Sent by {org} using NEXVO.",
   },
   assistant: {
+    demoBanner: "Local demo mode: answers are assembled from your real data by a simple keyword script, not by an AI model (no API key configured).",
     title: "Assistant", name: "NEXVO Assistant", lead: "Ask questions about your operations, invoices and sensors. Read-only: it never changes anything.",
     empty: "Ask a question in your own words, or try:", suggestions: "What is planned today?|Which invoices are overdue?|Which bins will be full soon?|Summarise the last 30 days",
     placeholder: "Your question…", send: "Send", thinking: "Looking at your data…", you: "You", sources: "Data used", newChat: "New conversation", history: "Conversations", delete: "Delete conversation",

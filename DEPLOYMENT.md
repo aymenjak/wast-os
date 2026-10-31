@@ -23,7 +23,7 @@
 | `CHARGILY_SECRET_KEY` | optional | **NEXVO's own** Chargily account, used only for paying NEXVO subscription invoices; webhook `${APP_URL}/api/webhooks/chargily`. Collection companies enter their own keys in Settings; their webhook is `${APP_URL}/api/webhooks/chargily/org/<organizationId>` (shown to them) |
 | `CHARGILY_MODE` | optional | `test` (default) or `live` for the platform account. **Switching to `live` changes payment behaviour: owner approval required** (AGENTS.md rule 8). Live mode requires an https `APP_URL` |
 | `ANTHROPIC_API_KEY` | optional | enables AI suggestions (civic triage, operations brief). Data sent is described in PRIVACY-AND-COMPLIANCE.md §6; **owner approval required before enabling for customers** |
-| **Never set in production:** `NEXVO_FAST_HASH`, `NEXVO_E2E`, `RATE_LIMIT_SCALE` | | test-only switches (`RATE_LIMIT_SCALE` is ignored unless `APP_URL` is localhost) |
+| **Never set in production:** `NEXVO_FAST_HASH`, `NEXVO_E2E`, `RATE_LIMIT_SCALE`, `AI_DEMO_PROVIDER` (ignored unless `APP_URL` is localhost) | | test-only switches (`RATE_LIMIT_SCALE` is ignored unless `APP_URL` is localhost) |
 
 Jobs (cron or the hosting scheduler):
 

@@ -23,6 +23,8 @@ Demo logins after seeding (synthetic): `owner@demo-collecte.test`, `dispatch@…
 
 Platform owner: organizations, subscriptions, municipality verification, suspension, plans, staff roles, account disable/unlock and a global audit log at `/[locale]/platform`. First owner of a new deployment: `npm run platform:role -- <email> OWNER`.
 
+Assistant screenshots: `docs/screenshots/assistant/` (taken in local demo mode: `AI_DEMO_PROVIDER=1` on localhost answers from real data with a keyword script, clearly bannered — not an AI model; regenerate with `node scripts/assistant-shots.mjs`).
+
 Optional integrations (off unless configured, see `DEPLOYMENT.md`): Chargily online payment (`CHARGILY_SECRET_KEY`, test mode by default) and AI suggestions (`ANTHROPIC_API_KEY`).
 
 All screens in Arabic: `docs/screenshots/ar/` (64 screens, all roles, desktop and mobile; regenerate with `node scripts/screenshots-ar.mjs`).

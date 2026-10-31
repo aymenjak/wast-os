@@ -17,6 +17,7 @@
     "billing:run": "tsx --conditions=react-server scripts/billing-run.ts",
     "outbox:work": "tsx --conditions=react-server scripts/outbox-work.ts",
     "retention:run": "tsx --conditions=react-server scripts/retention-run.ts",
+    "images:fetch": "node scripts/fetch-free-images.mjs",
     "test": "vitest run",
     "test:unit": "vitest run tests/unit",
     "test:integration": "vitest run tests/integration",

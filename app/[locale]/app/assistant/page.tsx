@@ -28,9 +28,10 @@ export default async function AssistantPage({ params, searchParams }: { params: 
   const suggestions = d.assistant.suggestions.split("|");
   return (
     <>
+      {av.demo ? <p role="status" className="mb-4 rounded-[var(--radius-card)] border border-warning-700/30 bg-warning-100 px-4 py-2 text-sm font-medium text-warning-700">{d.assistant.demoBanner}</p> : null}
       <PageHeader title={d.assistant.title} description={d.assistant.lead} actions={<Link className="text-sm font-medium text-brand-700 hover:underline" href={`/${locale}/app/assistant`}>{d.assistant.newChat}</Link>} />
       <div className="grid gap-6 lg:grid-cols-[16rem_1fr]">
-        <Card>
+        <Card className="order-2 lg:order-1">
           <CardHeader title={d.assistant.history} />
           <ul className="divide-y divide-ink-100 text-sm">
             {conversations.length === 0 ? <li className="px-4 py-3 text-ink-600">—</li> : conversations.map((x) => (
@@ -41,7 +42,7 @@ export default async function AssistantPage({ params, searchParams }: { params: 
           </ul>
           {current ? <CardBody className="border-t border-ink-100"><InlineAction action={deleteConversationAction} hidden={{ conversationId: current.id }} label={d.assistant.delete} variant="danger" size="sm" /></CardBody> : null}
         </Card>
-        <Card>
+        <Card className="order-1 lg:order-2">
           <Chat key={current?.id ?? "new"} conversationId={current?.id ?? null} suggestions={suggestions}
             initial={(current?.messages ?? []).map((m) => ({ role: m.role === "assistant" ? "assistant" : "user", content: m.content, toolsUsed: m.toolsUsed }))} />
         </Card>
