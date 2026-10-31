@@ -170,122 +170,152 @@
     "section": "شركة الجمع — المالك"
   },
   {
-    "file": "35-customers-table.png",
+    "file": "35-iot.png",
+    "title": "المستشعرات وأجهزة التتبع: تنبيهات وتوقّع الامتلاء",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "36-container-iot.png",
+    "title": "حاوية بمستشعر: القراءات والتوقّع",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "37-billing.png",
+    "title": "اشتراك المؤسسة وفواتير NEXVO",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "38-customers-table.png",
     "title": "جدول الزبائن: بحث وفرز وتصدير Excel",
     "section": "شركة الجمع — المالك"
   },
   {
-    "file": "36-support-ticket.png",
+    "file": "39-support-ticket.png",
     "title": "طلب دعم ومحادثة",
     "section": "شركة الجمع — المالك"
   },
   {
-    "file": "37-support.png",
+    "file": "40-support.png",
     "title": "الدعم: طلبات، وإذن وصول مؤقت وسجل الدخول",
     "section": "شركة الجمع — المالك"
   },
   {
-    "file": "38-platform.png",
+    "file": "41-platform-login-ok.png",
+    "title": "التحقق بخطوتين مفعّل لفريق المنصة",
+    "section": "مالك المنصة"
+  },
+  {
+    "file": "42-platform.png",
     "title": "لوحة مالك المنصة",
     "section": "مالك المنصة"
   },
   {
-    "file": "39-platform-tenants.png",
+    "file": "43-platform-tenants.png",
     "title": "كل المؤسسات: بحث وفلاتر",
     "section": "مالك المنصة"
   },
   {
-    "file": "40-platform-tenant.png",
+    "file": "44-platform-tenant.png",
     "title": "مؤسسة: الاشتراك والأعضاء والإيقاف",
     "section": "مالك المنصة"
   },
   {
-    "file": "41-platform-plans.png",
+    "file": "45-platform-plans.png",
     "title": "الباقات والأسعار والحدود",
     "section": "مالك المنصة"
   },
   {
-    "file": "42-platform-staff.png",
+    "file": "46-platform-billing.png",
+    "title": "فوترة اشتراكات NEXVO",
+    "section": "مالك المنصة"
+  },
+  {
+    "file": "47-account-security.png",
+    "title": "أمان الحساب: التحقق بخطوتين",
+    "section": "مالك المنصة"
+  },
+  {
+    "file": "48-platform-staff.png",
     "title": "فريق المنصة والحسابات",
     "section": "مالك المنصة"
   },
   {
-    "file": "43-platform-audit.png",
+    "file": "49-platform-audit.png",
     "title": "سجل التدقيق",
     "section": "مالك المنصة"
   },
   {
-    "file": "44-support-console.png",
+    "file": "50-support-console.png",
     "title": "لوحة الدعم",
     "section": "فريق دعم NEXVO"
   },
   {
-    "file": "45-support-console-ticket.png",
+    "file": "51-support-console-ticket.png",
     "title": "طلب من زبون مع إذن الوصول",
     "section": "فريق دعم NEXVO"
   },
   {
-    "file": "46-support-view.png",
+    "file": "52-support-view.png",
     "title": "عرض الدعم للقراءة فقط (شريط واضح)",
     "section": "فريق دعم NEXVO"
   },
   {
-    "file": "47-app-work-orders.png",
+    "file": "53-app-work-orders.png",
     "title": "عملي اليوم",
     "section": "السائق — على الهاتف"
   },
   {
-    "file": "48-m-work-order.png",
+    "file": "54-m-work-order.png",
     "title": "أمر العمل في الميدان",
     "section": "السائق — على الهاتف"
   },
   {
-    "file": "49-m-menu.png",
+    "file": "55-m-menu.png",
     "title": "القائمة على الهاتف",
     "section": "السائق — على الهاتف"
   },
   {
-    "file": "50-portal.png",
+    "file": "56-portal.png",
     "title": "بوابة الزبون",
     "section": "بوابة الزبون"
   },
   {
-    "file": "51-portal-certificate.png",
+    "file": "57-portal-certificate.png",
     "title": "شهادة الجمع للزبون",
     "section": "بوابة الزبون"
   },
   {
-    "file": "52-app-civic.png",
+    "file": "58-app-civic.png",
     "title": "النظرة المدنية",
     "section": "البلدية — NEXVO المدني"
   },
   {
-    "file": "53-app-civic-queue-status-ALL.png",
+    "file": "59-app-civic-queue-status-ALL.png",
     "title": "قائمة التحقق من البلاغات",
     "section": "البلدية — NEXVO المدني"
   },
   {
-    "file": "54-civic-report.png",
+    "file": "60-civic-report.png",
     "title": "مراجعة بلاغ وقرار",
     "section": "البلدية — NEXVO المدني"
   },
   {
-    "file": "55-app-civic-map.png",
+    "file": "61-app-civic-map.png",
     "title": "خريطة البلاغات",
     "section": "البلدية — NEXVO المدني"
   },
   {
-    "file": "56-civic-fleet.png",
+    "file": "62-civic-fleet.png",
     "title": "فرق البلدية",
     "section": "البلدية — NEXVO المدني"
   },
   {
-    "file": "57-m-home.png",
+    "file": "63-m-home.png",
     "title": "الصفحة الرئيسية على الهاتف",
     "section": "المواطن — على الهاتف"
   },
   {
-    "file": "58-m-report.png",
+    "file": "64-m-report.png",
     "title": "نموذج البلاغ على الهاتف",
     "section": "المواطن — على الهاتف"
   }
