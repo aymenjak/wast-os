@@ -81,7 +81,7 @@ test.describe.serial("tables, certificate, remote support", () => {
 
   test("staff enters read-only, sees the banner, leaves; the customer sees it in the log", async ({ page, context }) => {
     await register(page, { org: `Staff tmp ${id}`, email: staff });
-    await sql(`UPDATE "User" SET "isPlatformStaff" = true WHERE email = $1`, [staff]);
+    await sql(`UPDATE "User" SET "isPlatformStaff" = true, "platformRole" = 'SUPPORT' WHERE email = $1`, [staff]);
     await sql(`DELETE FROM "Membership" WHERE "userId" = (SELECT id FROM "User" WHERE email = $1)`, [staff]);
     await page.goto("/en/support-console");
     await page.getByRole("link", { name: new RegExp(subject) }).click();

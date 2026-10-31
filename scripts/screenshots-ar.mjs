@@ -110,6 +110,25 @@ async function firstHref(page, path, selector) {
   await c.close();
 }
 
+// ── Platform owner ──
+{
+  const c = await ctx(); const p = await c.newPage();
+  await p.goto(`${base}/ar/login`);
+  await p.fill('input[name=email]', "admin@nexvo.test");
+  await p.fill('input[name=password]', PASSWORD);
+  await p.click('button[type=submit]');
+  await p.waitForURL(/\/ar\/platform/);
+  const S = "مالك المنصة";
+  await shot(p, "/ar/platform", "لوحة مالك المنصة", S, { name: "platform" });
+  await shot(p, "/ar/platform/tenants", "كل المؤسسات: بحث وفلاتر", S, { name: "platform-tenants" });
+  const t = await firstHref(p, "/ar/platform/tenants", "a[href*='/platform/tenants/c']");
+  if (t) await shot(p, t, "مؤسسة: الاشتراك والأعضاء والإيقاف", S, { name: "platform-tenant" });
+  await shot(p, "/ar/platform/plans", "الباقات والأسعار والحدود", S, { name: "platform-plans" });
+  await shot(p, "/ar/platform/staff?q=demo", "فريق المنصة والحسابات", S, { name: "platform-staff" });
+  await shot(p, "/ar/platform/audit", "سجل التدقيق", S, { name: "platform-audit" });
+  await c.close();
+}
+
 // ── NEXVO support staff ──
 {
   const c = await ctx(); const p = await c.newPage();

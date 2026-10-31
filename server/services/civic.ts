@@ -15,7 +15,7 @@ const DUPLICATE_WINDOW_DAYS = 14;
 
 export async function publicMunicipalities() {
   return prisma.organization.findMany({
-    where: { kind: "MUNICIPALITY", verificationStatus: "VERIFIED" },
+    where: { kind: "MUNICIPALITY", verificationStatus: "VERIFIED", suspendedAt: null },
     select: { slug: true, name: true, wilaya: true, commune: true },
     orderBy: { name: "asc" },
   });
@@ -45,7 +45,7 @@ export async function submitCivicReport(input: unknown, photos: { name: string; 
   if (existing) return { trackingCode: existing.trackingCode, duplicateSubmission: true };
 
   const municipality = await prisma.organization.findFirst({
-    where: { slug: data.municipality, kind: "MUNICIPALITY", verificationStatus: "VERIFIED" },
+    where: { slug: data.municipality, kind: "MUNICIPALITY", verificationStatus: "VERIFIED", suspendedAt: null },
   });
   if (!municipality) throw new NotFoundError("Municipality");
 
@@ -271,7 +271,7 @@ export async function reviewCivicReport(ctx: OrgContext, reportId: string, input
 export async function publicMapPoints(municipalitySlug: string) {
   const rows = await prisma.civicReport.findMany({
     where: {
-      organization: { slug: municipalitySlug, kind: "MUNICIPALITY", verificationStatus: "VERIFIED" },
+      organization: { slug: municipalitySlug, kind: "MUNICIPALITY", verificationStatus: "VERIFIED", suspendedAt: null },
       status: { in: ["VERIFIED", "ASSIGNED", "IN_PROGRESS", "RESOLVED", "CONFIRMED", "REOPENED", "DISPUTED"] },
       createdAt: { gte: new Date(Date.now() - 90 * 86400_000) },
     },

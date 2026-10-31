@@ -63,3 +63,7 @@ NEXVO staff see a customer's workspace only after an OWNER/ADMIN grants time-lim
 ## 8. Online payments
 
 Card data is entered on Chargily's hosted page; NEXVO never sees card numbers. NEXVO stores the checkout id, amount, status and timestamps.
+
+## 9. Platform operator access
+
+The company running NEXVO (platform OWNER/ADMIN) sees, for each organization: profile (name, contact, NIF/RC), subscription, members' names, emails and roles, usage counts and the last activity date. It does not see customers, contracts, invoices, photos or citizen reports. Every operator action (subscription, verification, suspension, account disable/enable/unlock, role changes) is audited; actions on an organization appear in that organization's own audit log. There is no delete button: removing an organization's data is a manual procedure requiring owner approval and a retention check.

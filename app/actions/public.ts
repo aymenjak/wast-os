@@ -25,8 +25,9 @@ export async function loginAction(_: ActionState, fd: FormData): Promise<ActionS
     await setSessionCookie(token);
     const s = await resolveSession(token);
     if (s?.ctx?.role === "CUSTOMER_PORTAL") destination = `/${locale}/portal`;
-    else if (!s?.ctx) destination = `/${locale}/login?no-org=1`;
-    void user;
+    else if (!s?.ctx && (user.platformRole === "OWNER" || user.platformRole === "ADMIN")) destination = `/${locale}/platform`;
+    else if (!s?.ctx && user.platformRole === "SUPPORT") destination = `/${locale}/support-console`;
+    else if (!s?.ctx) destination = `/${locale}/login?${s?.suspended ? "suspended" : "no-org"}=1`;
   } catch (e) {
     return toActionError(e);
   }

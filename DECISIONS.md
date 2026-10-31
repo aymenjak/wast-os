@@ -36,3 +36,6 @@ Format: decision · reason · evidence (S = source, T = test, A = assumption) ·
 | D-30 | 2026-10-31 | Server-side tables with URL state instead of a client table library | Tenant scoping and large lists stay on the server; shareable views | T security-hardening | Done |
 | D-31 | 2026-10-31 | XLSX via `write-excel-file`, not `exceljs` | `exceljs` dependency tree had advisories | npm audit | Done |
 | D-32 | 2026-10-31 | Dashboard colours from the `dataviz` validator (blue/red pair, one-hue aging ramp) | Previous pair failed colour-vision-deficiency separation | DESIGN-SYSTEM.md | Done |
+| D-33 | 2026-10-31 | Platform operator console with roles OWNER > ADMIN > SUPPORT | Owner needs full control of organizations, subscriptions, plans and staff from the product, not the database | T platform-console, e2e | Done |
+| D-34 | 2026-10-31 | The operator controls accounts and metadata, not tenants' business records; reading those still needs the tenant's support grant | Customers' trust and data-protection role as processor (PRIVACY §9) | PRIVACY-AND-COMPLIANCE.md | Active — **owner may decide otherwise; would need legal review** |
+| D-35 | 2026-10-31 | Suspension is reversible and keeps data; no deletion feature in the console | Deletion is destructive and has legal retention questions | — | Active; deletion = manual, approved procedure |

@@ -16,7 +16,7 @@ beforeAll(async () => {
   await resetDb();
   owner = (await newOrg()).ctx;
   other = (await newOrg()).ctx;
-  staffId = (await prisma.user.create({ data: { email: "staff@nexvo.test", name: "Support", passwordHash: "x", isPlatformStaff: true } })).id;
+  staffId = (await prisma.user.create({ data: { email: "staff@nexvo.test", name: "Support", passwordHash: "x", isPlatformStaff: true, platformRole: "SUPPORT" } })).id;
   staffToken = await createSessionRecord(prisma, staffId, null);
 });
 
@@ -102,9 +102,9 @@ describe("access grants and support sessions", () => {
   it("losing staff status ends access even with a valid grant", async () => {
     await grantSupportAccess(owner, { hours: 1, reason: "staff flag test" });
     await startSupportSession(staffId, staffToken, owner.org.id);
-    await prisma.user.update({ where: { id: staffId }, data: { isPlatformStaff: false } });
+    await prisma.user.update({ where: { id: staffId }, data: { isPlatformStaff: false, platformRole: null } });
     expect((await resolveSession(staffToken))!.ctx).toBeNull();
-    await prisma.user.update({ where: { id: staffId }, data: { isPlatformStaff: true } });
+    await prisma.user.update({ where: { id: staffId }, data: { isPlatformStaff: true, platformRole: "SUPPORT" } });
   });
 
   it("ending the session is audited", async () => {

@@ -19,11 +19,13 @@ npm run db:seed                 # synthetic demo data (refuses in production)
 npm run dev                     # http://localhost:3000 → /fr
 ```
 
-Demo logins after seeding (synthetic): `owner@demo-collecte.test`, `dispatch@…`, `driver@…`, `finance@demo-collecte.test`, `civic@demo-apc.test`, `portal@demo-client.test` (customer portal), `support@nexvo.test` (NEXVO support console) — password `nexvo-demo-2026`.
+Demo logins after seeding (synthetic): `owner@demo-collecte.test`, `dispatch@…`, `driver@…`, `finance@demo-collecte.test`, `civic@demo-apc.test`, `portal@demo-client.test` (customer portal), `support@nexvo.test` (NEXVO support console), `admin@nexvo.test` (platform owner console at `/fr/platform`) — password `nexvo-demo-2026`.
+
+Platform owner: organizations, subscriptions, municipality verification, suspension, plans, staff roles, account disable/unlock and a global audit log at `/[locale]/platform`. First owner of a new deployment: `npm run platform:role -- <email> OWNER`.
 
 Optional integrations (off unless configured, see `DEPLOYMENT.md`): Chargily online payment (`CHARGILY_SECRET_KEY`, test mode by default) and AI suggestions (`ANTHROPIC_API_KEY`).
 
-All screens in Arabic: `docs/screenshots/ar/` (52 screens, all roles, desktop and mobile; regenerate with `node scripts/screenshots-ar.mjs`).
+All screens in Arabic: `docs/screenshots/ar/` (58 screens, all roles, desktop and mobile; regenerate with `node scripts/screenshots-ar.mjs`).
 
 ## Tests
 
@@ -34,7 +36,7 @@ npm run test:integration        # real Postgres+PostGIS test DB
 npm run build && npm run test:e2e
 ```
 
-Last recorded run (2026-10-31): 124 unit/integration tests and 28 E2E tests passing (details in `TEST-PLAN.md`).
+Last recorded run (2026-10-31): 140 unit/integration tests and 33 E2E tests passing (details in `TEST-PLAN.md`).
 
 ## Documentation map
 

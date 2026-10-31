@@ -82,6 +82,7 @@ const en = {
     reports: "Reports",
     team: "Team",
     support: "Support",
+    platform: "Platform",
     supportConsole: "Support console",
     settings: "Settings",
     civicOverview: "Civic overview",
@@ -217,6 +218,7 @@ const en = {
     inviteInvalid: "This invitation is invalid or has expired. Ask your administrator for a new one.",
     accept: "Accept invitation",
     noOrganization: "Your account is not a member of any organization yet.",
+    suspended: "This workspace is suspended. Contact NEXVO to restore access.",
   },
   dashboard: {
     progress: "Collections done today",
@@ -672,6 +674,7 @@ const en = {
     container: { codeTaken: "A container with this code already exists." },
     ai: { disabled: "AI assistance is not configured.", refusal: "The AI declined this request.", failed: "The AI service is unavailable. Try again later." },
     support: { closed: "This request is closed.", noGrant: "The customer has not granted support access.", readOnly: "Support view is read-only." },
+    platform: { alreadySuspended: "This organization is already suspended.", notSuspended: "This organization is not suspended.", userNotFound: "No account with this email.", notSelf: "You cannot change your own account here.", lastOwner: "The platform must keep at least one active owner." },
     civic: { reasonRequired: "A reason is required.", duplicateTargetRequired: "Enter the tracking code of the original report." },
   },
   search: {
@@ -800,6 +803,42 @@ const en = {
     noActiveGrant: "The customer has not granted access.",
     markResolved: "Resolve",
     workspace: "Workspace",
+  },
+  platform: {
+    title: "Platform",
+    lead: "Control centre for the company that runs NEXVO.",
+    nav: { overview: "Overview", tenants: "Organizations", plans: "Plans", staff: "Staff & accounts", audit: "Audit log", support: "Support console" },
+    roles: { OWNER: "Platform owner", ADMIN: "Platform admin", SUPPORT: "Support agent", NONE: "No platform role" },
+    kinds: { SERVICE_PROVIDER: "Collection company", MUNICIPALITY: "Municipality" },
+    privacy: "You manage accounts, subscriptions and organization profiles. Business records (customers, invoices, photos) stay private to each organization; seeing them needs the organization's own time-limited support grant.",
+    overview: {
+      providers: "Collection companies", municipalities: "Municipalities", suspended: "Suspended", pendingVerification: "Municipalities to verify", users: "Active user accounts",
+      trialsEnding: "Trials ending within 7 days", openTickets: "Open support requests", activeGrants: "Active support grants", signups30: "New organizations (30 days)",
+      listMrr: "Monthly revenue at list price", listMrrNote: "Active subscriptions × list price. Not collected money.", byStatus: "Subscriptions by status", byPlan: "Active subscriptions by plan", recent: "Latest organizations",
+    },
+    tenants: { kind: "Type", plan: "Plan", subscription: "Subscription", members: "Members", created: "Created", all: "All", suspendedBadge: "Suspended", toVerify: "To verify" },
+    tenant: {
+      profile: "Profile", usage: "Usage", customers: "Customers", vehicles: "Vehicles", workOrders30: "Work orders (30 days)", invoices: "Issued invoices", civic30: "Citizen reports (30 days)",
+      lastActivity: "Last activity", members: "Members", subscription: "Subscription", periodEnd: "Period ends", save: "Save", verification: "Verification",
+      suspend: "Suspend organization", suspendReason: "Reason (visible in the organization's audit log)", suspendHint: "Members lose access immediately. Data is kept and access returns on reactivation.",
+      reactivate: "Reactivate", suspendedSince: "Suspended since {date}: {reason}", log: "Platform actions on this organization", locked: "Locked", disabled: "Disabled",
+    },
+    plans: {
+      lead: "Prices and limits apply to every subscriber of the plan. Prices are hypotheses until validated (PRICING-ASSUMPTIONS.md).",
+      name: "Name", priceMonthly: "Monthly price", priceYearly: "Yearly price", maxUsers: "Users", maxVehicles: "Vehicles", maxCustomers: "Customers", unlimited: "-1 = unlimited",
+      customerPortal: "Customer portal", advancedReports: "Advanced reports", isPublic: "Shown on pricing page", subscribers: "{n} subscriptions", save: "Save plan", ownerOnly: "Only the platform owner can change plans.",
+    },
+    staff: {
+      lead: "People of your company who work in the platform.", email: "Email", role: "Role", assign: "Apply", ownerOnly: "Only the platform owner can change staff roles.", assignHint: "The person must already have a NEXVO account.",
+      users: "Find an account", usersHint: "Disable an abusive account, re-enable it, or unlock it after too many failed logins.", search: "Email contains…", find: "Search",
+      disable: "Disable", enable: "Enable", unlock: "Unlock", lockedUntil: "Locked until {date}", noResults: "No account found.",
+    },
+    audit: { lead: "Every action by platform staff, support access and account lockouts.", actor: "By", action: "Action", target: "Organization / item", when: "When" },
+    actions: {
+      verification_changed: "Verification changed", subscription_changed: "Subscription changed", tenant_suspended: "Organization suspended", tenant_reactivated: "Organization reactivated",
+      plan_updated: "Plan updated", staff_role_changed: "Staff role changed", user_disabled: "Account disabled", user_enabled: "Account enabled", user_unlocked: "Account unlocked",
+      access_granted: "Support access granted", access_revoked: "Support access revoked", session_started: "Support view opened", session_ended: "Support view closed", ticket_opened: "Support request opened", locked: "Account locked (failed logins)",
+    },
   },
   certificate: {
     title: "Collection certificate",

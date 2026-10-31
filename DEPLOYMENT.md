@@ -26,7 +26,13 @@
 
 Housekeeping: call `purgeRateLimits()` (server/rate-limit.ts) from a periodic job to delete expired buckets.
 
-Platform support staff: set `User.isPlatformStaff = true` for NEXVO support agents only (no membership needed). They reach a tenant only through that tenant's grant.
+Platform operator: create the first owner once, from a machine with database access, after that person has registered an account:
+
+```bash
+npm run platform:role -- owner@your-company.dz OWNER
+```
+
+The owner then manages admins and support agents in `/platform/staff`. Support agents reach a tenant only through that tenant's grant.
 
 ## 3. Release procedure
 

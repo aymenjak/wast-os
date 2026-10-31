@@ -84,6 +84,7 @@ const fr: Dictionary = {
     reports: "Rapports",
     team: "Équipe",
     support: "Assistance",
+    platform: "Plateforme",
     supportConsole: "Console d'assistance",
     settings: "Paramètres",
     civicOverview: "Vue civique",
@@ -219,6 +220,7 @@ const fr: Dictionary = {
     inviteInvalid: "Cette invitation est invalide ou a expiré. Demandez-en une nouvelle à votre administrateur.",
     accept: "Accepter l'invitation",
     noOrganization: "Votre compte n'est encore membre d'aucune organisation.",
+    suspended: "Cet espace est suspendu. Contactez NEXVO pour rétablir l'accès.",
   },
   dashboard: {
     progress: "Collectes réalisées aujourd'hui",
@@ -674,6 +676,7 @@ const fr: Dictionary = {
     container: { codeTaken: "Un conteneur porte déjà ce code." },
     ai: { disabled: "L'assistance IA n'est pas configurée.", refusal: "L'IA a refusé cette demande.", failed: "Le service d'IA est indisponible. Réessayez plus tard." },
     support: { closed: "Cette demande est fermée.", noGrant: "Le client n'a pas accordé d'accès à l'assistance.", readOnly: "La vue support est en lecture seule." },
+    platform: { alreadySuspended: "Cette organisation est déjà suspendue.", notSuspended: "Cette organisation n'est pas suspendue.", userNotFound: "Aucun compte avec cet e-mail.", notSelf: "Vous ne pouvez pas modifier votre propre compte ici.", lastOwner: "La plateforme doit garder au moins un propriétaire actif." },
     civic: { reasonRequired: "Un motif est obligatoire.", duplicateTargetRequired: "Saisissez le code de suivi du signalement d'origine." },
   },
   search: {
@@ -802,6 +805,42 @@ const fr: Dictionary = {
     noActiveGrant: "Le client n'a pas accordé d'accès.",
     markResolved: "Résoudre",
     workspace: "Espace",
+  },
+  platform: {
+    title: "Plateforme",
+    lead: "Centre de contrôle de la société qui exploite NEXVO.",
+    nav: { overview: "Vue d'ensemble", tenants: "Organisations", plans: "Offres", staff: "Équipe et comptes", audit: "Journal d'audit", support: "Console support" },
+    roles: { OWNER: "Propriétaire de la plateforme", ADMIN: "Administrateur plateforme", SUPPORT: "Agent support", NONE: "Aucun rôle plateforme" },
+    kinds: { SERVICE_PROVIDER: "Société de collecte", MUNICIPALITY: "Commune" },
+    privacy: "Vous gérez les comptes, abonnements et profils d'organisation. Les données métier (clients, factures, photos) restent privées à chaque organisation ; les voir nécessite l'accès support temporaire accordé par l'organisation.",
+    overview: {
+      providers: "Sociétés de collecte", municipalities: "Communes", suspended: "Suspendues", pendingVerification: "Communes à vérifier", users: "Comptes actifs",
+      trialsEnding: "Essais finissant sous 7 jours", openTickets: "Demandes support ouvertes", activeGrants: "Accès support actifs", signups30: "Nouvelles organisations (30 jours)",
+      listMrr: "Revenu mensuel au prix catalogue", listMrrNote: "Abonnements actifs × prix catalogue. Pas de l'argent encaissé.", byStatus: "Abonnements par statut", byPlan: "Abonnements actifs par offre", recent: "Dernières organisations",
+    },
+    tenants: { kind: "Type", plan: "Offre", subscription: "Abonnement", members: "Membres", created: "Créée le", all: "Toutes", suspendedBadge: "Suspendue", toVerify: "À vérifier" },
+    tenant: {
+      profile: "Profil", usage: "Utilisation", customers: "Clients", vehicles: "Véhicules", workOrders30: "Ordres de travail (30 jours)", invoices: "Factures émises", civic30: "Signalements (30 jours)",
+      lastActivity: "Dernière activité", members: "Membres", subscription: "Abonnement", periodEnd: "Fin de période", save: "Enregistrer", verification: "Vérification",
+      suspend: "Suspendre l'organisation", suspendReason: "Motif (visible dans le journal d'audit de l'organisation)", suspendHint: "Les membres perdent l'accès immédiatement. Les données sont conservées et l'accès revient à la réactivation.",
+      reactivate: "Réactiver", suspendedSince: "Suspendue depuis le {date} : {reason}", log: "Actions de la plateforme sur cette organisation", locked: "Verrouillé", disabled: "Désactivé",
+    },
+    plans: {
+      lead: "Les prix et limites s'appliquent à tous les abonnés de l'offre. Les prix restent des hypothèses tant qu'ils ne sont pas validés (PRICING-ASSUMPTIONS.md).",
+      name: "Nom", priceMonthly: "Prix mensuel", priceYearly: "Prix annuel", maxUsers: "Utilisateurs", maxVehicles: "Véhicules", maxCustomers: "Clients", unlimited: "-1 = illimité",
+      customerPortal: "Portail client", advancedReports: "Rapports avancés", isPublic: "Affichée sur la page tarifs", subscribers: "{n} abonnements", save: "Enregistrer l'offre", ownerOnly: "Seul le propriétaire de la plateforme peut modifier les offres.",
+    },
+    staff: {
+      lead: "Les personnes de votre société qui travaillent dans la plateforme.", email: "E-mail", role: "Rôle", assign: "Appliquer", ownerOnly: "Seul le propriétaire de la plateforme peut changer les rôles.", assignHint: "La personne doit déjà avoir un compte NEXVO.",
+      users: "Rechercher un compte", usersHint: "Désactiver un compte abusif, le réactiver, ou le déverrouiller après trop d'échecs de connexion.", search: "L'e-mail contient…", find: "Rechercher",
+      disable: "Désactiver", enable: "Activer", unlock: "Déverrouiller", lockedUntil: "Verrouillé jusqu'au {date}", noResults: "Aucun compte trouvé.",
+    },
+    audit: { lead: "Chaque action de l'équipe plateforme, les accès support et les verrouillages de comptes.", actor: "Par", action: "Action", target: "Organisation / élément", when: "Quand" },
+    actions: {
+      verification_changed: "Vérification modifiée", subscription_changed: "Abonnement modifié", tenant_suspended: "Organisation suspendue", tenant_reactivated: "Organisation réactivée",
+      plan_updated: "Offre modifiée", staff_role_changed: "Rôle plateforme modifié", user_disabled: "Compte désactivé", user_enabled: "Compte activé", user_unlocked: "Compte déverrouillé",
+      access_granted: "Accès support accordé", access_revoked: "Accès support retiré", session_started: "Vue support ouverte", session_ended: "Vue support fermée", ticket_opened: "Demande support ouverte", locked: "Compte verrouillé (échecs de connexion)",
+    },
   },
   certificate: {
     title: "Attestation de collecte",

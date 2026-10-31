@@ -27,12 +27,20 @@ model User {
   disabledAt   DateTime? @db.Timestamptz(3)
   /// NEXVO operator staff (support desk). Grants no tenant access by itself — see SupportAccessGrant.
   isPlatformStaff Boolean @default(false)
+  /// Platform role (OWNER > ADMIN > SUPPORT). Set iff isPlatformStaff (CHECK constraint).
+  platformRole    PlatformRole?
   /// Account lockout after repeated failed logins (credential-stuffing defence).
   failedLogins    Int       @default(0)
   lockedUntil     DateTime? @db.Timestamptz(3)
 
   sessions    Session[]
   memberships Membership[]
+}
+
+enum PlatformRole {
+  OWNER
+  ADMIN
+  SUPPORT
 }
 
 model Session {
@@ -91,6 +99,9 @@ model Organization {
   /// ISO weekdays on which crews work (1=Mon … 7=Sun). Algerian default: Sunday–Thursday.
   workingWeekdays    Int[]              @default([7, 1, 2, 3, 4])
   createdAt          DateTime           @default(now()) @db.Timestamptz(3)
+  /// Set by the platform operator; members lose access while set. Data is kept.
+  suspendedAt        DateTime?          @db.Timestamptz(3)
+  suspendedReason    String?
 
   memberships        Membership[]
   invitations        Invitation[]

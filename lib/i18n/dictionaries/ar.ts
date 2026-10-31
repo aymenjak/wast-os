@@ -84,6 +84,7 @@ const ar: Dictionary = {
     reports: "التقارير",
     team: "الفريق",
     support: "الدعم",
+    platform: "المنصة",
     supportConsole: "منصة الدعم",
     settings: "الإعدادات",
     civicOverview: "النظرة المدنية",
@@ -218,6 +219,7 @@ const ar: Dictionary = {
     inviteInvalid: "هذه الدعوة غير صالحة أو منتهية. اطلب دعوة جديدة من المسؤول.",
     accept: "قبول الدعوة",
     noOrganization: "حسابك ليس عضوًا في أي مؤسسة بعد.",
+    suspended: "مساحة العمل هذه موقوفة. تواصل مع NEXVO لاستعادة الوصول.",
   },
   dashboard: {
     progress: "عمليات الجمع المنجزة اليوم",
@@ -673,6 +675,7 @@ const ar: Dictionary = {
     container: { codeTaken: "توجد حاوية بهذا الرمز." },
     ai: { disabled: "المساعدة بالذكاء الاصطناعي غير مفعّلة.", refusal: "رفض الذكاء الاصطناعي هذا الطلب.", failed: "خدمة الذكاء الاصطناعي غير متاحة. أعد المحاولة لاحقًا." },
     support: { closed: "هذا الطلب مغلق.", noGrant: "لم يمنح الزبون إذن الوصول للدعم.", readOnly: "عرض الدعم للقراءة فقط." },
+    platform: { alreadySuspended: "هذه المؤسسة موقوفة مسبقًا.", notSuspended: "هذه المؤسسة غير موقوفة.", userNotFound: "لا يوجد حساب بهذا البريد.", notSelf: "لا يمكنك تعديل حسابك الخاص من هنا.", lastOwner: "يجب أن يبقى للمنصة مالك نشط واحد على الأقل." },
     civic: { reasonRequired: "السبب إجباري.", duplicateTargetRequired: "أدخل رمز متابعة البلاغ الأصلي." },
   },
   search: {
@@ -801,6 +804,42 @@ const ar: Dictionary = {
     noActiveGrant: "لم يمنح الزبون إذن الوصول.",
     markResolved: "حلّ الطلب",
     workspace: "المساحة",
+  },
+  platform: {
+    title: "المنصة",
+    lead: "مركز التحكم للشركة التي تشغّل NEXVO.",
+    nav: { overview: "نظرة عامة", tenants: "المؤسسات", plans: "الباقات", staff: "الفريق والحسابات", audit: "سجل التدقيق", support: "لوحة الدعم" },
+    roles: { OWNER: "مالك المنصة", ADMIN: "مدير المنصة", SUPPORT: "عون دعم", NONE: "بدون دور في المنصة" },
+    kinds: { SERVICE_PROVIDER: "شركة جمع", MUNICIPALITY: "بلدية" },
+    privacy: "أنت تدير الحسابات والاشتراكات وملفات المؤسسات. أما بيانات العمل (الزبائن، الفواتير، الصور) فتبقى خاصة بكل مؤسسة، ولا تُرى إلا بإذن دعم مؤقت تمنحه المؤسسة نفسها.",
+    overview: {
+      providers: "شركات الجمع", municipalities: "البلديات", suspended: "موقوفة", pendingVerification: "بلديات تنتظر التحقق", users: "حسابات مستخدمين نشطة",
+      trialsEnding: "فترات تجريبية تنتهي خلال 7 أيام", openTickets: "طلبات دعم مفتوحة", activeGrants: "أذونات دعم سارية", signups30: "مؤسسات جديدة (30 يومًا)",
+      listMrr: "الإيراد الشهري بسعر القائمة", listMrrNote: "الاشتراكات النشطة × سعر القائمة. ليس مالًا محصّلًا.", byStatus: "الاشتراكات حسب الحالة", byPlan: "الاشتراكات النشطة حسب الباقة", recent: "آخر المؤسسات",
+    },
+    tenants: { kind: "النوع", plan: "الباقة", subscription: "الاشتراك", members: "الأعضاء", created: "تاريخ الإنشاء", all: "الكل", suspendedBadge: "موقوفة", toVerify: "للتحقق" },
+    tenant: {
+      profile: "الملف", usage: "الاستعمال", customers: "الزبائن", vehicles: "المركبات", workOrders30: "أوامر العمل (30 يومًا)", invoices: "الفواتير الصادرة", civic30: "بلاغات المواطنين (30 يومًا)",
+      lastActivity: "آخر نشاط", members: "الأعضاء", subscription: "الاشتراك", periodEnd: "نهاية الفترة", save: "حفظ", verification: "التحقق",
+      suspend: "إيقاف المؤسسة", suspendReason: "السبب (يظهر في سجل تدقيق المؤسسة)", suspendHint: "يفقد الأعضاء الوصول فورًا. تُحفظ البيانات ويعود الوصول عند إعادة التفعيل.",
+      reactivate: "إعادة التفعيل", suspendedSince: "موقوفة منذ {date}: {reason}", log: "إجراءات المنصة على هذه المؤسسة", locked: "مقفل", disabled: "معطّل",
+    },
+    plans: {
+      lead: "تُطبَّق الأسعار والحدود على كل المشتركين في الباقة. الأسعار فرضيات إلى أن يتم التحقق منها (PRICING-ASSUMPTIONS.md).",
+      name: "الاسم", priceMonthly: "السعر الشهري", priceYearly: "السعر السنوي", maxUsers: "المستخدمون", maxVehicles: "المركبات", maxCustomers: "الزبائن", unlimited: "-1 = بلا حد",
+      customerPortal: "بوابة الزبون", advancedReports: "تقارير متقدمة", isPublic: "تظهر في صفحة الأسعار", subscribers: "{n} اشتراك", save: "حفظ الباقة", ownerOnly: "مالك المنصة وحده يستطيع تعديل الباقات.",
+    },
+    staff: {
+      lead: "أشخاص شركتك الذين يعملون في المنصة.", email: "البريد الإلكتروني", role: "الدور", assign: "تطبيق", ownerOnly: "مالك المنصة وحده يستطيع تغيير الأدوار.", assignHint: "يجب أن يكون للشخص حساب NEXVO مسبقًا.",
+      users: "البحث عن حساب", usersHint: "تعطيل حساب مسيء أو إعادة تفعيله أو فك قفله بعد محاولات دخول فاشلة كثيرة.", search: "البريد يحتوي على…", find: "بحث",
+      disable: "تعطيل", enable: "تفعيل", unlock: "فك القفل", lockedUntil: "مقفل حتى {date}", noResults: "لم يُعثر على أي حساب.",
+    },
+    audit: { lead: "كل إجراء من فريق المنصة، ووصول الدعم، وقفل الحسابات.", actor: "بواسطة", action: "الإجراء", target: "المؤسسة / العنصر", when: "التاريخ" },
+    actions: {
+      verification_changed: "تغيير حالة التحقق", subscription_changed: "تغيير الاشتراك", tenant_suspended: "إيقاف مؤسسة", tenant_reactivated: "إعادة تفعيل مؤسسة",
+      plan_updated: "تعديل باقة", staff_role_changed: "تغيير دور في المنصة", user_disabled: "تعطيل حساب", user_enabled: "تفعيل حساب", user_unlocked: "فك قفل حساب",
+      access_granted: "منح وصول الدعم", access_revoked: "سحب وصول الدعم", session_started: "فتح عرض الدعم", session_ended: "إغلاق عرض الدعم", ticket_opened: "فتح طلب دعم", locked: "قفل حساب (محاولات فاشلة)",
+    },
   },
   certificate: {
     title: "شهادة جمع",

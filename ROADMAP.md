@@ -22,6 +22,8 @@ Redesign ("Kerbside"), recurring schedules, container tracking, ops map, route s
 
 Overview dashboard rebuilt with validated charts; server-side tables (search, sort, filters, pagination, Excel/CSV) on customers, work orders, invoices, containers; receivables aging; monthly collection certificate (staff and portal); online payment adapter (Chargily, test mode); remote support (tickets, customer-granted read-only access, staff console, audit); optional AI suggestions (civic triage, operations brief); shared rate limiter, login lockout, nonce CSP.
 
+Platform owner console (organizations, subscriptions, verification, suspension, plans, staff, accounts, audit).
+
 ## Next milestone (M2): pilot-ready hardening — acceptance tests
 
 1. Email delivery for invitations, password reset and citizen updates via the outbox worker (test: outbox rows → sent, retries idempotent).
@@ -36,6 +38,7 @@ Overview dashboard rebuilt with validated charts; server-side tables (search, so
 
 ## Later
 
+- Platform: automatic billing of NEXVO subscriptions (invoices to tenants, dunning → PAST_DUE → suspension), 2FA mandatory for platform staff, CSV export of tenants.
 - Contractor assignment: municipality → provider tenant work orders with SLA reporting.
 - Quotations and credit notes; live online payments (after merchant onboarding and owner approval).
 - Offline-tolerant field app (PWA queue).

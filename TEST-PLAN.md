@@ -28,7 +28,18 @@
 | M Command palette search | integration (tenant + permission scoping, accent-insensitive, LIKE wildcards literal); e2e (Ctrl+K → result → navigate) |
 | J ar/fr/en desktop & mobile | e2e `i18n-a11y` (lang/dir, translated H1, axe WCAG 2.2 AA serious/critical = 0 on 6 public pages × 3 locales with reduced motion, no overflow at 360 px); screenshots in `docs/screenshots` reviewed |
 
-## Recorded results (2026-10-31, payments, remote support, AI, tables, documents, hardening)
+## Recorded results (2026-10-31, platform owner console)
+
+| Suite | Result |
+|-------|--------|
+| `npx vitest run` | **14 files, 140 tests passed** |
+| `npx playwright test` | **33 passed** (1.2 min) |
+| `npx tsc --noEmit` / `npx next build` | 0 errors / success |
+| `npm audit --omit=dev` | 0 vulnerabilities |
+
+`platform-console.test.ts` (16): tenant users and support agents refused everywhere; admins refused on plans/staff; disabled owner loses access; tenant search (name, member email, filters); detail exposes counts not records; subscription change audited in the tenant log; invalid plan refused; municipality verification; list-price revenue from ACTIVE only; suspension blocks live sessions, keeps data, refuses double suspension, reversible, audited; suspended municipality refuses citizen reports; plan update audited, negative price refused; role grant/removal, not self, unknown email, last owner protected; DB CHECK on role/flag; disable ends sessions and login, enable, unlock; admins cannot disable owners or themselves; global audit. E2E `platform-owner.spec` (5): 404 for tenant users, owner lands on console, changes plan, suspends, member sees the suspension message and is blocked, reactivation restores access.
+
+## Earlier results (2026-10-31, payments, remote support, AI, tables, documents, hardening)
 
 | Suite | Result |
 |-------|--------|

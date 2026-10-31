@@ -61,6 +61,7 @@ export default async function AppLayout({ children, params }: { children: React.
           <div className="hidden flex-1 md:flex"><CommandPalette /></div>
           <div className="ms-auto flex items-center gap-4">
             <LanguageSwitcher className="hidden sm:flex" />
+            {(session?.user.platformRole === "OWNER" || session?.user.platformRole === "ADMIN") && !ctx.support ? <Link href={`/${locale}/platform`} className="hidden text-sm font-medium text-ink-800 hover:underline md:inline">{d.nav.platform}</Link> : null}
             {session?.user.isPlatformStaff && !ctx.support ? <Link href={`/${locale}/support-console`} className="hidden text-sm font-medium text-ink-800 hover:underline md:inline">{d.nav.supportConsole}</Link> : null}
             <span className="hidden text-sm text-ink-700 md:inline">{ctx.userName}</span>
             <form action={logoutAction}>

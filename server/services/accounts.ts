@@ -160,9 +160,13 @@ export async function resolveSession(token: string) {
     });
   }
   let ctx: OrgContext | null = null;
+  let suspended = false;
   if (session.supportGrantId) ctx = await loadSupportContext(session.user, session.supportGrantId, session.id);
-  else if (session.activeOrganizationId) ctx = await loadContext(session.user.id, session.activeOrganizationId);
-  return { session, user: session.user, ctx };
+  else if (session.activeOrganizationId) {
+    ctx = await loadContext(session.user.id, session.activeOrganizationId);
+    if (!ctx) suspended = !!(await prisma.organization.findUnique({ where: { id: session.activeOrganizationId }, select: { suspendedAt: true } }))?.suspendedAt;
+  }
+  return { session, user: session.user, ctx, suspended };
 }
 
 export async function loadContext(userId: string, organizationId: string): Promise<OrgContext | null> {
@@ -172,6 +176,8 @@ export async function loadContext(userId: string, organizationId: string): Promi
   });
   if (!m || m.status !== "ACTIVE") return null;
   const o = m.organization;
+  // Suspended by the platform operator: no member access until reactivated.
+  if (o.suspendedAt) return null;
   return buildContext({
     userId,
     userName: m.user.name,

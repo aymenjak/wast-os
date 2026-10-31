@@ -43,7 +43,7 @@ export async function requireUser(locale: Locale) {
 /** Pages under /app and /portal call this; it never trusts anything from the client. */
 export async function requireOrg(locale: Locale): Promise<OrgContext> {
   const s = await requireUser(locale);
-  if (!s.ctx) redirect(`/${locale}/login?no-org=1`);
+  if (!s.ctx) redirect(`/${locale}/login?${s.suspended ? "suspended" : "no-org"}=1`);
   return s.ctx;
 }
 

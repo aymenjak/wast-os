@@ -31,9 +31,11 @@ async function main() {
     await prisma.plan.upsert({ where: { code: p.code }, create: p, update: p });
   }
 
-  // Platform support staff (synthetic). No membership: sees a tenant only through a time-limited grant.
-  if (!(await prisma.user.findUnique({ where: { email: "support@nexvo.test" } }))) {
-    await prisma.user.create({ data: { email: "support@nexvo.test", name: "Support NEXVO", passwordHash: await hashPassword(PASSWORD), isPlatformStaff: true, locale: "ar" } });
+  // Platform operator accounts (synthetic). No membership: support sees a tenant only through a time-limited grant.
+  for (const [mail, name, role] of [["admin@nexvo.test", "Propriétaire NEXVO", "OWNER"], ["support@nexvo.test", "Support NEXVO", "SUPPORT"]] as const) {
+    const existing = await prisma.user.findUnique({ where: { email: mail } });
+    if (!existing) await prisma.user.create({ data: { email: mail, name, passwordHash: await hashPassword(PASSWORD), isPlatformStaff: true, platformRole: role, locale: "ar" } });
+    else if (!existing.platformRole) await prisma.user.update({ where: { id: existing.id }, data: { isPlatformStaff: true, platformRole: role } });
   }
 
   if (await prisma.user.findUnique({ where: { email: "owner@demo-collecte.test" } })) {
@@ -165,6 +167,7 @@ async function main() {
   Finance:         finance@demo-collecte.test
   Municipality:    civic@demo-apc.test
   Customer portal: portal@demo-client.test
+  Platform owner:  admin@nexvo.test (console at /fr/platform)
   Support staff:   support@nexvo.test (console at /fr/support-console)`);
 }
 
