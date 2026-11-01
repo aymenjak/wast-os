@@ -86,22 +86,42 @@ export async function recordRejects(ctx: OrgContext, ticketId: string, input: un
 
 type Filter = { from: string; to: string; customerId?: string };
 
-async function tickets(ctx: OrgContext, f: Filter) {
-  return prisma.weightTicket.findMany({
-    where: {
-      organizationId: ctx.org.id,
-      weighedAt: { gte: dateOnly(f.from), lt: new Date(dateOnly(f.to).getTime() + 86400_000) },
-      ...(f.customerId ? { workOrder: { customerId: f.customerId } } : {}),
-    },
-    include: {
-      destination: { select: { id: true, name: true, kind: true, registrationNumber: true } },
-      workOrder: { select: { id: true, number: true, customerId: true, scheduledDate: true, customer: { select: { name: true } }, wasteCategory: { select: { stream: true } }, serviceLocation: { select: { label: true } } } },
-    },
-    orderBy: { weighedAt: "asc" },
-  });
+type Row = {
+  id: string; netKg: string; rejectedKg: string; stream: MaterialStream | null; contaminated: boolean; weighedAt: Date;
+  destination: { id: string; name: string; kind: DestinationKind; registrationNumber: string | null } | null;
+  workOrder: { id: string; number: string; customerId: string | null; scheduledDate: Date; customer: { name: string } | null; wasteCategory: { stream: MaterialStream | null } | null; serviceLocation: { label: string } | null };
+};
+
+/**
+ * One SQL query with joins (pre-pilot review, 2026-11-01): the previous `include` loaded relations with `IN (…ids)`, which
+ * exceeds PostgreSQL's bind-parameter limit beyond ~32k tickets (HTTP 500 at a year of pilot-scale data).
+ */
+async function tickets(ctx: OrgContext, f: Filter): Promise<Row[]> {
+  const from = dateOnly(f.from), to = new Date(dateOnly(f.to).getTime() + 86400_000);
+  const rows = await prisma.$queryRaw<{
+    id: string; netKg: string; rejectedKg: string; stream: MaterialStream | null; contaminated: boolean; weighedAt: Date;
+    dId: string | null; dName: string | null; dKind: DestinationKind | null; dReg: string | null;
+    woId: string; woNumber: string; customerId: string | null; scheduledDate: Date; customerName: string | null; categoryStream: MaterialStream | null; locationLabel: string | null;
+  }[]>`
+    SELECT t.id, t."netKg"::text AS "netKg", t."rejectedKg"::text AS "rejectedKg", t.stream, t.contaminated, t."weighedAt",
+           d.id AS "dId", d.name AS "dName", d.kind AS "dKind", d."registrationNumber" AS "dReg",
+           w.id AS "woId", w.number AS "woNumber", w."customerId", w."scheduledDate", c.name AS "customerName", wc.stream AS "categoryStream", sl.label AS "locationLabel"
+      FROM "WeightTicket" t
+      JOIN "WorkOrder" w ON w.id = t."workOrderId" AND w."organizationId" = t."organizationId"
+      LEFT JOIN "Destination" d ON d.id = t."destinationId" AND d."organizationId" = t."organizationId"
+      LEFT JOIN "Customer" c ON c.id = w."customerId" AND c."organizationId" = w."organizationId"
+      LEFT JOIN "WasteCategory" wc ON wc.id = w."wasteCategoryId" AND wc."organizationId" = w."organizationId"
+      LEFT JOIN "ServiceLocation" sl ON sl.id = w."serviceLocationId" AND sl."organizationId" = w."organizationId"
+     WHERE t."organizationId" = ${ctx.org.id} AND t."weighedAt" >= ${from} AND t."weighedAt" < ${to}
+       AND (${f.customerId ?? null}::text IS NULL OR w."customerId" = ${f.customerId ?? null}::text)
+     ORDER BY t."weighedAt" ASC`;
+  return rows.map((r) => ({
+    id: r.id, netKg: r.netKg, rejectedKg: r.rejectedKg, stream: r.stream, contaminated: r.contaminated, weighedAt: r.weighedAt,
+    destination: r.dId ? { id: r.dId, name: r.dName!, kind: r.dKind!, registrationNumber: r.dReg } : null,
+    workOrder: { id: r.woId, number: r.woNumber, customerId: r.customerId, scheduledDate: r.scheduledDate, customer: r.customerName !== null ? { name: r.customerName } : null, wasteCategory: { stream: r.categoryStream }, serviceLocation: r.locationLabel !== null ? { label: r.locationLabel } : null },
+  }));
 }
 
-type Row = Awaited<ReturnType<typeof tickets>>[number];
 const streamOf = (t: Row): MaterialStream | null => t.stream ?? t.workOrder.wasteCategory?.stream ?? null;
 const forRecovery = (t: Row) => ({ netMinor: toMinor(t.netKg), rejectedMinor: toMinor(t.rejectedKg), stream: streamOf(t), contaminated: t.contaminated, destinationKind: (t.destination?.kind ?? null) as DestinationKind | null });
 const split = (t: Row) => splitTicket(forRecovery(t));
@@ -182,6 +202,7 @@ export async function recoveryCertificate(ctx: OrgContext, customerId: string, m
 
 /** Aggregates for the AI assistant (no names): last 30 days. */
 export async function recyclingKpis(ctx: OrgContext, from: string, to: string) {
+  requirePermission(ctx, "reports.read");
   const s = summarize(await tickets(ctx, { from, to }));
   return {
     recoveredKg: s.total.recovered / 100, energyValorisationKg: s.total.energy / 100, disposedKg: s.total.disposed / 100, untrackedKg: s.total.untracked / 100, diversionRate: s.rate,

@@ -176,6 +176,7 @@ export async function addManualLine(ctx: OrgContext, invoiceId: string, input: u
       },
     });
     await recalc(tx, ctx.org.id, invoiceId);
+    await audit(tx, { organizationId: ctx.org.id, actorUserId: ctx.userId, action: "invoice.line_added", entityType: "Invoice", entityId: invoiceId, data: { quantity: data.quantity, unitPrice: data.unitPrice, taxRateBps: data.taxRateBps } });
   });
 }
 
@@ -187,6 +188,7 @@ export async function removeLine(ctx: OrgContext, invoiceId: string, lineId: str
     const r = await tx.invoiceLine.deleteMany({ where: { id: lineId, invoiceId, organizationId: ctx.org.id } });
     if (r.count === 0) throw new NotFoundError("InvoiceLine");
     await recalc(tx, ctx.org.id, invoiceId);
+    await audit(tx, { organizationId: ctx.org.id, actorUserId: ctx.userId, action: "invoice.line_removed", entityType: "Invoice", entityId: invoiceId, data: { lineId } });
   });
 }
 

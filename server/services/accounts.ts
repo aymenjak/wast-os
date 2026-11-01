@@ -357,6 +357,7 @@ export async function revokeInvitation(ctx: OrgContext, invitationId: string) {
     data: { revokedAt: new Date() },
   });
   if (r.count === 0) throw new NotFoundError("Invitation");
+  await audit(prisma, { organizationId: ctx.org.id, actorUserId: ctx.userId, action: "member.invitation_revoked", entityType: "Invitation", entityId: invitationId });
 }
 
 export async function getInvitationByToken(token: string) {

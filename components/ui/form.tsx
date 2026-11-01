@@ -133,15 +133,17 @@ export function Select({ className, ...p }: ComponentProps<"select">) {
 
 export function Checkbox({ label, ...p }: ComponentProps<"input"> & { label: ReactNode }) {
   return (
-    <label className="inline-flex items-center gap-2 text-sm text-ink-800">
-      <input type="checkbox" className="size-4 rounded border-ink-300 accent-brand-700" {...p} />
+    // 44 px tall tap area and a 20 px box: usable with gloves in the field (pre-pilot field test).
+    <label className="inline-flex min-h-11 cursor-pointer items-center gap-2.5 text-sm text-ink-800">
+      <input type="checkbox" className="size-5 shrink-0 rounded border-ink-300 accent-brand-700" {...p} />
       {label}
     </label>
   );
 }
 
-export function SubmitButton({ children, variant = "primary", className, size = "md", name, value }: { children: ReactNode; variant?: "primary" | "secondary" | "danger" | "subtle"; className?: string; size?: "sm" | "md" | "lg"; name?: string; value?: string }) {
-  const { pending } = useFormStatus();
+export function SubmitButton({ children, variant = "primary", className, size = "md", name, value, busy = false }: { children: ReactNode; variant?: "primary" | "secondary" | "danger" | "subtle"; className?: string; size?: "sm" | "md" | "lg"; name?: string; value?: string; busy?: boolean }) {
+  const formStatus = useFormStatus();
+  const pending = formStatus.pending || busy;
   const { t } = useI18n();
   const v = {
     primary: "bg-brand-700 text-white hover:bg-brand-800",

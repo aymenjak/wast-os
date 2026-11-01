@@ -1,4 +1,5 @@
 "use client";
+import { compressInputFile } from "@/lib/client/compress-image";
 import { useState } from "react";
 import { Camera } from "lucide-react";
 import { ActionForm, Field, Input, Select, SubmitButton, Textarea, Checkbox } from "@/components/ui/form";
@@ -66,15 +67,17 @@ function Cancel({ onClick }: { onClick: () => void }) {
 
 export function EvidenceUpload({ workOrderId }: { workOrderId: string }) {
   const { t } = useI18n();
+  // The upload button waits while the photo is being shrunk on the phone (see lib/client/compress-image.ts).
+  const [compressing, setCompressing] = useState(false);
   return (
     <ActionForm action={uploadEvidenceAction} hidden={{ workOrderId }} encType="multipart/form-data" resetOnSuccess className="flex flex-wrap items-end gap-3 rounded-md bg-ink-50 p-3">
       <Field label={t("workOrders.photoKind")} name="kind">
         {(p) => <Select {...p} defaultValue="AFTER"><option value="BEFORE">{t("enums.EvidenceKind.BEFORE")}</option><option value="AFTER">{t("enums.EvidenceKind.AFTER")}</option><option value="DOCUMENT">{t("enums.EvidenceKind.DOCUMENT")}</option></Select>}
       </Field>
       <Field label={t("workOrders.addPhoto")} name="file" hint={t("workOrders.uploadHint")} className="min-w-0 flex-1">
-        {(p) => <input {...p} type="file" accept="image/jpeg,image/png,image/webp,application/pdf" capture="environment" required className="block w-full text-sm file:me-3 file:rounded-md file:border-0 file:bg-white file:px-3 file:py-2 file:text-sm file:font-medium file:ring-1 file:ring-ink-200" />}
+        {(p) => <input {...p} type="file" accept="image/jpeg,image/png,image/webp,application/pdf" capture="environment" required onChange={async (e) => { setCompressing(true); try { await compressInputFile(e.currentTarget); } finally { setCompressing(false); } }} className="block w-full text-sm file:me-3 file:rounded-md file:border-0 file:bg-white file:px-3 file:py-2 file:text-sm file:font-medium file:ring-1 file:ring-ink-200" />}
       </Field>
-      <SubmitButton variant="subtle"><Camera aria-hidden className="size-4" />{t("workOrders.upload")}</SubmitButton>
+      <SubmitButton variant="subtle" busy={compressing}><Camera aria-hidden className="size-4" />{t("workOrders.upload")}</SubmitButton>
     </ActionForm>
   );
 }

@@ -94,7 +94,10 @@ export async function addContact(ctx: OrgContext, customerId: string, input: unk
     if (data.isPrimary) {
       await tx.customerContact.updateMany({ where: { organizationId: ctx.org.id, customerId }, data: { isPrimary: false } });
     }
-    return tx.customerContact.create({ data: { ...data, organizationId: ctx.org.id, customerId } });
+    const c = await tx.customerContact.create({ data: { ...data, organizationId: ctx.org.id, customerId } });
+    // No contact details in the audit entry (personal data stays in its own table).
+    await audit(tx, { organizationId: ctx.org.id, actorUserId: ctx.userId, action: "customer.contact_added", entityType: "Customer", entityId: customerId, data: { contactId: c.id } });
+    return c;
   });
 }
 

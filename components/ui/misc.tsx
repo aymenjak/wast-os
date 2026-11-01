@@ -40,7 +40,7 @@ export function Stat({ label, value, sub, tone = "default" }: { label: ReactNode
   return (
     <div className="min-w-0 px-5 py-4">
       <div className="text-sm text-ink-600">{label}</div>
-      <div className={cn("display mt-1 text-[2rem] leading-none font-bold tabular-nums", tone === "danger" ? "text-danger-700" : tone === "warning" ? "text-warning-700" : "text-ink-950")}>{value}</div>
+      <div className={cn("display mt-1 text-[1.375rem] leading-tight font-bold tabular-nums [overflow-wrap:anywhere] sm:text-[2rem] sm:leading-none", tone === "danger" ? "text-danger-700" : tone === "warning" ? "text-warning-700" : "text-ink-950")}>{value}</div>
       {sub ? <div className="mt-1.5 text-xs text-ink-600">{sub}</div> : null}
     </div>
   );

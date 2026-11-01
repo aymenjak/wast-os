@@ -89,17 +89,18 @@ cp .env.example .env && npm ci && npx prisma migrate dev && npm run db:seed && n
 
 - Managed Postgres point-in-time recovery, or nightly `pg_dump -Fc` + WAL archiving; keep 30 days; copy off-site (encrypted).
 - Object storage versioning on.
-- **Restore drill before launch** (not yet executed): restore latest dump into a fresh instance → `prisma migrate status` → run integration smoke (`/api/health`, login, open an invoice) → record time to restore.
+- Scripts: `scripts/ops/db-backup.sh <db-url> <file.dump>` (excludes PostGIS `spatial_ref_sys` data) and `scripts/ops/restore-drill.sh <file.dump> <empty-db-url>` (stops on first error, checks migrations and the append-only audit trigger). Uploaded files (`UPLOAD_DIR`) are not in the dump — back them up separately.
+- **Restore drill executed locally on 2026-11-01** (PILOT-READINESS.md §3): clean restore in < 2 s, identical row counts, app up on the copy with login and invoice. Repeat it once on the real server before the pilot.
 - Before any destructive migration: backup, rehearse on a restored copy, approval.
 
 ## 5. Release gates (Definition of Done for production)
 
 - [ ] All suites green in CI (`.github/workflows/ci.yml`)
-- [ ] Security gaps 1–3 in SECURITY.md closed (shared rate limiter, password reset, CSP)
+- [x] Security gaps 1–3 in SECURITY.md closed (shared rate limiter, password reset, CSP); HSTS added in the pre-pilot review
 - [ ] Object storage provider implemented and tested
-- [ ] Notification worker (email at least) implemented
+- [x] Notification worker (email at least) implemented (`npm run outbox:work`)
 - [ ] Legal review items in PRIVACY-AND-COMPLIANCE.md §5 completed
-- [ ] Restore drill executed and recorded
+- [x] Restore drill executed and recorded (locally, PILOT-READINESS.md §3 — repeat on the real server)
 - [ ] Monitoring: uptime check on `/api/health`, error tracking, DB disk/CPU alerts
 - [ ] Invoice legal format validated by an accountant
 

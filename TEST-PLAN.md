@@ -31,6 +31,20 @@
 | M Command palette search | integration (tenant + permission scoping, accent-insensitive, LIKE wildcards literal); e2e (Ctrl+K → result → navigate) |
 | J ar/fr/en desktop & mobile | e2e `i18n-a11y` (lang/dir, translated H1, axe WCAG 2.2 AA serious/critical = 0 on 6 public pages × 3 locales with reduced motion, no overflow at 360 px); screenshots in `docs/screenshots` reviewed |
 
+## Recorded results (2026-11-01, pre-pilot review — see PILOT-READINESS.md)
+
+| Suite | Result |
+|-------|--------|
+| `npm run test:unit` | **9 files, 57 tests passed** |
+| `npm run test:integration` | **22 files, 199 tests passed** (new: `audit-trail.test.ts` 2 — newly audited operations, append-only trigger; `scale.test.ts` 1 — recycling, territory and work-order export over 35,000 tickets) |
+| `npx playwright test` | **54 passed** |
+| `npm audit --omit=dev` | 0 vulnerabilities |
+| Restore drill | clean (`scripts/ops/restore-drill.sh`), identical row counts, app smoke on the copy |
+| Load | 40k work orders / 60k tickets: all pages < 0.8 s, exports < 3.3 s (after fixing HTTP 500) |
+| Field test | Pixel 5 3G and iPhone 13 slow 3G, CPU ×4, Arabic: full job in 18.6 s / 38.4 s; 93 page views at 393 px without overflow |
+
+Defects found and fixed: bind-parameter limit (HTTP 500 at scale); missing HSTS; 8 unaudited mutations; audit trail editable by the app role; restore printing errors (PostGIS); page sideways overflow on phones (grid min-width) incl. invoice amounts; job actions out of reach on phones; focus hidden under sticky header; slow photo upload (now compressed on device); 16 px checkboxes.
+
 ## Recorded results (2026-11-01, R3 territory)
 
 | Suite | Result |

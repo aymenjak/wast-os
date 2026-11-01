@@ -115,7 +115,9 @@ export async function createTeam(ctx: OrgContext, input: unknown) {
   requirePermission(ctx, "fleet.write");
   const { name } = parse(z.object({ name: requiredText(80) }), input);
   if (await prisma.team.findFirst({ where: { organizationId: ctx.org.id, name } })) throw new DomainError("errors.fleet.teamTaken");
-  return prisma.team.create({ data: { organizationId: ctx.org.id, name } });
+  const team = await prisma.team.create({ data: { organizationId: ctx.org.id, name } });
+  await audit(prisma, { organizationId: ctx.org.id, actorUserId: ctx.userId, action: "fleet.team_created", entityType: "Team", entityId: team.id });
+  return team;
 }
 
 export async function addTeamMember(ctx: OrgContext, teamId: string, membershipId: string) {
@@ -131,6 +133,8 @@ export async function addTeamMember(ctx: OrgContext, teamId: string, membershipI
     create: { teamId, membershipId },
     update: {},
   });
+  // Team membership decides which work orders a field worker can see: traced.
+  await audit(prisma, { organizationId: ctx.org.id, actorUserId: ctx.userId, action: "fleet.team_member_added", entityType: "Team", entityId: teamId, data: { membershipId } });
 }
 
 export async function removeTeamMember(ctx: OrgContext, teamId: string, membershipId: string) {
@@ -138,6 +142,7 @@ export async function removeTeamMember(ctx: OrgContext, teamId: string, membersh
   const team = await prisma.team.findFirst({ where: { id: teamId, organizationId: ctx.org.id } });
   if (!team) throw new NotFoundError("Team");
   await prisma.teamMember.deleteMany({ where: { teamId, membershipId } });
+  await audit(prisma, { organizationId: ctx.org.id, actorUserId: ctx.userId, action: "fleet.team_member_removed", entityType: "Team", entityId: teamId, data: { membershipId } });
 }
 
 export async function staffOptions(ctx: OrgContext) {

@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { z } from "zod";
 import { prisma } from "../db";
-import { requirePermission, type OrgContext } from "../context";
+import { hasPermission, requirePermission, type OrgContext } from "../context";
 import { DomainError, ForbiddenError, NotFoundError } from "../domain/errors";
 import { audit } from "../audit";
 import { hashToken } from "../auth/tokens";
@@ -67,6 +67,7 @@ export async function resolveAlert(ctx: OrgContext, alertId: string) {
   requirePermission(ctx, "fleet.write");
   const r = await prisma.iotAlert.updateMany({ where: { id: alertId, organizationId: ctx.org.id, resolvedAt: null }, data: { resolvedAt: new Date(), resolvedById: ctx.userId } });
   if (r.count === 0) throw new NotFoundError("IotAlert");
+  await audit(prisma, { organizationId: ctx.org.id, actorUserId: ctx.userId, action: "iot.alert_resolved", entityType: "IotAlert", entityId: alertId });
 }
 
 export async function iotOverview(ctx: OrgContext) {
@@ -211,6 +212,8 @@ export async function ingest(device: Device, body: unknown) {
 
 /** Aggregate IoT figures for dashboards and the AI brief (no locations, no customer names). */
 export async function iotKpis(ctx: OrgContext) {
+  // Defence in depth: callers (dashboard, assistant tools) already check, but aggregates stay behind a permission too.
+  if (!hasPermission(ctx, "reports.read") && !hasPermission(ctx, "fleet.read")) throw new ForbiddenError("reports.read");
   const [devices, openAlerts, forecasts] = await Promise.all([
     prisma.iotDevice.count({ where: { organizationId: ctx.org.id, revokedAt: null } }),
     prisma.iotAlert.groupBy({ by: ["kind"], where: { organizationId: ctx.org.id, resolvedAt: null }, _count: true }),

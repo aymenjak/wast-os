@@ -21,19 +21,23 @@ import type { DestinationKind, MaterialStream } from "@/lib/generated/prisma/enu
 const NONE = "—";
 const materialRate = (s: Split) => { const t = s.recovered + s.disposed + s.untracked; return t > 0 ? (s.recovered - s.energy) / t : null; };
 
+/** Single SQL query with joins — see recycling.ts `tickets` (bind-parameter limit with `include` at pilot scale). */
 async function ticketsInRange(ctx: OrgContext, from: string, to: string, commune?: string) {
-  return prisma.weightTicket.findMany({
-    where: {
-      organizationId: ctx.org.id,
-      weighedAt: { gte: dateOnly(from), lt: new Date(dateOnly(to).getTime() + 86400_000) },
-      ...(commune ? { workOrder: { serviceLocation: { commune } } } : {}),
-    },
-    select: {
-      netKg: true, rejectedKg: true, stream: true, contaminated: true,
-      destination: { select: { kind: true } },
-      workOrder: { select: { wasteCategory: { select: { stream: true } }, serviceLocation: { select: { commune: true, wilaya: true } } } },
-    },
-  });
+  const rows = await prisma.$queryRaw<{ netKg: string; rejectedKg: string; stream: MaterialStream | null; contaminated: boolean; kind: DestinationKind | null; categoryStream: MaterialStream | null; commune: string | null; wilaya: string | null }[]>`
+    SELECT t."netKg"::text AS "netKg", t."rejectedKg"::text AS "rejectedKg", t.stream, t.contaminated, d.kind, wc.stream AS "categoryStream", sl.commune, sl.wilaya
+      FROM "WeightTicket" t
+      JOIN "WorkOrder" w ON w.id = t."workOrderId" AND w."organizationId" = t."organizationId"
+      LEFT JOIN "Destination" d ON d.id = t."destinationId" AND d."organizationId" = t."organizationId"
+      LEFT JOIN "WasteCategory" wc ON wc.id = w."wasteCategoryId" AND wc."organizationId" = w."organizationId"
+      LEFT JOIN "ServiceLocation" sl ON sl.id = w."serviceLocationId" AND sl."organizationId" = w."organizationId"
+     WHERE t."organizationId" = ${ctx.org.id}
+       AND t."weighedAt" >= ${dateOnly(from)} AND t."weighedAt" < ${new Date(dateOnly(to).getTime() + 86400_000)}
+       AND (${commune ?? null}::text IS NULL OR sl.commune = ${commune ?? null}::text)`;
+  return rows.map((r) => ({
+    netKg: r.netKg, rejectedKg: r.rejectedKg, stream: r.stream, contaminated: r.contaminated,
+    destination: r.kind ? { kind: r.kind } : null,
+    workOrder: { wasteCategory: { stream: r.categoryStream }, serviceLocation: { commune: r.commune, wilaya: r.wilaya } },
+  }));
 }
 type T = Awaited<ReturnType<typeof ticketsInRange>>[number];
 const streamOf = (t: T): MaterialStream | null => t.stream ?? t.workOrder.wasteCategory?.stream ?? null;

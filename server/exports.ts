@@ -1,3 +1,4 @@
+import type { FailureReason, WorkOrderKind, WorkOrderStatus } from "@/lib/generated/prisma/enums";
 import "server-only";
 import writeXlsxFile from "write-excel-file/node";
 import { prisma } from "./db";
@@ -22,16 +23,27 @@ export async function buildExport(ctx: OrgContext, kind: ExportKind, from: strin
   switch (kind) {
     case "work-orders": {
       requirePermission(ctx, "reports.read");
-      const rows = await prisma.workOrder.findMany({
-        where: { organizationId: ctx.org.id, scheduledDate: { gte: dateOnly(from), lte: dateOnly(to) } },
-        include: { customer: true, serviceLocation: true, wasteCategory: true, team: true, vehicle: true, weightTickets: true },
-        orderBy: { scheduledDate: "asc" },
-      });
+      // One query with joins and the net weight summed in SQL (an `include` of 40k work orders + tickets exceeded the
+      // PostgreSQL bind-parameter limit — found in the pre-pilot load test).
+      const rows = await prisma.$queryRaw<{
+        number: string; kind: WorkOrderKind; scheduledDate: Date; status: WorkOrderStatus; customer: string | null; location: string | null;
+        nameAr: string | null; nameFr: string | null; nameEn: string | null; team: string | null; plate: string | null; netKg: string | null; failureReason: FailureReason | null;
+      }[]>`
+        SELECT w.number, w.kind, w."scheduledDate", w.status, c.name AS customer, sl.label AS location, wc."nameAr", wc."nameFr", wc."nameEn",
+               tm.name AS team, v."plateNumber" AS plate, (SELECT SUM(t."netKg") FROM "WeightTicket" t WHERE t."workOrderId" = w.id AND t."organizationId" = w."organizationId")::text AS "netKg", w."failureReason"
+          FROM "WorkOrder" w
+          LEFT JOIN "Customer" c ON c.id = w."customerId" AND c."organizationId" = w."organizationId"
+          LEFT JOIN "ServiceLocation" sl ON sl.id = w."serviceLocationId" AND sl."organizationId" = w."organizationId"
+          LEFT JOIN "WasteCategory" wc ON wc.id = w."wasteCategoryId" AND wc."organizationId" = w."organizationId"
+          LEFT JOIN "Team" tm ON tm.id = w."teamId" AND tm."organizationId" = w."organizationId"
+          LEFT JOIN "Vehicle" v ON v.id = w."vehicleId" AND v."organizationId" = w."organizationId"
+         WHERE w."organizationId" = ${ctx.org.id} AND w."scheduledDate" >= ${dateOnly(from)} AND w."scheduledDate" <= ${dateOnly(to)}
+         ORDER BY w."scheduledDate" ASC, w.number ASC`;
       return {
         header: [d.workOrders.number, d.workOrders.kind, d.workOrders.scheduled, d.common.status, d.requests.customer, d.requests.location, d.contracts.category, d.workOrders.team, d.workOrders.vehicle, d.workOrders.netKg, d.workOrders.failureReason],
         rows: rows.map((w) => [
-          w.number, d.enums.WorkOrderKind[w.kind], day(w.scheduledDate), d.enums.WorkOrderStatus[w.status], w.customer?.name ?? null, w.serviceLocation?.label ?? null,
-          cat(w.wasteCategory), w.team?.name ?? null, w.vehicle?.plateNumber ?? null, w.weightTickets.reduce((s, t) => s + toMinor(t.netKg), 0) / 100,
+          w.number, d.enums.WorkOrderKind[w.kind], day(w.scheduledDate), d.enums.WorkOrderStatus[w.status], w.customer, w.location,
+          cat(w.nameAr !== null ? { nameAr: w.nameAr, nameFr: w.nameFr!, nameEn: w.nameEn! } : null), w.team, w.plate, w.netKg === null ? 0 : toMinor(w.netKg) / 100,
           w.failureReason ? d.enums.FailureReason[w.failureReason] : null,
         ]),
       };

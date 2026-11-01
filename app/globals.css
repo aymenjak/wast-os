@@ -61,6 +61,14 @@
   html {
     -webkit-text-size-adjust: 100%;
     color-scheme: light;
+    /* Keep scrolled-to and keyboard-focused elements clear of the sticky header (h-14) — WCAG 2.4.11. */
+    scroll-padding-top: 4.5rem;
+  }
+  /* Grid items default to min-width:auto and grow to the width of a wide table inside them, which makes the whole page
+     scroll sideways on phones (found in the pre-pilot field test: work-order page, weight-tickets table). Let them shrink
+     so tables scroll inside their own overflow container instead. */
+  .grid > * {
+    min-width: 0;
   }
   html[lang="ar"] body {
     font-family: var(--font-arabic);

@@ -73,10 +73,12 @@ Also run: `npm audit --omit=dev` → 0 vulnerabilities (2026-10-31).
 
 ## Known gaps (must close before production)
 
-1. ~~Per-process rate limiter~~ (done: Postgres) · ~~no CSP on HTML~~ (done: nonce CSP) · ~~no lockout~~ (done).
-2. ~~No 2FA~~ (done: TOTP, mandatory for staff). Still missing: password reset flow (needs an email provider), session list/revoke UI, WebAuthn/passkeys.
-3. Lockout can be used to lock a known user out for 15 min (accepted trade-off; IP-based login limit also applies). Revisit with 2FA/captcha.
-4. No Postgres row-level security (defence in depth).
-5. No antivirus scanning of PDFs; PNG/WebP metadata not stripped (only JPEG).
-6. Audit log is in the same database and writable by the app role — export to append-only storage.
-7. No independent penetration test.
+Updated after the pre-pilot review (PILOT-READINESS.md, 2026-11-01).
+
+1. ~~Per-process rate limiter~~ · ~~no CSP~~ · ~~no lockout~~ · ~~no password reset~~ · ~~no HSTS~~ (all done). Still missing: session list/revoke UI, WebAuthn/passkeys.
+2. Lockout can be used to lock a known user out for 15 min (accepted trade-off; IP-based limit also applies).
+3. No Postgres row-level security (defence in depth; tenant filtering verified by scan + tests).
+4. No antivirus scanning of PDFs; PNG/WebP metadata not stripped (JPEG stripped; photos re-encoded on the phone carry no EXIF).
+5. Audit trail is append-only in the database (trigger, verified) but not yet exported to external append-only storage.
+6. No independent penetration test.
+7. Uploaded files on local disk only (single-server pilot); S3-compatible provider still to implement for multi-instance.
