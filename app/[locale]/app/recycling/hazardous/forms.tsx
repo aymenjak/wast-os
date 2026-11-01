@@ -2,7 +2,8 @@
 import { ActionForm, Checkbox, Field, Input, Select, SubmitButton, Textarea } from "@/components/ui/form";
 import { useI18n } from "@/components/i18n-provider";
 import { NOMENCLATURE_06_104 } from "@/lib/nomenclature-06-104";
-import { createAuthorisationAction, createMovementAction, deliverMovementAction, pickUpMovementAction, refuseMovementAction } from "@/app/actions/business";
+import { TREATMENT_OPERATIONS } from "@/lib/treatment-operations";
+import { confirmTreatmentAction, createAuthorisationAction, createMovementAction, deliverMovementAction, pickUpMovementAction, refuseMovementAction } from "@/app/actions/business";
 
 const CONSISTENCIES = ["SOLID", "LIQUID", "GASEOUS", "PASTY"] as const;
 // Only class SD (annex III) can travel under décret 04-409.
@@ -49,6 +50,10 @@ export function MovementForm({ customers, destinations, vehicles, authorisations
       </Field>
       <Field label={t("hazardous.consistency")} name="consistency">{(p) => <Select {...p} defaultValue="SOLID">{CONSISTENCIES.map((c) => <option key={c} value={c}>{t(`enums.WasteConsistency.${c}`)}</option>)}</Select>}</Field>
       <Field label={t("hazardous.quantityKg")} name="quantityKg">{(p) => <Input {...p} required inputMode="decimal" dir="ltr" />}</Field>
+      <div className="flex items-end pb-2"><Checkbox name="quantityEstimated" label={t("hazardous.quantityEstimated")} /></div>
+      <Field label={t("hazardous.plannedOperation")} name="plannedOperation" optional className="sm:col-span-2" hint={t("hazardous.operationHint")}>
+        {(p) => <Select {...p} defaultValue=""><option value="">—</option>{TREATMENT_OPERATIONS.map(([c, l]) => <option key={c} value={c} lang="fr">{c} — {l.length > 70 ? `${l.slice(0, 70)}…` : l}</option>)}</Select>}
+      </Field>
       <Field label={t("hazardous.vehicle")} name="vehicleId" hint={t("hazardous.vehicleHint")}>{(p) => <Select {...p} required defaultValue=""><option value="" disabled>—</option>{vehicles.map((v) => <option key={v.id} value={v.id}>{v.plateNumber}</option>)}</Select>}</Field>
       <Field label={t("hazardous.packageCount")} name="packageCount">{(p) => <Input {...p} type="number" min={1} max={500} defaultValue={1} dir="ltr" />}</Field>
       <Field label={t("hazardous.originAddress")} name="originAddress" optional hint={t("hazardous.originAddressHint")}>{(p) => <Input {...p} maxLength={300} />}</Field>
@@ -69,13 +74,30 @@ export function PickUpForm({ movementId }: { movementId: string }) {
   );
 }
 
-export function DeliverForm({ movementId }: { movementId: string }) {
+export function DeliverForm({ movementId, expectedKg }: { movementId: string; expectedKg: number }) {
   const { t } = useI18n();
   return (
-    <ActionForm action={deliverMovementAction} hidden={{ movementId }} className="space-y-3">
-      <Field label={t("hazardous.consigneeSignedName")} name="consigneeSignedName">{(p) => <Input {...p} required maxLength={120} />}</Field>
-      <Checkbox name="decontaminated" required label={t("hazardous.decontaminated")} />
-      <div><SubmitButton>{t("hazardous.deliver")}</SubmitButton></div>
+    <ActionForm action={deliverMovementAction} hidden={{ movementId }} className="grid gap-3 sm:grid-cols-2">
+      <Field label={t("hazardous.consigneeSignedName")} name="consigneeSignedName" className="sm:col-span-2">{(p) => <Input {...p} required maxLength={120} />}</Field>
+      <Field label={t("hazardous.receivedKg")} name="receivedKg">{(p) => <Input {...p} required inputMode="decimal" dir="ltr" defaultValue={String(expectedKg)} />}</Field>
+      <Field label={t("hazardous.refusedKg")} name="refusedKg" optional>{(p) => <Input {...p} inputMode="decimal" dir="ltr" placeholder="0" />}</Field>
+      <Field label={t("hazardous.partialRefusalReason")} name="partialRefusalReason" optional className="sm:col-span-2" hint={t("hazardous.partialRefusalHint")}>{(p) => <Input {...p} maxLength={500} />}</Field>
+      <div className="sm:col-span-2"><Checkbox name="decontaminated" required label={t("hazardous.decontaminated")} /></div>
+      <div className="sm:col-span-2"><SubmitButton>{t("hazardous.deliver")}</SubmitButton></div>
+    </ActionForm>
+  );
+}
+
+export function TreatmentForm({ movementId, planned, minDate, maxDate }: { movementId: string; planned: string | null; minDate: string; maxDate: string }) {
+  const { t } = useI18n();
+  return (
+    <ActionForm action={confirmTreatmentAction} hidden={{ movementId }} className="grid gap-3 sm:grid-cols-2">
+      <Field label={t("hazardous.treatmentCode")} name="treatmentCode" className="sm:col-span-2" hint={t("hazardous.operationHint")}>
+        {(p) => <Select {...p} required defaultValue={planned ?? ""}><option value="" disabled>—</option>{TREATMENT_OPERATIONS.map(([c, l]) => <option key={c} value={c} lang="fr">{c} — {l.length > 70 ? `${l.slice(0, 70)}…` : l}</option>)}</Select>}
+      </Field>
+      <Field label={t("hazardous.treatmentDate")} name="treatmentDate">{(p) => <Input {...p} type="date" required min={minDate} max={maxDate} dir="ltr" />}</Field>
+      <Field label={t("hazardous.treatmentSignedName")} name="treatmentSignedName">{(p) => <Input {...p} required maxLength={120} />}</Field>
+      <div className="sm:col-span-2"><SubmitButton variant="secondary">{t("hazardous.confirmTreatment")}</SubmitButton></div>
     </ActionForm>
   );
 }

@@ -7,6 +7,7 @@ import { nextNumber } from "../counters";
 import { dateOnly, optionalText, parse, requiredText } from "../validation";
 import { orgToday } from "./reports";
 import { findNomenclature } from "@/lib/nomenclature-06-104";
+import { isPreliminary, TREATMENT_CODES } from "@/lib/treatment-operations";
 import { toMinor, fromMinor } from "@/lib/money";
 import type { DestinationKind } from "@/lib/generated/prisma/enums";
 
@@ -108,6 +109,8 @@ const createSchema = z.object({
   quantityKg: z.coerce.number().positive().max(1_000_000),
   packaging: requiredText(200),
   labelled: z.preprocess((v) => v === "on" || v === "true" || v === true, z.boolean()),
+  quantityEstimated: z.preprocess((v) => v === "on" || v === "true" || v === true, z.boolean()),
+  plannedOperation: z.preprocess((v) => (v === "" ? undefined : v), z.enum(TREATMENT_CODES).optional()),
 });
 
 export async function createMovement(ctx: OrgContext, input: unknown) {
@@ -134,7 +137,7 @@ export async function createMovement(ctx: OrgContext, input: unknown) {
     const m = await tx.hazardousMovement.create({
       data: {
         organizationId: ctx.org.id, number, customerId: customer.id, destinationId: destination.id, workOrderId: workOrder?.id ?? null, vehicleId: vehicle.id, authorisationId: auth.id,
-        packageCount: data.packageCount, originAddress: data.originAddress ?? customer.billingAddress ?? null,
+        packageCount: data.packageCount, quantityEstimated: data.quantityEstimated, plannedOperation: data.plannedOperation ?? null, originAddress: data.originAddress ?? customer.billingAddress ?? null,
         wasteCode: entry[0], designation: entry[2], hazardCriteria: entry[3], consistency: data.consistency,
         quantityKg: fromMinor(toMinor(data.quantityKg.toFixed(2))), packaging: data.packaging, labelled: data.labelled,
         carrierAuthNumber: auth.number, carrierAuthExpiresOn: auth.validUntil, createdById: ctx.userId,
@@ -172,13 +175,47 @@ export async function pickUp(ctx: OrgContext, id: string, input: unknown) {
 /** Delivery: consignee signs; the container must have been cleaned and decontaminated before the carrier leaves (art. 19). */
 export async function deliver(ctx: OrgContext, id: string, input: unknown) {
   canExecute(ctx);
-  const data = parse(z.object({ consigneeSignedName: requiredText(120), decontaminated: z.preprocess((v) => v === "on" || v === "true" || v === true, z.boolean()) }), input);
+  const data = parse(z.object({
+    consigneeSignedName: requiredText(120),
+    decontaminated: z.preprocess((v) => v === "on" || v === "true" || v === true, z.boolean()),
+    receivedKg: z.coerce.number().positive().max(1_000_000),
+    refusedKg: z.preprocess((v) => (v === "" || v === undefined ? 0 : v), z.coerce.number().min(0).max(1_000_000)),
+    partialRefusalReason: optionalText(500),
+  }), input);
   if (!data.decontaminated) throw new DomainError("errors.hazardous.notDecontaminated");
+  if (data.refusedKg > data.receivedKg) throw new DomainError("errors.hazardous.refusedAboveReceived");
+  // Everything refused = a refusal by the consignee (art. 17 / law art. 22), not a delivery.
+  if (data.refusedKg === data.receivedKg) throw new DomainError("errors.hazardous.useRefusal");
+  if (data.refusedKg > 0 && !data.partialRefusalReason) throw new DomainError("errors.validation", { fields: { partialRefusalReason: "required" } });
   const m = await loadForUpdate(ctx, id);
   if (m.status !== "IN_TRANSIT") throw new DomainError("errors.invalidTransition", { entity: "HazardousMovement", from: m.status, to: "DELIVERED" });
-  const r = await prisma.hazardousMovement.updateMany({ where: { id, organizationId: ctx.org.id, status: "IN_TRANSIT" }, data: { status: "DELIVERED", consigneeSignedName: data.consigneeSignedName, consigneeSignedAt: new Date(), decontaminated: true } });
+  const r = await prisma.hazardousMovement.updateMany({
+    where: { id, organizationId: ctx.org.id, status: "IN_TRANSIT" },
+    data: {
+      status: "DELIVERED", consigneeSignedName: data.consigneeSignedName, consigneeSignedAt: new Date(), decontaminated: true,
+      receivedKg: fromMinor(toMinor(data.receivedKg.toFixed(2))), refusedKg: fromMinor(toMinor(data.refusedKg.toFixed(2))), partialRefusalReason: data.refusedKg > 0 ? data.partialRefusalReason : null,
+    },
+  });
   if (r.count !== 1) throw new DomainError("errors.invalidTransition", { entity: "HazardousMovement" });
-  await audit(prisma, { organizationId: ctx.org.id, actorUserId: ctx.userId, action: "hazardous.movement_delivered", entityType: "HazardousMovement", entityId: id });
+  await audit(prisma, { organizationId: ctx.org.id, actorUserId: ctx.userId, action: "hazardous.movement_delivered", entityType: "HazardousMovement", entityId: id, data: { receivedKg: data.receivedKg, refusedKg: data.refusedKg } });
+}
+
+/**
+ * The facility confirms the operation actually carried out (D/R code of décret 19-10's annexes), its date and signatory —
+ * what a certificate of elimination/valorisation states (19-10 art. 17, annex III box 19). Recorded by the office.
+ */
+export async function confirmTreatment(ctx: OrgContext, id: string, input: unknown) {
+  requirePermission(ctx, "workorders.dispatch");
+  const data = parse(z.object({ treatmentCode: z.enum(TREATMENT_CODES), treatmentDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), treatmentSignedName: requiredText(120) }), input);
+  const m = await loadForUpdate(ctx, id);
+  if (m.status !== "DELIVERED") throw new DomainError("errors.invalidTransition", { entity: "HazardousMovement", from: m.status, to: "TREATED" });
+  if (data.treatmentDate > orgToday(ctx) || (m.consigneeSignedAt && data.treatmentDate < m.consigneeSignedAt.toISOString().slice(0, 10))) throw new DomainError("errors.validation", { fields: { treatmentDate: "invalid" } });
+  const r = await prisma.hazardousMovement.updateMany({
+    where: { id, organizationId: ctx.org.id, status: "DELIVERED" },
+    data: { status: "TREATED", treatmentCode: data.treatmentCode, treatmentDate: dateOnly(data.treatmentDate), treatmentSignedName: data.treatmentSignedName, treatmentSignedAt: new Date() },
+  });
+  if (r.count !== 1) throw new DomainError("errors.invalidTransition", { entity: "HazardousMovement" });
+  await audit(prisma, { organizationId: ctx.org.id, actorUserId: ctx.userId, action: "hazardous.movement_treated", entityType: "HazardousMovement", entityId: id, data: { code: data.treatmentCode } });
 }
 
 /** A party refuses to perform its task (art. 17) — recorded with who and why; final. */
@@ -242,6 +279,13 @@ const SECTION_C: Record<DestinationKind, "reuse" | "recycling" | "valorisation" 
   OTHER_DISPOSAL: "elimination",
 };
 
+/** Section C bucket from the confirmed D/R operation; preliminary operations (D13–D15, R12–R13) fall back to the destination kind. */
+function sectionForTreatment(code: string | null): "reuse" | "recycling" | "valorisation" | "elimination" | null {
+  if (!code || isPreliminary(code)) return null;
+  if (code.startsWith("D")) return "elimination";
+  return code === "R1" || code === "R10" ? "valorisation" : "recycling";
+}
+
 /**
  * Pre-filled 05-315 declaration for one customer (the generator) and one calendar year, from weight tickets of work orders
  * whose category is classified SPECIAL_HAZARDOUS. Fields only the generator knows (raw material, chemical composition,
@@ -284,17 +328,18 @@ export async function annualDeclaration(ctx: OrgContext, customerId: string, yea
   const tonnes = (minor: number) => Math.round(minor / 100) / 1000;
   const org = await prisma.organization.findUniqueOrThrow({ where: { id: ctx.org.id }, select: { name: true, legalName: true } });
   const movements = await prisma.hazardousMovement.findMany({
-    where: { organizationId: ctx.org.id, customerId, status: "DELIVERED", consigneeSignedAt: { gte: new Date(Date.UTC(year, 0, 1)), lt: new Date(Date.UTC(year + 1, 0, 1)) } },
-    select: { number: true, wasteCode: true, designation: true, hazardCriteria: true, quantityKg: true, workOrderId: true, destination: { select: { name: true, kind: true, registrationNumber: true } } },
+    where: { organizationId: ctx.org.id, customerId, status: { in: ["DELIVERED", "TREATED"] }, consigneeSignedAt: { gte: new Date(Date.UTC(year, 0, 1)), lt: new Date(Date.UTC(year + 1, 0, 1)) } },
+    select: { number: true, wasteCode: true, designation: true, hazardCriteria: true, quantityKg: true, receivedKg: true, refusedKg: true, treatmentCode: true, workOrderId: true, destination: { select: { name: true, kind: true, registrationNumber: true } } },
     orderBy: { number: "asc" },
   });
   // Delivered transports not linked to a work order are not covered by weight tickets: count their declared quantity.
   for (const m of movements.filter((x) => !x.workOrderId)) {
     const key = `code:${m.wasteCode}`;
     const l = lines.get(key) ?? { categoryId: key, categoryName: m.designation, code: m.wasteCode, designation: m.designation, criteria: m.hazardCriteria, minor: 0, untrackedMinor: 0, c: { reuse: 0, recycling: 0, valorisation: 0, elimination: 0 }, installations: new Set<string>() };
-    const q = toMinor(m.quantityKg);
+    // Accepted quantity when the consignee recorded one; refused part goes back to the holder, not to treatment.
+    const q = toMinor(m.receivedKg ?? m.quantityKg) - toMinor(m.refusedKg ?? 0);
     l.minor += q;
-    l.c[SECTION_C[m.destination.kind]] += q;
+    l.c[sectionForTreatment(m.treatmentCode) ?? SECTION_C[m.destination.kind]] += q;
     l.installations.add(`${m.destination.name}${m.destination.registrationNumber ? ` (${m.destination.registrationNumber})` : ""}`);
     lines.set(key, l);
   }
@@ -303,7 +348,7 @@ export async function annualDeclaration(ctx: OrgContext, customerId: string, yea
     // Art. 3: within three months after the close of the year.
     dueBy: `${year + 1}-03-31`,
     lines: [...lines.values()].map((l) => ({ ...l, tonnes: tonnes(l.minor), untrackedTonnes: tonnes(l.untrackedMinor), c: { reuse: tonnes(l.c.reuse), recycling: tonnes(l.c.recycling), valorisation: tonnes(l.c.valorisation), elimination: tonnes(l.c.elimination) }, installations: [...l.installations] })),
-    movements: movements.map((m) => ({ number: m.number, wasteCode: m.wasteCode, quantityKg: Number(m.quantityKg) })),
+    movements: movements.map((m) => ({ number: m.number, wasteCode: m.wasteCode, quantityKg: (toMinor(m.receivedKg ?? m.quantityKg) - toMinor(m.refusedKg ?? 0)) / 100 })),
     tickets: tickets.length,
   };
 }

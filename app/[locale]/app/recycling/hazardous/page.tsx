@@ -13,7 +13,7 @@ import { EmptyState, Forbidden, PageHeader, Table, Td, Th } from "@/components/u
 import { AuthorisationForm, MovementForm } from "./forms";
 
 const AUTH_TONE = { valid: "success", expired: "danger", notYet: "warning", withdrawn: "neutral" } as const;
-const STATUS_TONE = { DRAFT: "neutral", IN_TRANSIT: "info", DELIVERED: "success", REFUSED: "danger", CANCELLED: "neutral" } as const;
+const STATUS_TONE = { DRAFT: "neutral", IN_TRANSIT: "info", DELIVERED: "brand", TREATED: "success", REFUSED: "danger", CANCELLED: "neutral" } as const;
 
 /** Special hazardous waste: carrier authorisation (04-409 art. 13–16) and movement tracking (art. 17–21). */
 export default async function HazardousPage({ params }: { params: Promise<{ locale: Locale }> }) {

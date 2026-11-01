@@ -83,6 +83,14 @@ test.describe.serial("Hazardous waste", () => {
     await expect(page.getByText("Delivered", { exact: true })).toBeVisible();
     await expect(page.getByText("✓ M. Expéditeur")).toBeVisible();
     await expect(page.getByText("✓ Mme Destinataire")).toBeVisible();
+    // Treatment confirmed from the facility's certificate (décret 19-10 art. 17), D/R code from its annexes.
+    await page.waitForLoadState("networkidle");
+    await page.locator('select[name="treatmentCode"]').selectOption("D10");
+    await page.locator('input[name="treatmentDate"]').fill(new Date().toISOString().slice(0, 10));
+    await page.locator('input[name="treatmentSignedName"]').fill("Responsable installation");
+    await page.getByRole("button", { name: "Confirm treatment" }).click();
+    await expect(page.getByText("Treated", { exact: true })).toBeVisible();
+    await expect(page.getByText("Incinération à terre")).toBeVisible();
   });
 
   test("annual declaration draft and Arabic transport page on a phone", async ({ page }) => {

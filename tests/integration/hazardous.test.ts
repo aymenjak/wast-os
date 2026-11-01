@@ -4,7 +4,7 @@ import { prisma } from "@/server/db";
 import { addServiceLocation, createCustomer } from "@/server/services/customers";
 import { addWeightTicket } from "@/server/services/work-orders";
 import { classifyCategory, createDestination } from "@/server/services/recycling";
-import { annualDeclaration, cancelMovement, createAuthorisation, createMovement, deliver, getMovement, listAuthorisations, listMovements, pickUp, refuse, setAuthorisationActive } from "@/server/services/hazardous";
+import { annualDeclaration, cancelMovement, confirmTreatment, createAuthorisation, createMovement, deliver, getMovement, listAuthorisations, listMovements, pickUp, refuse, setAuthorisationActive } from "@/server/services/hazardous";
 import { createVehicle } from "@/server/services/fleet";
 import type { OrgContext } from "@/server/context";
 
@@ -15,6 +15,7 @@ let customerId: string;
 let licensed: string, unlicensed: string;
 let truck: string, otherTruck: string, authId = "";
 const year = new Date().getUTCFullYear();
+const today = () => new Date().toISOString().slice(0, 10);
 const nextYear = `${year + 1}-12-31`;
 
 const base = () => ({ authorisationId: authId, vehicleId: truck, packageCount: "2", customerId, destinationId: licensed, wasteCode: "20.1.1", consistency: "LIQUID", quantityKg: "350", packaging: "Fûts métalliques 200 L (synthetic)", labelled: "on" });
@@ -75,11 +76,11 @@ describe("movements (04-409 art. 17–21)", () => {
     await cancelMovement(a, unlabelled.id);
 
     const m = await createMovement(a, base());
-    await expect(deliver(a, m.id, { consigneeSignedName: "Mme Destinataire", decontaminated: "on" })).rejects.toThrow("errors.invalidTransition");
+    await expect(deliver(a, m.id, { consigneeSignedName: "Mme Destinataire", decontaminated: "on", receivedKg: "350" })).rejects.toThrow("errors.invalidTransition");
     const driver = await addMember(a, "FIELD_WORKER");
     await pickUp(driver, m.id, { shipperSignedName: "M. Expéditeur" });
-    await expect(deliver(driver, m.id, { consigneeSignedName: "Mme Destinataire" })).rejects.toThrow("errors.hazardous.notDecontaminated");
-    await deliver(driver, m.id, { consigneeSignedName: "Mme Destinataire", decontaminated: "on" });
+    await expect(deliver(driver, m.id, { consigneeSignedName: "Mme Destinataire", receivedKg: "350" })).rejects.toThrow("errors.hazardous.notDecontaminated");
+    await deliver(driver, m.id, { consigneeSignedName: "Mme Destinataire", decontaminated: "on", receivedKg: "350" });
     const done = (await getMovement(a, m.id))!;
     expect(done.status).toBe("DELIVERED");
     expect(done.shipperSignedName).toBe("M. Expéditeur");
@@ -97,6 +98,35 @@ describe("movements (04-409 art. 17–21)", () => {
   it("the database itself refuses a delivered movement without decontamination", async () => {
     const m = await createMovement(a, base());
     await expect(prisma.hazardousMovement.update({ where: { id: m.id }, data: { status: "DELIVERED", shipperSignedAt: new Date(), carrierSignedAt: new Date(), consigneeSignedAt: new Date(), decontaminated: false } })).rejects.toThrow();
+  });
+});
+
+describe("reception and treatment (law 01-19 art. 22; décret 19-10 art. 17 and annex D/R codes)", () => {
+  it("records received/refused quantities, demands a reason for partial refusal, then the operation actually carried out", async () => {
+    const m = await createMovement(a, { ...base(), plannedOperation: "R2", quantityEstimated: "on", quantityKg: "500" });
+    expect(m.plannedOperation).toBe("R2");
+    expect(m.quantityEstimated).toBe(true);
+    await expect(createMovement(a, { ...base(), plannedOperation: "Z9" })).rejects.toThrow("errors.validation");
+    await pickUp(a, m.id, { shipperSignedName: "M. Expéditeur" });
+    const ok = { consigneeSignedName: "Réception", decontaminated: "on" };
+    await expect(deliver(a, m.id, { ...ok, receivedKg: "480", refusedKg: "500" })).rejects.toThrow("errors.hazardous.refusedAboveReceived");
+    await expect(deliver(a, m.id, { ...ok, receivedKg: "480", refusedKg: "480", partialRefusalReason: "x" })).rejects.toThrow("errors.hazardous.useRefusal");
+    await expect(deliver(a, m.id, { ...ok, receivedKg: "480", refusedKg: "30" })).rejects.toThrow("errors.validation");
+    await deliver(a, m.id, { ...ok, receivedKg: "480", refusedKg: "30", partialRefusalReason: "Un fût percé (synthetic)" });
+
+    const field = await addMember(a, "FIELD_WORKER");
+    await expect(confirmTreatment(field, m.id, { treatmentCode: "R2", treatmentDate: today(), treatmentSignedName: "X" })).rejects.toThrow();
+    await expect(confirmTreatment(a, m.id, { treatmentCode: "R99", treatmentDate: today(), treatmentSignedName: "X" })).rejects.toThrow("errors.validation");
+    await expect(confirmTreatment(a, m.id, { treatmentCode: "R2", treatmentDate: "2099-01-01", treatmentSignedName: "X" })).rejects.toThrow("errors.validation");
+    await expect(confirmTreatment(b, m.id, { treatmentCode: "R2", treatmentDate: today(), treatmentSignedName: "X" })).rejects.toThrow();
+    await confirmTreatment(a, m.id, { treatmentCode: "R2", treatmentDate: today(), treatmentSignedName: "Responsable installation (synthetic)" });
+    const t = (await getMovement(a, m.id))!;
+    expect(t.status).toBe("TREATED");
+    expect(Number(t.receivedKg) - Number(t.refusedKg)).toBe(450);
+    await expect(confirmTreatment(a, m.id, { treatmentCode: "D10", treatmentDate: today(), treatmentSignedName: "X" })).rejects.toThrow("errors.invalidTransition");
+    // The database refuses TREATED without the treatment evidence.
+    const raw = await createMovement(a, base());
+    await expect(prisma.hazardousMovement.update({ where: { id: raw.id }, data: { status: "TREATED", consigneeSignedAt: new Date(), decontaminated: true, shipperSignedAt: new Date(), carrierSignedAt: new Date() } })).rejects.toThrow();
   });
 });
 
@@ -121,8 +151,8 @@ describe("annual declaration (05-315)", () => {
     const d = await annualDeclaration(a, customerId, year);
     expect(d.dueBy).toBe(`${year + 1}-03-31`);
     expect(d.lines).toHaveLength(1);
-    // 400 kg from the weight ticket + 350 kg from the delivered transport (not linked to a work order), same code → one line.
-    expect(d.lines[0]).toMatchObject({ code: "20.1.1", designation: "Solvants", tonnes: 0.75, c: { elimination: 0.75, recycling: 0, reuse: 0, valorisation: 0 } });
+    // 400 kg weight ticket + 350 kg delivered transport + 450 kg accepted of a treated transport (R2 → recycling), same code.
+    expect(d.lines[0]).toMatchObject({ code: "20.1.1", designation: "Solvants", tonnes: 1.2, c: { elimination: 0.75, recycling: 0.45, reuse: 0, valorisation: 0 } });
     expect(d.lines[0]!.criteria).toContain("Inflammable");
     expect(d.movements.length).toBeGreaterThanOrEqual(1);
 

@@ -29,6 +29,17 @@
 | M Command palette search | integration (tenant + permission scoping, accent-insensitive, LIKE wildcards literal); e2e (Ctrl+K → result → navigate) |
 | J ar/fr/en desktop & mobile | e2e `i18n-a11y` (lang/dir, translated H1, axe WCAG 2.2 AA serious/critical = 0 on 6 public pages × 3 locales with reduced motion, no overflow at 360 px); screenshots in `docs/screenshots` reviewed |
 
+## Recorded results (2026-11-01, reception and treatment of hazardous transports)
+
+| Suite | Result |
+|-------|--------|
+| `npm run test:unit` | **9 files, 57 tests passed** |
+| `npm run test:integration` | **18 files, 186 tests passed** (`hazardous.test.ts` now 7: planned D/R code validated; refused > received refused; all refused → must be a refusal; partial refusal needs a reason; treatment confirmation — office only, valid D/R code, date between delivery and today, other tenant refused, single transition; DB CHECK refuses TREATED without evidence; declaration uses accepted quantity and confirmed operation: 1.2 t = 0.75 elimination + 0.45 recycling) |
+| `npx playwright test` | **48 passed** (`hazardous.spec` confirms treatment D10 through the UI and shows the official label of the code) |
+| Migrations | `20261103120000_haz_reception_treatment` (enum value + columns) and `20261103120100_haz_reception_checks` (CHECKs in a separate migration — PostgreSQL cannot use a new enum value in the transaction that adds it); dev/test/demo; drift empty |
+
+Incident: PostgreSQL had stopped after a container restart and `migrate diff` produced an empty file; caught by the non-empty check before deploying, regenerated after `service postgresql start`.
+
 ## Recorded results (2026-11-01, authorisations and labels — arrêtés of 2 September 2013)
 
 | Suite | Result |

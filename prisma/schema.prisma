@@ -430,6 +430,7 @@ enum HazardousMovementStatus {
   DRAFT
   IN_TRANSIT
   DELIVERED
+  TREATED
   REFUSED
   CANCELLED
 }
@@ -458,6 +459,10 @@ model HazardousMovement {
   hazardCriteria       String
   consistency          WasteConsistency
   quantityKg           Decimal                 @db.Decimal(12, 2)
+  /// Quantity estimated at departure (true) or weighed (false).
+  quantityEstimated    Boolean                 @default(false)
+  /// Planned disposal/recovery operation (D/R code, décret 19-10 annexes).
+  plannedOperation     String?
   packaging            String
   labelled             Boolean                 @default(false)
   carrierAuthNumber    String
@@ -469,6 +474,16 @@ model HazardousMovement {
   consigneeSignedName  String?
   consigneeSignedAt    DateTime?               @db.Timestamptz(3)
   decontaminated       Boolean                 @default(false)
+  /// Reception by the consignee: net quantity presented and the part refused, with reason (law 01-19 art. 22).
+  receivedKg           Decimal?                @db.Decimal(12, 2)
+  refusedKg            Decimal?                @db.Decimal(12, 2)
+  partialRefusalReason String?
+  /// Operation actually carried out (D/R code), its date and signatory — basis of the certificate of
+  /// elimination/valorisation (décret 19-10 art. 17, annex III box 19).
+  treatmentCode        String?
+  treatmentDate        DateTime?               @db.Date
+  treatmentSignedName  String?
+  treatmentSignedAt    DateTime?               @db.Timestamptz(3)
   refusedByRole        String?
   refusalReason        String?
   refusedAt            DateTime?               @db.Timestamptz(3)

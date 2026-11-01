@@ -276,3 +276,6 @@ export async function refuseMovementAction(_: ActionState, fd: FormData) {
 export async function cancelMovementAction(_: ActionState, fd: FormData) {
   return orgAction(fd, (ctx) => hazardous.cancelMovement(ctx, s(fd.get("movementId"))), { revalidate: [`/app/recycling/hazardous/${s(fd.get("movementId"))}`] });
 }
+export async function confirmTreatmentAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, (ctx, input) => hazardous.confirmTreatment(ctx, s(input.movementId), input), { revalidate: [`/app/recycling/hazardous/${s(fd.get("movementId"))}`] });
+}
