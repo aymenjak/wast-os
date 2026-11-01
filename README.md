@@ -9,6 +9,8 @@ Status: **MVP milestone, not deployed.** Pilot-oriented; pricing and market figu
 
 ## Quick start (development)
 
+Step-by-step guide for a personal computer (Arabic/English, Docker database): [`docs/LOCAL-SETUP.md`](docs/LOCAL-SETUP.md).
+
 Requirements: Node 22, PostgreSQL 16 with PostGIS 3.4 and citext.
 
 ```bash
