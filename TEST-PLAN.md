@@ -24,11 +24,26 @@
 | H Invalid transitions | unit `state-machines` (exhaustive terminal-state check); integration H |
 | I Idempotent financial effects | integration `payments-idempotency` (retry, conflict, 3 concurrent payments, webhook replay ×5) |
 | K Recurring schedules | unit `schedule.test.ts` (daily/weekly/biweekly/monthly, Fri–Sat off, contract bounds); integration `operations.test.ts` (idempotent generation, range limit, role, tenant, invoice price from own line); e2e `operations.spec.ts` |
+| R Recycling R1 | unit `recovery`, `nomenclature`; integration `recycling` (7); e2e `recycling.spec` (4) |
 | L Containers | integration (transitions, history, field-worker scope, cross-tenant location rejected); e2e (register + deliver) |
 | M Command palette search | integration (tenant + permission scoping, accent-insensitive, LIKE wildcards literal); e2e (Ctrl+K → result → navigate) |
 | J ar/fr/en desktop & mobile | e2e `i18n-a11y` (lang/dir, translated H1, axe WCAG 2.2 AA serious/critical = 0 on 6 public pages × 3 locales with reduced motion, no overflow at 360 px); screenshots in `docs/screenshots` reviewed |
 
-## Recorded results (2026-10-31, home page)
+## Recorded results (2026-11-01, recycling R1 + décret 06-104)
+
+| Suite | Result |
+|-------|--------|
+| `npm run test:unit` | **9 files, 54 tests passed** (new: `recovery.test.ts` 5, `nomenclature.test.ts` 3) |
+| `npm run test:integration` | **17 files, 177 tests passed** (new: `recycling.test.ts` 7 — destinations tenant-scoped/unique/admin-only, stream defaulted from category, foreign or inactive destination refused, rejects ≤ net and audited, recovered/disposed/untracked + rate from tickets only, cross-tenant and field-worker refusal, certificate per customer/month incl. portal scope, 06-104 code accepted only with a matching class) |
+| `npx playwright test` | **45 passed** (new `recycling.spec` 4: destination, classification error then success, weight ticket with material + destination → 100 % rate → certificate, Arabic page at 390 px without horizontal overflow) |
+| `npx tsc --noEmit` / `npx next build` | 0 errors / success |
+| Seed | Run on a fresh scratch database (`nexvo_r1demo`); existing dev data not touched |
+
+Nomenclature check: `scripts/nomenclature/parse-06-104.py` re-generates `lib/nomenclature-06-104.ts` byte-identically from `pdftotext -layout` of the JO; every section numbered 1..n without gaps; 2 rubrics whose class sits on a continuation line (9.1.2, 14.1.3 — both SD) fixed by hand after reading the page; 12 random annex III rows compared to the text.
+
+Defects found in screenshot review and fixed: "06-104" rendered as "104-06" inside Arabic sentences (bidi; now an LTR isolate); "t 3,86" unit order in RTL; chart maximum shown in kg next to tonnes; inline rejects form overflowed the ticket table; certificate defaulting to an empty current month (screenshot taken for the previous month); hardcoded "Wilaya" label.
+
+## Earlier results (2026-10-31, home page)
 
 Vitest 211 passed, Playwright 41 passed (axe serious/critical = 0 and no horizontal overflow on the home page in ar/fr/en, reduced motion), build success, npm audit 0 (motion 14.9.0). Browser console: 0 errors on the home page after fixing the middleware redirect of `/showcase/*.jpg`.
 

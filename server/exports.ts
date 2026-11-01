@@ -6,9 +6,10 @@ import { dateOnly } from "./validation";
 import { toCsv } from "./services/reports";
 import { toMinor } from "@/lib/money";
 import { getDictionary } from "@/lib/i18n";
+import { recoveryLedger } from "./services/recycling";
 import type { Locale } from "@/lib/i18n/config";
 
-export const EXPORT_KINDS = ["work-orders", "invoices", "customers", "containers"] as const;
+export const EXPORT_KINDS = ["work-orders", "invoices", "customers", "containers", "recovery"] as const;
 export type ExportKind = (typeof EXPORT_KINDS)[number];
 type Table = { header: string[]; rows: (string | number | Date | null)[][] };
 
@@ -56,6 +57,18 @@ export async function buildExport(ctx: OrgContext, kind: ExportKind, from: strin
       return {
         header: [d.customers.code, d.common.name, d.customers.kind, d.customers.taxId, d.common.email, d.common.phone, d.customers.locations, d.contracts.title, d.common.status],
         rows: rows.map((c) => [c.code, c.name, d.enums.CustomerKind[c.kind], c.taxId, c.email, c.phone, c._count.locations, c._count.contracts, d.enums.CustomerStatus[c.status]]),
+      };
+    }
+    case "recovery": {
+      // Ticket-level recovery ledger: every figure on the recycling page traces to these lines.
+      const rows = await recoveryLedger(ctx, { from, to });
+      return {
+        header: [d.common.date, d.workOrders.number, d.requests.customer, d.recycling.stream, d.recycling.destination, d.recycling.kind, d.recycling.registrationNumber, d.workOrders.netKg, d.recycling.rejectedKg, d.recycling.contaminated, d.recycling.recovered, d.recycling.disposed, d.recycling.untracked],
+        rows: rows.map(({ t, stream, split }) => [
+          day(t.weighedAt), t.workOrder.number, t.workOrder.customer?.name ?? null, stream ? d.enums.MaterialStream[stream] : null,
+          t.destination?.name ?? null, t.destination ? d.enums.DestinationKind[t.destination.kind] : null, t.destination?.registrationNumber ?? null,
+          Number(t.netKg), Number(t.rejectedKg), t.contaminated ? "✓" : "", split.recovered / 100, split.disposed / 100, split.untracked / 100,
+        ]),
       };
     }
     case "containers": {

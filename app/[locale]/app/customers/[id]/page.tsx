@@ -27,6 +27,7 @@ export default async function CustomerDetail({ params }: { params: Promise<{ loc
           <>
             <StatusBadge status={c.status} label={d.enums.CustomerStatus[c.status]} />
             <ButtonLink variant="ghost" size="sm" href={`/${locale}/app/customers/${c.id}/certificate`}>{d.certificate.generate}</ButtonLink>
+            <ButtonLink variant="ghost" size="sm" href={`/${locale}/app/customers/${c.id}/recovery`}>{d.recycling.certificate}</ButtonLink>
             {ctx.permissions.has("contracts.write") ? <ButtonLink variant="secondary" size="sm" href={`/${locale}/app/contracts/new?customer=${c.id}`}>{d.contracts.new}</ButtonLink> : null}
             {ctx.permissions.has("requests.write") ? <ButtonLink size="sm" href={`/${locale}/app/requests/new?customer=${c.id}`}>{d.requests.new}</ButtonLink> : null}
           </>

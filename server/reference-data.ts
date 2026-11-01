@@ -1,13 +1,13 @@
 /** Default waste categories created for every organization; editable later. */
 export const DEFAULT_WASTE_CATEGORIES = [
-  { code: "MSW", nameEn: "Household & similar waste", nameFr: "Déchets ménagers et assimilés", nameAr: "النفايات المنزلية وما شابهها", hazardous: false },
-  { code: "CARDBOARD", nameEn: "Paper & cardboard", nameFr: "Papier et carton", nameAr: "الورق والكرتون", hazardous: false },
-  { code: "PLASTIC", nameEn: "Plastics", nameFr: "Plastiques", nameAr: "البلاستيك", hazardous: false },
-  { code: "METAL", nameEn: "Metals", nameFr: "Métaux", nameAr: "المعادن", hazardous: false },
-  { code: "GLASS", nameEn: "Glass", nameFr: "Verre", nameAr: "الزجاج", hazardous: false },
-  { code: "ORGANIC", nameEn: "Organic / green waste", nameFr: "Déchets organiques / verts", nameAr: "النفايات العضوية والخضراء", hazardous: false },
-  { code: "INERT", nameEn: "Inert / construction waste", nameFr: "Déchets inertes / BTP", nameAr: "النفايات الهامدة / البناء", hazardous: false },
-  { code: "SPECIAL", nameEn: "Special waste (regulated)", nameFr: "Déchets spéciaux (réglementés)", nameAr: "النفايات الخاصة (منظمة)", hazardous: true },
+  { code: "MSW", nameEn: "Household & similar waste", nameFr: "Déchets ménagers et assimilés", nameAr: "النفايات المنزلية وما شابهها", hazardous: false, stream: "RESIDUAL", regulatoryClass: "HOUSEHOLD_SIMILAR" },
+  { code: "CARDBOARD", nameEn: "Paper & cardboard", nameFr: "Papier et carton", nameAr: "الورق والكرتون", hazardous: false, stream: "PAPER_CARDBOARD", regulatoryClass: "HOUSEHOLD_SIMILAR" },
+  { code: "PLASTIC", nameEn: "Plastics", nameFr: "Plastiques", nameAr: "البلاستيك", hazardous: false, stream: "MIXED_PLASTIC", regulatoryClass: "HOUSEHOLD_SIMILAR" },
+  { code: "METAL", nameEn: "Metals", nameFr: "Métaux", nameAr: "المعادن", hazardous: false, stream: "FERROUS", regulatoryClass: "HOUSEHOLD_SIMILAR" },
+  { code: "GLASS", nameEn: "Glass", nameFr: "Verre", nameAr: "الزجاج", hazardous: false, stream: "GLASS", regulatoryClass: "HOUSEHOLD_SIMILAR" },
+  { code: "ORGANIC", nameEn: "Organic / green waste", nameFr: "Déchets organiques / verts", nameAr: "النفايات العضوية والخضراء", hazardous: false, stream: "ORGANIC", regulatoryClass: "HOUSEHOLD_SIMILAR" },
+  { code: "INERT", nameEn: "Inert / construction waste", nameFr: "Déchets inertes / BTP", nameAr: "النفايات الهامدة / البناء", hazardous: false, stream: "INERT", regulatoryClass: "INERT" },
+  { code: "SPECIAL", nameEn: "Special waste (regulated)", nameFr: "Déchets spéciaux (réglementés)", nameAr: "النفايات الخاصة (منظمة)", hazardous: true, stream: "SPECIAL", regulatoryClass: "SPECIAL_HAZARDOUS" },
 ] as const;
 
 /**

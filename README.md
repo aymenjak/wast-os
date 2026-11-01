@@ -2,7 +2,7 @@
 
 Waste-operations SaaS for Algeria, in Arabic (RTL), French and English.
 
-- **NEXVO Business** — for private collection companies: customers, service locations, contracts, collection requests, dispatch, field evidence (photos, weights), fleet, invoicing and payments, reports, customer portal.
+- **NEXVO Business** — for private collection companies: customers, service locations, contracts, collection requests, dispatch, field evidence (photos, weights), fleet, invoicing and payments, reports, customer portal, **recycling** (material per weight ticket, destinations, recovery rate, recovery certificates, décret 06-104 classification — see `RECYCLING.md`).
 - **NEXVO Civic** — for communes: anonymous citizen reports, verification with PostGIS duplicate detection, team assignment, public tracking, SLA analytics.
 
 Status: **MVP milestone, not deployed.** Pilot-oriented; pricing and market figures are hypotheses (see `BUSINESS-MODEL.md`).
@@ -52,7 +52,7 @@ Last recorded run (2026-10-31): 211 unit/integration tests and 41 E2E tests pass
 | Design system | `DESIGN-SYSTEM.md`, `docs/screenshots/` |
 | Security, privacy, compliance | `SECURITY.md`, `PRIVACY-AND-COMPLIANCE.md` |
 | Testing, deployment, roadmap, decisions | `TEST-PLAN.md`, `DEPLOYMENT.md`, `ROADMAP.md`, `DECISIONS.md` |
-| Recycling research and module proposal | `RECYCLING.md` |
+| Recycling: research, décret 06-104 notes, R1 module and R2/R3 plan | `RECYCLING.md` |
 | Agent workflow, skills, MCP | `AGENTS.md`, `.claude/skills/`, `docs/skills/`, `docs/mcp/` |
 
 The original Bolt-generated "Waste City OS" prototype is preserved, unmodified, in `archive/bolt-prototype/` (excluded from the build).

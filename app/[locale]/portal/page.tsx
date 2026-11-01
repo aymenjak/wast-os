@@ -36,7 +36,10 @@ export default async function PortalHome({ params, searchParams }: { params: Pro
       {payment === "returned" ? <p role="status" className="mb-4 rounded-md bg-info-100 px-4 py-3 text-sm text-info-700">{d.payOnline.returned}</p> : null}
       {payment === "failed" ? <p role="alert" className="mb-4 rounded-md bg-danger-100 px-4 py-3 text-sm text-danger-700">{d.payOnline.failed}</p> : null}
       <div className="space-y-6">
-        <a href={`/${locale}/portal/certificate?month=${month}`} className="inline-block text-sm font-medium text-ink-800 underline">{d.certificate.generate}</a>
+        <div className="flex flex-wrap gap-4">
+          <a href={`/${locale}/portal/certificate?month=${month}`} className="inline-block text-sm font-medium text-ink-800 underline">{d.certificate.generate}</a>
+          <a href={`/${locale}/portal/recovery?month=${month}`} className="inline-block text-sm font-medium text-ink-800 underline">{d.recycling.certificate}</a>
+        </div>
         <Disclosure summary={d.portal.newRequest}>
           <RequestForm portal customers={[customer]} categories={cats.map((c) => ({ id: c.id, name: name(c) }))} defaultCustomerId={customer.id} today={orgToday(ctx)} />
         </Disclosure>

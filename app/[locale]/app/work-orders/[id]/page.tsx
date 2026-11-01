@@ -11,7 +11,8 @@ import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/badge";
 import { DescriptionList, PageHeader, Table, Td, Th } from "@/components/ui/misc";
 import { AssignForm } from "../../dispatch/assign-form";
-import { EvidenceUpload, WeightForm, WorkOrderActions } from "./forms";
+import { EvidenceUpload, RejectsForm, WeightForm, WorkOrderActions } from "./forms";
+import { listDestinations } from "@/server/services/recycling";
 import { MoveForm } from "../../containers/forms";
 
 export default async function WorkOrderDetail({ params }: { params: Promise<{ locale: Locale; id: string }> }) {
@@ -34,6 +35,7 @@ export default async function WorkOrderDetail({ params }: { params: Promise<{ lo
   const lng = wo.serviceLocation?.longitude;
   const name = (x: { nameEn: string; nameFr: string; nameAr: string }) => (locale === "ar" ? x.nameAr : locale === "fr" ? x.nameFr : x.nameEn);
   const netTotal = wo.weightTickets.reduce((s, t) => s + Number(t.netKg), 0);
+  const destinations = wo.kind === "COLLECTION" ? await listDestinations(ctx, { activeOnly: true }).catch(() => []) : [];
   // Containers on site / in the yard: shown to whoever can move them during this job.
   const canMoveContainers = wo.kind === "COLLECTION" && wo.serviceLocationId && (ctx.permissions.has("fleet.write") || (canExecute && wo.status === "IN_PROGRESS"));
   const [onSite, inYard] = canMoveContainers
@@ -160,7 +162,7 @@ export default async function WorkOrderDetail({ params }: { params: Promise<{ lo
               <CardHeader title={d.workOrders.weights} description={netTotal ? `${d.workOrders.netKg}: ${formatNumber(netTotal, locale)}` : undefined} />
               {wo.weightTickets.length ? (
                 <Table>
-                  <thead><tr><Th>{d.workOrders.ticketNumber}</Th><Th numeric>{d.workOrders.grossKg}</Th><Th numeric>{d.workOrders.tareKg}</Th><Th numeric>{d.workOrders.netKg}</Th><Th>{d.workOrders.facility}</Th></tr></thead>
+                  <thead><tr><Th>{d.workOrders.ticketNumber}</Th><Th numeric>{d.workOrders.grossKg}</Th><Th numeric>{d.workOrders.tareKg}</Th><Th numeric>{d.workOrders.netKg}</Th><Th>{d.recycling.stream}</Th><Th>{d.recycling.destination}</Th><Th>{d.recycling.rejectedKg}</Th></tr></thead>
                   <tbody>
                     {wo.weightTickets.map((t) => (
                       <tr key={t.id}>
@@ -168,13 +170,15 @@ export default async function WorkOrderDetail({ params }: { params: Promise<{ lo
                         <Td numeric>{formatNumber(t.grossKg, locale)}</Td>
                         <Td numeric>{formatNumber(t.tareKg, locale)}</Td>
                         <Td numeric className="font-medium">{formatNumber(t.netKg, locale)}</Td>
-                        <Td>{t.facility ?? "—"}</Td>
+                        <Td>{t.stream ? d.enums.MaterialStream[t.stream] : "—"}{t.contaminated ? <span className="ms-1 text-xs font-semibold text-danger-700">· {d.recycling.contaminated}</span> : null}</Td>
+                        <Td>{t.destination ? <>{t.destination.name}<div className="text-xs text-ink-600">{d.enums.DestinationKind[t.destination.kind]}</div></> : <span className="text-xs text-warning-700">{d.recycling.untracked}</span>}</Td>
+                        <Td>{Number(t.rejectedKg) > 0 ? <div className="num whitespace-nowrap text-ink-900">{formatNumber(t.rejectedKg, locale)}</div> : null}{canDispatch && t.destination ? <RejectsForm ticketId={t.id} /> : null}</Td>
                       </tr>
                     ))}
                   </tbody>
                 </Table>
               ) : null}
-              {canExecute && ["IN_PROGRESS", "COMPLETED"].includes(wo.status) ? <CardBody><WeightForm workOrderId={wo.id} /></CardBody> : null}
+              {canExecute && ["IN_PROGRESS", "COMPLETED"].includes(wo.status) ? <CardBody><WeightForm workOrderId={wo.id} defaultStream={wo.wasteCategory?.stream ?? null} destinations={destinations.map((x) => ({ id: x.id, name: x.name, kind: x.kind }))} /></CardBody> : null}
             </Card>
           ) : null}
         </div>

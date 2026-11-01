@@ -1,6 +1,6 @@
 # Recycling (الرسكلة / valorisation) — research and proposed module
 
-Status: research note + design proposal, 2026-11-01. **Nothing in this file is implemented yet.** Figures are cited with their source and evidence grade; conflicting figures are shown side by side. The primary text of Law 25-02 could **not** be read from this environment (hosts blocked); every statement about it comes from secondary summaries and must be checked against the Journal officiel n° 12 of 2025 before it appears in product or sales material.
+Status: 2026-11-01 — **Phase R1 implemented** (§6); R2/R3 remain proposals. Figures are cited with their source and evidence grade; conflicting figures are shown side by side. The primary text of Law 25-02 could **not** be read from this environment (hosts blocked); every statement about it comes from secondary summaries and must be checked against the Journal officiel n° 12 of 2025 before it appears in product or sales material. The primary text of **décret 06-104** (nomenclature) **was** read — see §1.5.
 
 ## 1. What the research says
 
@@ -23,6 +23,15 @@ Status: research note + design proposal, 2026-11-01. **Nothing in this file is i
 - **Law 25-02 of 20 Feb 2025** amends and supplements Law 01-19 (not a replacement), JO n° 12/2025. Summaries report: waste hierarchy, eco-design, **extended producer responsibility (REP/EPR)**, an obligation for producers/holders to **recover (valoriser)** their waste or pay an **éco-contribution**, a **national digital waste-management system**, progressive replacement of **single-use plastics** (art. 10 bis), mandatory **biological treatment of organic waste**, heavier penalties. Sources: [Regask](https://regask.com/algeria-waste-management-law/), [JORADP news](https://joradp.news/en/N/2025-02-23), [UNEP LEAP record](https://leap.unep.org/en/countries/dz/national-legislation/loi-ndeg-25-02-du-21-chaabane-1446-correspondant-au-20-fevrier), [Algérie Confluences](https://algerieconfluences.dz/economie-vertela-loi-25-02publiee-au-journal-officiel/).
 - **Implementing decrees** (amounts of éco-contribution, who declares what, format of the digital system) were not found → the product must not assume them.
 - **Special hazardous waste:** declaration (décret 05-315), transport (décret 04-409), export (décret 19-10), nomenclature (décret 06-104). No Algerian tracking-slip template was found ([FAOLEX](https://faolex.fao.org/docs/pdf/alg200194.pdf), [UpGrowth](https://www.upgrowth.dz/reference/decret-executif-n-19-10-du-23-janvier-2019-reglementant-l-exportation-des)).
+
+### 1.5 Décret exécutif 06-104 — waste nomenclature (grade A: primary text, JORA n° 13 of 5 March 2006, pp. 9–61)
+
+Read in full from the PDF supplied by the project owner ([SOURCES S-90](SOURCES.md)).
+- **Code** = `category.section.rubrique` (art. 2-A), e.g. `20.3.1`. Each rubric has a **class**: MA (ménagers et assimilés), I (inertes), S (spéciaux), SD (spéciaux dangereux) (art. 2-B); SD rubrics also list **hazard criteria** from annex I (explosible, inflammable, toxique, …) (art. 2-C).
+- **Annex II** lists MA and I wastes (63 classified rubrics); **annex III** lists S and SD wastes (705). `.99 Déchets non spécifiés` rubrics carry no class.
+- **The same code exists in both annexes with different meanings** — `20.1.1` is "Papier et carton" (MA, annex II) and "Solvants" (SD, annex III); `20.1.21` "Métaux" exists only in annex III as S. A waste is therefore identified by **(code, class)**, never by the code alone.
+- Art. 4: the nomenclature applies whether the waste goes to recovery or disposal; being listed does not by itself make a material a waste.
+- Useful annex II rubrics for collectors: 20.1.1 Papier et carton · 20.1.2 Verre · 20.1.3 Déchets de cuisine et de cantine biodégradables · 20.1.7 Matières plastiques · 20.2.1 Déchets biodégradables (jardins) · 20.3.1 Déchets communaux en mélange · 20.3.2 Déchets de marchés · 15.1.x packaging by material · 17.x construction waste (I). Note: annex II has **no municipal metals rubric** (metal packaging is 15.1.4 MA; "Métaux" 20.1.21 is S in annex III).
 
 ### 1.3 Ecosystem
 
@@ -76,3 +85,14 @@ Waste categories per contract line, work orders with weight tickets and photos, 
 ## 5. Risks
 
 Legal details unverified (primary text not read); no reliable price data; informal-sector inclusion must protect personal data (Law 18-07); recycling claims must never be inflated — every percentage must trace to weight tickets.
+
+## 6. What is implemented (Phase R1, 2026-11-01)
+
+- **Material stream** on every weight ticket (defaulted from the work-order category, changeable — several tickets per job, one per material), **contamination flag**, **processor rejects** (≤ net weight, audited).
+- **Destinations** registry (recycler, sorting centre, composting, landfill/CET, incineration, other) with approval number; a ticket can only point to an active destination of the same organization.
+- **Recovery report** (`/app/recycling`): rate = recovered ÷ (recovered + disposed + untracked), by month, material, destination and customer; Excel/CSV ledger export at ticket level. Rules in DECISIONS D-54.
+- **Recovery certificate** (attestation de valorisation) per customer and month, printable, also in the customer portal for the customer's own data; lists every ticket and the method.
+- **Category classification** with stream, regulatory class and a décret 06-104 code **validated against the decree for that class** (D-55); the demo seed uses 20.3.1 / 20.1.1 / 20.1.2.
+- AI assistant tool `get_recycling_summary` (read-only, reports.read).
+- Not done (by design, D-56): prices, éco-contribution, SNID export, hazard-criteria handling for SD waste tracking (décrets 04-409 / 05-315 not yet read).
+

@@ -8,6 +8,7 @@ import { audit } from "../audit";
 import { DOCUMENT_TYPES, IMAGE_TYPES, storeUpload } from "../storage";
 import { dateOnly, isoDate, optionalText, parse } from "../validation";
 import { toMinor, fromMinor } from "@/lib/money";
+import { assertDestination, ticketRecyclingSchema } from "./recycling";
 import type { CivicReportStatus as CivicStatus } from "@/lib/generated/prisma/enums";
 import type { WorkOrderStatus } from "@/lib/generated/prisma/enums";
 import type { Prisma } from "@/lib/generated/prisma/client";
@@ -63,7 +64,7 @@ export async function getWorkOrder(ctx: OrgContext, workOrderId: string) {
       wasteCategory: true,
       team: { include: { members: { include: { membership: { include: { user: { select: { name: true } } } } } } } },
       vehicle: true,
-      weightTickets: { orderBy: { weighedAt: "asc" } },
+      weightTickets: { orderBy: { weighedAt: "asc" }, include: { destination: { select: { name: true, kind: true } } } },
       evidence: { orderBy: { createdAt: "asc" } },
       collectionRequest: { select: { number: true, notes: true } },
       civicReport: { select: { id: true, trackingCode: true, category: true, description: true } },
@@ -217,6 +218,7 @@ const weightSchema = z
     tareKg: z.coerce.number().min(0).max(100_000),
     facility: optionalText(160),
   })
+  .and(ticketRecyclingSchema)
   .refine((d) => d.grossKg >= d.tareKg, { path: ["tareKg"], message: "tareAboveGross" });
 
 export async function addWeightTicket(ctx: OrgContext, workOrderId: string, input: unknown) {
@@ -226,6 +228,9 @@ export async function addWeightTicket(ctx: OrgContext, workOrderId: string, inpu
     if (!wo) throw new NotFoundError("WorkOrder");
     await assertExecutor(ctx, tx, wo.teamId);
     if (!["IN_PROGRESS", "COMPLETED"].includes(wo.status)) throw new DomainError("errors.workOrder.weightClosed");
+    const destination = await assertDestination(tx, ctx, data.destinationId);
+    // Default stream: the work order's waste category (can be overridden per ticket for mixed loads).
+    const category = wo.wasteCategoryId ? await tx.wasteCategory.findFirst({ where: { id: wo.wasteCategoryId, organizationId: ctx.org.id }, select: { stream: true } }) : null;
     const gross = toMinor(data.grossKg.toFixed(2));
     const tare = toMinor(data.tareKg.toFixed(2));
     const t = await tx.weightTicket.create({
@@ -239,6 +244,9 @@ export async function addWeightTicket(ctx: OrgContext, workOrderId: string, inpu
         facility: data.facility,
         weighedAt: new Date(),
         recordedById: ctx.userId,
+        stream: data.stream ?? category?.stream ?? null,
+        destinationId: destination?.id ?? null,
+        contaminated: data.contaminated,
       },
     });
     await audit(tx, { organizationId: ctx.org.id, actorUserId: ctx.userId, action: "workorder.weight_recorded", entityType: "WorkOrder", entityId: wo.id, data: { netKg: fromMinor(gross - tare) } });

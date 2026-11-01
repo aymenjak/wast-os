@@ -31,6 +31,7 @@ export function buildNav(ctx: OrgContext, d: Dictionary, locale: string): NavSec
   if (p("contracts.read")) commercial.items.push({ href: `${base}/contracts`, label: d.nav.contracts, icon: "FileText" });
   if (p("invoices.read")) commercial.items.push({ href: `${base}/invoices`, label: d.nav.invoices, icon: "Receipt" });
   if (p("reports.read") && ctx.org.kind === "SERVICE_PROVIDER") commercial.items.push({ href: `${base}/reports`, label: d.nav.reports, icon: "BarChart3" });
+  if (p("reports.read")) ops.items.push({ href: `${base}/recycling`, label: d.nav.recycling, icon: "Recycle" });
 
   if (p("team.manage")) admin.items.push({ href: `${base}/team`, label: d.nav.team, icon: "Users" });
   if (p("settings.manage")) admin.items.push({ href: `${base}/settings`, label: d.nav.settings, icon: "Settings" });

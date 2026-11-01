@@ -11,7 +11,7 @@ export type Column = { key: string; label: string; segments: Segment[]; marker?:
  * hit target wider than the mark with a tooltip (value first, then name, keyed by a line).
  * Built in HTML flex so RTL mirrors the axis automatically.
  */
-export function ColumnChart({ columns, height = 160, gridSteps = [0.5, 1], ariaLabel, showMax = false }: { columns: Column[]; height?: number; gridSteps?: number[]; ariaLabel: string; showMax?: boolean }) {
+export function ColumnChart({ columns, height = 160, gridSteps = [0.5, 1], ariaLabel, showMax = false, maxUnit }: { columns: Column[]; height?: number; gridSteps?: number[]; ariaLabel: string; showMax?: boolean; maxUnit?: string }) {
   const [active, setActive] = useState<number | null>(null);
   const id = useId();
   const max = Math.max(1, ...columns.map((c) => c.segments.reduce((s, x) => s + x.value, 0)));
@@ -20,7 +20,7 @@ export function ColumnChart({ columns, height = 160, gridSteps = [0.5, 1], ariaL
       <div className="relative" style={{ height }}>
         {gridSteps.map((g) => <div key={g} aria-hidden className="absolute inset-x-0 border-t border-[#e5e9e8]" style={{ bottom: `${g * 100}%` }} />)}
         <div aria-hidden className="absolute inset-x-0 bottom-0 border-t border-ink-300" />
-        {showMax ? <span aria-hidden className="num absolute -top-2 end-0 bg-white ps-1 text-[11px] leading-none text-ink-600">{max}</span> : null}
+        {showMax ? <span aria-hidden className="num absolute -top-2 end-0 bg-white ps-1 text-[11px] leading-none text-ink-600">{maxUnit ? `\u2066${Math.round(max * 10) / 10} ${maxUnit}\u2069` : max}</span> : null}
         <div className="relative flex h-full items-end">
           {columns.map((c, i) => {
             const total = c.segments.reduce((s, x) => s + x.value, 0);

@@ -104,6 +104,7 @@ Each source ID (S-xx) is referenced from `RESEARCH-DOSSIER.md` and `DECISIONS.md
 | S-87 | Vengence UI listing (premium React/Tailwind library; no official site found) | https://uiuxshowcase.com/resources/vengence-ui/ | C |
 | S-88 | Animmaster Lib (paid catalog of ~300 animated components, delivered via Google Drive) | https://animmasterlib.dev/ · https://xiry.app/resources/animmaster-lib | C (site blocked here) |
 | S-89 | Motion (motion.dev) 14.9.0, MIT — animation library used by Skiper UI | https://www.npmjs.com/package/motion | A |
+| S-90 | Décret exécutif n° 06-104 du 28 février 2006 fixant la nomenclature des déchets, y compris les déchets spéciaux dangereux — JORA n° 13 du 5 mars 2006 (annexes I–III). PDF supplied by the project owner (me.gov.dz and Scribd links were unreachable from this environment) | https://www.me.gov.dz/wp-content/uploads/2022/05/Decret-executif-06-104.pdf | A (primary text read in full; transcribed to `lib/nomenclature-06-104.ts`) |
 
 ## Sources not yet consulted (open items)
 

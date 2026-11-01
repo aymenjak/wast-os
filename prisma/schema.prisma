@@ -163,6 +163,7 @@ model Organization {
   platformInvoices   PlatformInvoice[]
   iotDevices         IotDevice[]
   aiConversations    AiConversation[]
+  destinations       Destination[]
   iotIntegrations    IotIntegration[]
   sensorReadings     SensorReading[]
   vehiclePositions   VehiclePosition[]
@@ -351,6 +352,61 @@ model PlatformBillingSettings {
   /// Gapless invoice sequence, incremented under a row lock.
   lastInvoiceSeq      Int      @default(0)
   updatedAt           DateTime @default(now()) @updatedAt @db.Timestamptz(3)
+}
+
+// ───────────────────────────── Recycling (R1) ─────────────────────────────
+
+enum MaterialStream {
+  PAPER_CARDBOARD
+  PET
+  HDPE_PP
+  PLASTIC_FILM
+  MIXED_PLASTIC
+  FERROUS
+  ALUMINIUM
+  GLASS
+  ORGANIC
+  WOOD
+  TEXTILE
+  INERT
+  SPECIAL
+  RESIDUAL
+}
+
+enum RegulatoryClass {
+  HOUSEHOLD_SIMILAR
+  INERT
+  SPECIAL
+  SPECIAL_HAZARDOUS
+}
+
+/// Where loads go. RECYCLER / SORTING_CENTRE / COMPOSTING count as recovery; the others as disposal.
+enum DestinationKind {
+  RECYCLER
+  SORTING_CENTRE
+  COMPOSTING
+  LANDFILL
+  INCINERATION
+  OTHER_DISPOSAL
+}
+
+model Destination {
+  id                 String          @id @default(cuid())
+  organizationId     String
+  name               String
+  kind               DestinationKind
+  /// Approval / registration number of the operator (agrément), as shown on its documents.
+  registrationNumber String?
+  wilaya             String?
+  address            String?
+  active             Boolean         @default(true)
+  createdAt          DateTime        @default(now()) @db.Timestamptz(3)
+
+  organization  Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  weightTickets WeightTicket[]
+
+  @@unique([organizationId, name])
+  @@unique([organizationId, id])
 }
 
 // ───────────────────────────── AI assistant ─────────────────────────────
@@ -658,6 +714,12 @@ model WasteCategory {
   /// Hazardous/special streams require separate regulatory handling (Law 01-19 as amended).
   hazardous      Boolean  @default(false)
   active         Boolean  @default(true)
+  /// Material stream used for recovery accounting (RECYCLING.md). Null = not classified.
+  stream          MaterialStream?
+  /// Class under décret exécutif 06-104 (household & similar, inert, special, special hazardous).
+  regulatoryClass RegulatoryClass @default(HOUSEHOLD_SIMILAR)
+  /// Code from the décret exécutif 06-104 nomenclature, entered by the operator from the official text (never pre-filled).
+  nomenclatureCode String?
 
   organization  Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   contractLines ContractServiceLine[]
@@ -1000,9 +1062,15 @@ model WeightTicket {
   weighedAt      DateTime @db.Timestamptz(3)
   recordedById   String
   createdAt      DateTime @default(now()) @db.Timestamptz(3)
+  /// Recovery accounting: what material, where it went, and what the processor sent back as rejects.
+  stream         MaterialStream?
+  destinationId  String?
+  contaminated   Boolean  @default(false)
+  rejectedKg     Decimal  @default(0) @db.Decimal(12, 2)
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   workOrder    WorkOrder    @relation(fields: [organizationId, workOrderId], references: [organizationId, id], onDelete: Cascade)
+  destination  Destination? @relation(fields: [organizationId, destinationId], references: [organizationId, id])
 
   @@index([organizationId, workOrderId])
 }

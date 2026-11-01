@@ -18,6 +18,7 @@ import { assignWorkOrder } from "../server/services/work-orders";
 import { submitCivicReport } from "../server/services/civic";
 import { createContainer, moveContainer } from "../server/services/containers";
 import { generateRecurringWorkOrders } from "../server/services/schedules";
+import { classifyCategory, createDestination } from "../server/services/recycling";
 import { createDraftInvoice, issueInvoice, recordPayment } from "../server/services/invoices";
 import { randomUUID } from "node:crypto";
 
@@ -105,9 +106,18 @@ async function main() {
     const c = await createContainer(owner, { code, type });
     if (i < 3 && locs[i]) await moveContainer(owner, { containerId: c.id, action: "deliver", serviceLocationId: locs[i]!.id });
   }
+  // Décret 06-104 codes for the demo categories, chosen by the (synthetic) operator and checked by the service.
+  for (const [code, stream, nomenclatureCode] of [["MSW", "RESIDUAL", "20.3.1"], ["CARDBOARD", "PAPER_CARDBOARD", "20.1.1"], ["GLASS", "GLASS", "20.1.2"]] as const) {
+    const cat = await prisma.wasteCategory.findFirstOrThrow({ where: { organizationId: reg.org.id, code } });
+    await classifyCategory(owner, cat.id, { stream, regulatoryClass: "HOUSEHOLD_SIMILAR", nomenclatureCode });
+  }
+  // Recycling destinations (synthetic names, no real operators).
+  const recycler = await createDestination(owner, { name: "Récup Carton Démo (fictif)", kind: "RECYCLER", wilaya: "Alger" });
+  const sorting = await createDestination(owner, { name: "Centre de tri Démo (fictif)", kind: "SORTING_CENTRE", wilaya: "Alger" });
+  const cet = await createDestination(owner, { name: "CET Démo (fictif)", kind: "LANDFILL", wilaya: "Alger" });
   // 14 days of synthetic history so dashboards are not empty in demos (clearly demo data).
   const team1 = team;
-  const custs = await prisma.customer.findMany({ where: { organizationId: reg.org.id }, include: { locations: true, contracts: { include: { lines: true } } } });
+  const custs = await prisma.customer.findMany({ where: { organizationId: reg.org.id }, include: { locations: true, contracts: { include: { lines: { include: { wasteCategory: true } } } } } });
   let n = 1000;
   for (let back = 13; back >= 1; back--) {
     const day = new Date(Date.now() - back * 86400_000).toISOString().slice(0, 10);
@@ -129,7 +139,12 @@ async function main() {
       });
       if (!failed && line.billingUnit === "PER_TONNE") {
         const gross = 9900 + 900 + ((back * 137) % 1400);
-        await prisma.weightTicket.create({ data: { organizationId: reg.org.id, workOrderId: wo.id, grossKg: String(gross), tareKg: "9900", netKg: String(gross - 9900), weighedAt: start, recordedById: reg.user.id } });
+        const base = { organizationId: reg.org.id, workOrderId: wo.id, weighedAt: start, recordedById: reg.user.id, tareKg: "9900" };
+        // Residual fraction → landfill (one in five left without a destination, to show the "untracked" bucket).
+        await prisma.weightTicket.create({ data: { ...base, grossKg: String(gross), netKg: String(gross - 9900), stream: line.wasteCategory.stream, destinationId: back % 5 === 0 ? null : cet.id } });
+        // Source-separated cardboard weighed on its own ticket → recycler or sorting centre.
+        const card = 250 + ((back * 89) % 450);
+        await prisma.weightTicket.create({ data: { ...base, grossKg: String(9900 + card), netKg: String(card), stream: "PAPER_CARDBOARD", destinationId: back % 2 ? recycler.id : sorting.id, contaminated: back % 6 === 0, rejectedKg: back % 4 === 0 ? String(Math.round(card * 0.08)) : "0" } });
       }
     }
   }

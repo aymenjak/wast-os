@@ -14,6 +14,7 @@ import type { ContractStatus, VehicleStatus } from "@/lib/generated/prisma/enums
 import * as schedules from "@/server/services/schedules";
 import * as containers from "@/server/services/containers";
 import * as iot from "@/server/services/iot";
+import * as recycling from "@/server/services/recycling";
 import { sendInvoiceEmail } from "@/server/services/mailer";
 import { globalSearch, type SearchHit } from "@/server/services/search";
 import { requireOrg } from "@/server/auth/session";
@@ -236,4 +237,18 @@ export async function sendInvoiceEmailAction(_: ActionState, fd: FormData): Prom
     out = { to: res.to, configured: String(res.deliveryConfigured) };
   });
   return r.ok ? { ...r, data: out } : r;
+}
+
+// ── Recycling ──
+export async function recordRejectsAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, (ctx, input) => recycling.recordRejects(ctx, s(input.ticketId), input), { revalidate: ["/app/work-orders", "/app/recycling"] });
+}
+export async function createDestinationAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, async (ctx, input) => void (await recycling.createDestination(ctx, input)), { revalidate: ["/app/recycling/destinations"] });
+}
+export async function setDestinationActiveAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, (ctx) => recycling.setDestinationActive(ctx, s(fd.get("destinationId")), fd.get("active") === "true"), { revalidate: ["/app/recycling/destinations"] });
+}
+export async function classifyCategoryAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, (ctx, input) => recycling.classifyCategory(ctx, s(input.categoryId), input), { revalidate: ["/app/recycling/destinations"] });
 }
