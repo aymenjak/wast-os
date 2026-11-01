@@ -4,6 +4,7 @@ import { appPage } from "@/server/page";
 import { listWorkOrders } from "@/server/services/work-orders";
 import { formatDay } from "@/lib/i18n/format";
 import { Card } from "@/components/ui/card";
+import { buttonClass } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/badge";
 import { EmptyState, Forbidden, PageHeader, Table, Td, Th } from "@/components/ui/misc";
 import { Pagination, SortTh, TableToolbar } from "@/components/data-table";
@@ -29,7 +30,7 @@ export default async function WorkOrdersPage({ params, searchParams }: { params:
   const page = field ? null : await workOrdersTable(ctx, s);
   return (
     <>
-      <PageHeader title={field ? d.workOrders.myWork : d.workOrders.title} />
+      <PageHeader title={field ? d.workOrders.myWork : d.workOrders.title} actions={field ? <Link href={`/${locale}/field`} prefetch={false} className={buttonClass("subtle", "md", "min-h-11")}>{d.fieldApp.title}</Link> : undefined} />
       {field ? (
         <nav aria-label={d.common.filter} className="mb-4 flex flex-wrap gap-1">
           {FILTERS.map((x) => (

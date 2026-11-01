@@ -16,7 +16,11 @@ const nextConfig: NextConfig = {
     serverActions: { bodySizeLimit: "6mb" },
   },
   async headers() {
-    return [{ source: "/:path*", headers: securityHeaders }];
+    return [
+      { source: "/:path*", headers: securityHeaders },
+      // The service worker must be re-checked on every visit so a fix reaches phones on the next online load.
+      { source: "/field-sw.js", headers: [{ key: "Cache-Control", value: "no-cache" }, { key: "Content-Type", value: "text/javascript; charset=utf-8" }] },
+    ];
   },
 };
 

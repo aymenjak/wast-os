@@ -27,6 +27,7 @@
 | R Recycling R1 | unit `recovery`, `nomenclature`; integration `recycling` (7); e2e `recycling.spec` (4) |
 | T Territory (R3) | integration `territory` (4); e2e `territory.spec` (3) |
 | S Sorting yard (R2) | integration `yard` (6); e2e `yard.spec` (3) |
+| O Offline driver mode | integration `field-offline` (9: bundle scope, full offline job replayed twice without duplicates and with phone times, 3 concurrent deliveries keep one ticket, refusals, clock bounds, malformed input, other team, cross-tenant, support/portal); e2e `field-offline.spec` (4: page and jobs open with network cut, job done offline sent once on reconnect, API header/origin/session checks, Arabic RTL at 390 px) |
 | L Containers | integration (transitions, history, field-worker scope, cross-tenant location rejected); e2e (register + deliver) |
 | M Command palette search | integration (tenant + permission scoping, accent-insensitive, LIKE wildcards literal); e2e (Ctrl+K → result → navigate) |
 | J ar/fr/en desktop & mobile | e2e `i18n-a11y` (lang/dir, translated H1, axe WCAG 2.2 AA serious/critical = 0 on 6 public pages × 3 locales with reduced motion, no overflow at 360 px); screenshots in `docs/screenshots` reviewed |
@@ -123,6 +124,19 @@ Defects found and fixed: React 19 form reset wiped user input after any server e
 Nomenclature check: `scripts/nomenclature/parse-06-104.py` re-generates `lib/nomenclature-06-104.ts` byte-identically from `pdftotext -layout` of the JO; every section numbered 1..n without gaps; 2 rubrics whose class sits on a continuation line (9.1.2, 14.1.3 — both SD) fixed by hand after reading the page; 12 random annex III rows compared to the text.
 
 Defects found in screenshot review and fixed: "06-104" rendered as "104-06" inside Arabic sentences (bidi; now an LTR isolate); "t 3,86" unit order in RTL; chart maximum shown in kg next to tonnes; inline rejects form overflowed the ticket table; certificate defaulting to an empty current month (screenshot taken for the previous month); hardcoded "Wilaya" label.
+
+## Latest results (2026-11-01, offline driver mode)
+
+| Suite | Result |
+|---|---|
+| `npm run typecheck` | pass |
+| `npm run test:unit` | 57 passed |
+| `npm run test:integration` | 208 passed (23 files; new `field-offline` 9) |
+| `npm run build && npm run test:e2e` | 58 passed (new `field-offline.spec` 4) |
+
+Measured by hand (production build, emulated Pixel 5, 400 ms latency, 0.4 Mb/s, CPU ×4, already signed in): `/ar/field` first opening 2.5 s, next openings 0.6 s, with the network cut 0.4 s. The first figure benefits from scripts already cached by the sign-in page; a cold first visit remains the 8 s measured in PILOT-READINESS.md §5. Defect found in screenshot review and fixed: status banners used colour shades that do not exist in the design tokens (invisible offline banner).
+
+Not covered: real phones, iOS Safari (service worker and IndexedDB storage eviction behave differently), a phone switched off for days with a large outbox, storage quota exhaustion with many photos.
 
 ## Earlier results (2026-10-31, home page)
 

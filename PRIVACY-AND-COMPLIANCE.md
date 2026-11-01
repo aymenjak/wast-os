@@ -84,6 +84,10 @@ Invoice emails contain the invoice details (customer name, amounts, line descrip
 
 The assistant is off until an organization's owner/admin turns it on in Settings; then the question and the records needed to answer (e.g. customer names and invoice balances) are sent to Anthropic. Conversations are visible only to their author and deleted after 90 days. The retention job (`npm run retention:run`) now deletes GPS positions after 90 days, sensor readings after 400 days, sent emails after 180 days and expired sessions/tokens (configurable; to confirm with a lawyer).
 
+## 14. Offline driver mode (data on phones)
+
+The offline page keeps a copy of the driver's team jobs from yesterday to tomorrow (customer name, address, access notes, instructions, vehicle plate) and the photos not yet sent, in the phone browser's storage, until the next successful sync replaces or removes them. No citizen contact data and no prices are included. The service worker caches only the page and its scripts, never job data. Pilot phones should have a screen lock; a lost phone should be reported so the account's sessions can be ended. This is a new storage location to mention in the ANPDP declaration (section 5).
+
 ## Informal collectors (R2 sorting yard)
 
 Sellers who are individuals are recorded with a **name and optional phone number only** — no national ID, address or photo — because NEXVO only needs to identify who was paid for which weighed load. Before using the module an organization should check whether a stricter identification is legally required for buying scrap (none was found in the texts read) and declare the processing to the ANPDP under Law 18-07 ⚠. Purchase vouchers are kept as accounting records; there is no retention job for sellers yet (to add with the organization's accounting retention period).

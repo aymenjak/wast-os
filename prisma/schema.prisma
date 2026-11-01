@@ -1404,6 +1404,8 @@ model WorkOrder {
 model WeightTicket {
   id             String          @id @default(cuid())
   organizationId String
+  /// Id generated on the phone for an offline action (driver app): makes replays idempotent.
+  clientRef      String?
   workOrderId    String
   ticketNumber   String?
   grossKg        Decimal         @db.Decimal(12, 2)
@@ -1423,6 +1425,7 @@ model WeightTicket {
   workOrder    WorkOrder    @relation(fields: [organizationId, workOrderId], references: [organizationId, id], onDelete: Cascade)
   destination  Destination? @relation(fields: [organizationId, destinationId], references: [organizationId, id])
 
+  @@unique([organizationId, clientRef])
   @@index([organizationId, workOrderId])
 }
 
@@ -1436,6 +1439,8 @@ enum EvidenceKind {
 model EvidenceFile {
   id             String       @id @default(cuid())
   organizationId String
+  /// Id generated on the phone for an offline action (driver app): makes replays idempotent.
+  clientRef      String?
   kind           EvidenceKind
   workOrderId    String?
   civicReportId  String?
@@ -1453,6 +1458,7 @@ model EvidenceFile {
   civicReport  CivicReport? @relation(fields: [civicReportId], references: [id], onDelete: Cascade)
   contract     Contract?    @relation(fields: [organizationId, contractId], references: [organizationId, id], onDelete: Cascade)
 
+  @@unique([organizationId, clientRef])
   @@index([organizationId, workOrderId])
   @@index([civicReportId])
 }

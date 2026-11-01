@@ -128,7 +128,8 @@ export async function assignWorkOrder(ctx: OrgContext, workOrderId: string, inpu
 }
 
 /** Runs a lifecycle action, keeping the linked request or civic report consistent in the same transaction. */
-export async function transitionWorkOrder(ctx: OrgContext, workOrderId: string, action: Exclude<WorkOrderAction, "assign" | "dispute">, input: unknown = {}) {
+/** `opts.occurredAt`: when the action really happened on the phone (offline driver app); defaults to now. */
+export async function transitionWorkOrder(ctx: OrgContext, workOrderId: string, action: Exclude<WorkOrderAction, "assign" | "dispute">, input: unknown = {}, opts: { occurredAt?: Date } = {}) {
   const data = parse(transitionSchema, input);
   return prisma.$transaction(async (tx) => {
     const wo = await tx.workOrder.findFirst({ where: { id: workOrderId, organizationId: ctx.org.id }, include: { _count: { select: { evidence: true } } } });
@@ -141,7 +142,7 @@ export async function transitionWorkOrder(ctx: OrgContext, workOrderId: string, 
       evidenceCount: wo._count.evidence,
       failureReason: data.failureReason,
     });
-    const now = new Date();
+    const now = opts.occurredAt ?? new Date();
     const patch: Prisma.WorkOrderUpdateInput = { status: to };
     if (action === "start") patch.actualStart = now;
     if (action === "complete") Object.assign(patch, { actualEnd: now, completionNotes: data.completionNotes });
@@ -198,14 +199,22 @@ export async function customerFeedback(ctx: OrgContext, workOrderId: string, inp
   });
 }
 
-export async function addEvidence(ctx: OrgContext, workOrderId: string, kind: "BEFORE" | "AFTER" | "DOCUMENT", file: { name: string; bytes: Uint8Array }) {
+/** `opts.clientRef`: id generated on the phone; a replay of the same upload returns the stored file instead of a duplicate. */
+export async function addEvidence(ctx: OrgContext, workOrderId: string, kind: "BEFORE" | "AFTER" | "DOCUMENT", file: { name: string; bytes: Uint8Array }, opts: { clientRef?: string } = {}) {
+  if (opts.clientRef) {
+    const existing = await prisma.evidenceFile.findFirst({ where: { organizationId: ctx.org.id, clientRef: opts.clientRef } });
+    if (existing) {
+      if (existing.workOrderId !== workOrderId) throw new DomainError("errors.validation", { fields: { clientRef: "invalid" } });
+      return existing;
+    }
+  }
   return prisma.$transaction(async (tx) => {
     const wo = await tx.workOrder.findFirst({ where: { id: workOrderId, organizationId: ctx.org.id } });
     if (!wo) throw new NotFoundError("WorkOrder");
     await assertExecutor(ctx, tx, wo.teamId);
     if (!["ASSIGNED", "IN_PROGRESS", "COMPLETED", "DISPUTED"].includes(wo.status)) throw new DomainError("errors.workOrder.evidenceClosed");
     const stored = await storeUpload(file, { prefix: `org/${ctx.org.id}/wo`, allow: kind === "DOCUMENT" ? DOCUMENT_TYPES : IMAGE_TYPES });
-    const ev = await tx.evidenceFile.create({ data: { ...stored, organizationId: ctx.org.id, kind, workOrderId: wo.id, uploadedById: ctx.userId } });
+    const ev = await tx.evidenceFile.create({ data: { ...stored, organizationId: ctx.org.id, kind, workOrderId: wo.id, uploadedById: ctx.userId, clientRef: opts.clientRef ?? null } });
     await audit(tx, { organizationId: ctx.org.id, actorUserId: ctx.userId, action: "workorder.evidence_added", entityType: "WorkOrder", entityId: wo.id, data: { evidenceId: ev.id, kind, sha256: stored.sha256 } });
     return ev;
   });
@@ -221,8 +230,16 @@ const weightSchema = z
   .and(ticketRecyclingSchema)
   .refine((d) => d.grossKg >= d.tareKg, { path: ["tareKg"], message: "tareAboveGross" });
 
-export async function addWeightTicket(ctx: OrgContext, workOrderId: string, input: unknown) {
+/** `opts.clientRef` makes a replay idempotent; `opts.weighedAt` is when the weighing happened on the phone (offline app). */
+export async function addWeightTicket(ctx: OrgContext, workOrderId: string, input: unknown, opts: { clientRef?: string; weighedAt?: Date } = {}) {
   const data = parse(weightSchema, input);
+  if (opts.clientRef) {
+    const existing = await prisma.weightTicket.findFirst({ where: { organizationId: ctx.org.id, clientRef: opts.clientRef } });
+    if (existing) {
+      if (existing.workOrderId !== workOrderId) throw new DomainError("errors.validation", { fields: { clientRef: "invalid" } });
+      return existing;
+    }
+  }
   return prisma.$transaction(async (tx) => {
     const wo = await tx.workOrder.findFirst({ where: { id: workOrderId, organizationId: ctx.org.id } });
     if (!wo) throw new NotFoundError("WorkOrder");
@@ -246,8 +263,9 @@ export async function addWeightTicket(ctx: OrgContext, workOrderId: string, inpu
         tareKg: fromMinor(tare),
         netKg: fromMinor(gross - tare),
         facility: data.facility,
-        weighedAt: new Date(),
+        weighedAt: opts.weighedAt ?? new Date(),
         recordedById: ctx.userId,
+        clientRef: opts.clientRef ?? null,
         stream: data.stream ?? category?.stream ?? null,
         destinationId: destination?.id ?? null,
         contaminated: data.contaminated,

@@ -86,6 +86,8 @@ No horizontal overflow on **93 page views** (393 px wide, Arabic/French/English,
 
 Remaining for the field: the **first visit on slow 3G takes 8 s** (JavaScript download) and nothing works **without network** — both point to the offline-capable driver mode proposed next (service worker cache + queued actions).
 
+**Follow-up done (D-77): offline driver mode** at `/{locale}/field` (link "Offline mode" on My work). The jobs open and a whole job (start, photo, weight, finish) can be done with no network; it is sent automatically, in order and exactly once, when the network returns (verified in Chromium with the network cut, e2e `field-offline.spec`). On emulated slow 3G with CPU ×4 the page reopens in 0.6 s online and 0.4 s offline after the first visit. Still to check on real phones, including iPhones (Safari limits how long browser storage is kept).
+
 ## Before the pilot starts (owner actions)
 
 1. Server with HTTPS; build with `APP_URL=https://…` (enables HSTS and Secure cookies); `APP_ENCRYPTION_KEY`, `PAYMENT_WEBHOOK_SECRET` set (DEPLOYMENT.md §2).

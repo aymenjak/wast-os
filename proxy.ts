@@ -26,6 +26,10 @@ function csp(nonce: string) {
     `img-src 'self' blob: data: ${tileOrigin()}`,
     "font-src 'self'",
     "connect-src 'self'",
+    // Offline driver app: the service worker is a same-origin script (public/field-sw.js) — without this the
+    // worker would fall back to script-src, where 'strict-dynamic' ignores 'self' and blocks registration.
+    "worker-src 'self'",
+    "manifest-src 'self'",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
@@ -60,7 +64,7 @@ export const config = {
   matcher: [
     {
       // Pages only: never redirect API routes, Next assets or public files (anything with a file extension, e.g. /showcase/*.jpg).
-      source: "/((?!api|_next/static|_next/image|showcase/|favicon.ico|icon.svg|robots.txt|.*\\.(?:jpg|jpeg|png|webp|avif|svg|ico|txt|xml|woff2?)$).*)",
+      source: "/((?!api|_next/static|_next/image|showcase/|favicon.ico|icon.svg|robots.txt|.*\\.(?:jpg|jpeg|png|webp|avif|svg|ico|txt|xml|woff2?|js|webmanifest)$).*)",
       missing: [
         { type: "header", key: "next-router-prefetch" },
         { type: "header", key: "purpose", value: "prefetch" },
