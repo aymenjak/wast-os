@@ -25,6 +25,7 @@ const destinationSchema = z.object({
   registrationNumber: optionalText(80),
   wilaya: optionalText(80),
   address: optionalText(300),
+  ownYard: z.preprocess((v) => v === "on" || v === "true" || v === true, z.boolean()).default(false),
 });
 
 export async function listDestinations(ctx: OrgContext, opts: { activeOnly?: boolean } = {}) {
@@ -35,6 +36,8 @@ export async function listDestinations(ctx: OrgContext, opts: { activeOnly?: boo
 export async function createDestination(ctx: OrgContext, input: unknown) {
   requirePermission(ctx, "settings.manage");
   const data = parse(destinationSchema, input);
+  // Only a sorting centre can be the organization's own yard (R2).
+  if (data.ownYard && data.kind !== "SORTING_CENTRE") throw new DomainError("errors.validation", { fields: { ownYard: "invalid" } });
   if (await prisma.destination.findFirst({ where: { organizationId: ctx.org.id, name: data.name } })) throw new DomainError("errors.recycling.destinationExists");
   return prisma.$transaction(async (tx) => {
     const d = await tx.destination.create({ data: { ...data, organizationId: ctx.org.id } });

@@ -1,6 +1,6 @@
 # Recycling (الرسكلة / valorisation) — research and proposed module
 
-Status: 2026-11-01 — **Phase R1 implemented** (§6); R2/R3 remain proposals. Figures are cited with their source and evidence grade; conflicting figures are shown side by side. The primary texts of **law 25-02** (JORA n° 12/2025, §1.2) and **décret 06-104** (§1.5) were read from PDFs supplied by the project owner; implementing decrees of law 25-02 were not found.
+Status: 2026-11-01 — **Phases R1 and R2 implemented** (§6, §7); R3 remains a proposal. Figures are cited with their source and evidence grade; conflicting figures are shown side by side. The primary texts of **law 25-02** (JORA n° 12/2025, §1.2) and **décret 06-104** (§1.5) were read from PDFs supplied by the project owner; implementing decrees of law 25-02 were not found.
 
 ## 1. What the research says
 
@@ -158,4 +158,16 @@ Implementing decrees of law 25-02 not published/obtained; no reliable price data
 - **Special hazardous waste (2026-11-01, third and fourth passes):** transport authorisations recorded as granted — wastes (SD codes), named vehicles, route, crew, validity, withdrawal — and every transport must use one that is valid that day, covers its code and names its vehicle (04-409 art. 13–16, arrêté du 2 septembre 2013); bilingual package labels per the label arrêté's annex model (one per package, starred items in red); planned D/R operation and estimated/weighed quantity at creation; reception with net received, refused part and reason (law 01-19 art. 22); treatment confirmed with the D/R code actually carried out, date and facility signatory (décret 19-10 art. 17; codes from its annexes) — field coverage benchmarked against the French BSDD, which has no force in Algeria (S-100); transports with SD code and hazard criteria copied from 06-104, consistency, packaging, labels required before pickup (art. 6), shipper + carrier signatures at pickup, consignee signature only with decontamination confirmed (art. 19), refusal by any party recorded (art. 17), licensed consignee only (law art. 15/19), printable; DB CHECK constraints mirror the rules. **Annual declaration (05-315)** pre-filled per customer and year in the annex's section order — code, designation, hazard criterion, t/year, installations, section C split — with blanks for what only the generator knows and the due date (31 March of the next year). Clearly labelled as internal tracking: the official movement-document form (04-409 art. 18) is not available.
 - AI assistant tool `get_recycling_summary` (read-only, reports.read).
 - Not done (by design, D-56): prices, éco-contribution, national information-system export, hazard-criteria handling for SD waste tracking (décrets 04-409 / 05-315 not yet read).
+
+## 7. What is implemented (Phase R2 — sorting yard, 2026-11-01)
+
+- **Own yard** = a sorting-centre destination flagged "our own yard"; weight tickets of own collections delivered there become **inbound stock** automatically.
+- **Sellers** (individual collectors or companies). Individuals: name and optional phone only (law 18-07 minimisation; no ID number). Companies: optional trade-register/approval number.
+- **Purchase vouchers** (ACH-…): weighed lines (gross, tare, net) by material and grade at a **price per kg typed by the operator** — NEXVO never suggests prices (no reliable public price series, §1.3); paid/unpaid; printable with seller and yard signature boxes; voiding refused once the material has been baled or sold.
+- **Bulk stock** per material, derived (never stored): collections + purchases + opening + corrections − rejects − bales − loose sales; **never negative** (checked under a per-yard advisory lock; concurrent baling tested).
+- **Bales** (BAL-…) with a printable **QR label** (offline content: number, material, grade, weight, date — no URL, no personal data); breaking a bale returns its weight to bulk.
+- **Rejects, opening stock and signed corrections**, each with a reason, audited.
+- **Sales** (VTE-…) of bales and/or loose material to a registered buyer, price per kg per material typed by the operator; **delivery note** with signature boxes; buyer weighbridge; **quality claim** (weight and/or amount, with reason); settled; draft cancel returns bales. Amounts **excluding tax** — taxes on material sales are not computed (to check with an accountant).
+- **Mass balance and estimated margin** per material and period: inbound (collected, bought, opening), baled, rejects, reject rate, sold; revenue net of claims (spread by line amount); **estimated** material cost = sold kg × weighted average inbound cost (purchases at their price, own collections at zero material cost; transport, labour, energy not included).
+- Not done: payments to collectors through Chargily or mobile money (cash recorded only); buyer invoices through the invoice module; carbon/CO₂ claims; price indices (gated, §3).
 

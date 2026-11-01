@@ -2,7 +2,7 @@
 
 Waste-operations SaaS for Algeria, in Arabic (RTL), French and English.
 
-- **NEXVO Business** — for private collection companies: customers, service locations, contracts, collection requests, dispatch, field evidence (photos, weights), fleet, invoicing and payments, reports, customer portal, **recycling** (material per weight ticket, destinations, recovery rate, recovery certificates, décret 06-104 classification — see `RECYCLING.md`).
+- **NEXVO Business** — for private collection companies: customers, service locations, contracts, collection requests, dispatch, field evidence (photos, weights), fleet, invoicing and payments, reports, customer portal, **recycling** (material per weight ticket, destinations, recovery rate, recovery certificates, décret 06-104 classification, special hazardous waste transports and declaration, **sorting yard**: purchases, bales with QR labels, stock, sales, mass balance — see `RECYCLING.md`).
 - **NEXVO Civic** — for communes: anonymous citizen reports, verification with PostGIS duplicate detection, team assignment, public tracking, SLA analytics.
 
 Status: **MVP milestone, not deployed.** Pilot-oriented; pricing and market figures are hypotheses (see `BUSINESS-MODEL.md`).

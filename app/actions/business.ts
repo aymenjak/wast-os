@@ -16,6 +16,7 @@ import * as containers from "@/server/services/containers";
 import * as iot from "@/server/services/iot";
 import * as recycling from "@/server/services/recycling";
 import * as hazardous from "@/server/services/hazardous";
+import * as yard from "@/server/services/yard";
 import { sendInvoiceEmail } from "@/server/services/mailer";
 import { globalSearch, type SearchHit } from "@/server/services/search";
 import { requireOrg } from "@/server/auth/session";
@@ -278,4 +279,49 @@ export async function cancelMovementAction(_: ActionState, fd: FormData) {
 }
 export async function confirmTreatmentAction(_: ActionState, fd: FormData) {
   return orgAction(fd, (ctx, input) => hazardous.confirmTreatment(ctx, s(input.movementId), input), { revalidate: [`/app/recycling/hazardous/${s(fd.get("movementId"))}`] });
+}
+
+// ── R2 sorting yard ──
+const rows = (input: Record<string, unknown>, prefix: string, n: number, fields: string[]) =>
+  Array.from({ length: n }, (_, i) => Object.fromEntries(fields.map((f) => [f, input[`${prefix}.${i}.${f}`]])));
+
+export async function createSupplierAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, async (ctx, input) => void (await yard.createSupplier(ctx, input)), { revalidate: ["/app/recycling/yard/purchases"] });
+}
+export async function createPurchaseAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, async (ctx, input) => `/app/recycling/yard/purchases/${(await yard.createPurchase(ctx, { ...input, lines: rows(input, "lines", 4, ["stream", "grade", "grossKg", "tareKg", "unitPrice"]) })).id}`);
+}
+export async function markPurchasePaidAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, (ctx) => yard.markPurchasePaid(ctx, s(fd.get("purchaseId"))), { revalidate: [`/app/recycling/yard/purchases/${s(fd.get("purchaseId"))}`] });
+}
+export async function voidPurchaseAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, (ctx, input) => yard.voidPurchase(ctx, s(input.purchaseId), input), { revalidate: [`/app/recycling/yard/purchases/${s(fd.get("purchaseId"))}`] });
+}
+export async function createBaleAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, async (ctx, input) => void (await yard.createBale(ctx, input)), { revalidate: ["/app/recycling/yard"] });
+}
+export async function voidBaleAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, (ctx) => yard.voidBale(ctx, s(fd.get("baleId"))), { revalidate: ["/app/recycling/yard"] });
+}
+export async function addAdjustmentAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, async (ctx, input) => void (await yard.addAdjustment(ctx, input)), { revalidate: ["/app/recycling/yard"] });
+}
+export async function createSaleAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, async (ctx, input) => {
+    const prices = Object.fromEntries(Object.entries(input).filter(([k]) => k.startsWith("price.")).map(([k, v]) => [k.slice(6), v]));
+    const sale = await yard.createSale(ctx, { yardId: input.yardId, buyerId: input.buyerId, baleIds: input.baleIds ?? [], loose: rows(input, "loose", 2, ["stream", "grade", "weightKg"]), prices });
+    return `/app/recycling/yard/sales/${sale.id}`;
+  });
+}
+export async function deliverSaleAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, (ctx, input) => yard.deliverSale(ctx, s(input.saleId), input), { revalidate: [`/app/recycling/yard/sales/${s(fd.get("saleId"))}`] });
+}
+export async function recordClaimAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, (ctx, input) => yard.recordClaim(ctx, s(input.saleId), input), { revalidate: [`/app/recycling/yard/sales/${s(fd.get("saleId"))}`] });
+}
+export async function settleSaleAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, (ctx) => yard.settleSale(ctx, s(fd.get("saleId"))), { revalidate: [`/app/recycling/yard/sales/${s(fd.get("saleId"))}`] });
+}
+export async function cancelSaleAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, (ctx) => yard.cancelSale(ctx, s(fd.get("saleId"))), { revalidate: [`/app/recycling/yard/sales/${s(fd.get("saleId"))}`] });
 }

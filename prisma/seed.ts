@@ -19,6 +19,7 @@ import { submitCivicReport } from "../server/services/civic";
 import { createContainer, moveContainer } from "../server/services/containers";
 import { generateRecurringWorkOrders } from "../server/services/schedules";
 import { classifyCategory, createDestination } from "../server/services/recycling";
+import { addAdjustment, createBale, createPurchase, createSale, createSupplier, deliverSale } from "../server/services/yard";
 import { confirmTreatment, createAuthorisation, createMovement, deliver, pickUp } from "../server/services/hazardous";
 import { createDraftInvoice, issueInvoice, recordPayment } from "../server/services/invoices";
 import { randomUUID } from "node:crypto";
@@ -114,7 +115,7 @@ async function main() {
   }
   // Recycling destinations (synthetic names, no real operators).
   const recycler = await createDestination(owner, { name: "Récup Carton Démo (fictif)", kind: "RECYCLER", wilaya: "Alger" });
-  const sorting = await createDestination(owner, { name: "Centre de tri Démo (fictif)", kind: "SORTING_CENTRE", wilaya: "Alger" });
+  const sorting = await createDestination(owner, { name: "Centre de tri Démo (fictif)", kind: "SORTING_CENTRE", wilaya: "Alger", ownYard: "on" });
   const cet = await createDestination(owner, { name: "CET Démo (fictif)", kind: "LANDFILL", wilaya: "Alger" });
   // 14 days of synthetic history so dashboards are not empty in demos (clearly demo data).
   const team1 = team;
@@ -162,6 +163,19 @@ async function main() {
   await deliver(owner, hz.id, { consigneeSignedName: "Réception Installation Démo", decontaminated: "on", receivedKg: "636", refusedKg: "0" });
   await confirmTreatment(owner, hz.id, { treatmentCode: "R4", treatmentDate: new Date().toISOString().slice(0, 10), treatmentSignedName: "Responsable Installation Démo (fictif)" });
   await createMovement(owner, { authorisationId: auth.id, vehicleId: v1.id, packageCount: "2", customerId: custs[1]?.id ?? custs[0]!.id, destinationId: facility.id, wasteCode: "13.2.5", consistency: "LIQUID", quantityKg: "400", packaging: "Fûts 200 L (fictif)", labelled: "on" });
+
+  // R2 sorting yard (synthetic): sellers, purchases, bales, a sale and a reject. Prices are a 1 DZD/kg PLACEHOLDER —
+  // deliberately not a market price (no reliable price source exists; never present demo prices as real).
+  const collector = await createSupplier(owner, { name: "Collecteur Démo (fictif)", kind: "INDIVIDUAL", phone: "0550 00 00 00" });
+  const trader = await createSupplier(owner, { name: "Récup Plastique Démo SARL (fictif)", kind: "COMPANY", registrationNumber: "RC 00/00-0000000 (fictif)" });
+  await createPurchase(owner, { yardId: sorting.id, supplierId: collector.id, paid: "on", lines: [{ stream: "PET", grade: "Clair", grossKg: "186", tareKg: "6", unitPrice: "1" }, { stream: "ALUMINIUM", grossKg: "42", tareKg: "2", unitPrice: "1" }] });
+  await createPurchase(owner, { yardId: sorting.id, supplierId: trader.id, lines: [{ stream: "PET", grade: "Couleur", grossKg: "520", tareKg: "20", unitPrice: "1" }] });
+  await addAdjustment(owner, { yardId: sorting.id, stream: "PET", kind: "REJECT", reason: "Bouchons et étiquettes (fictif)", kg: "35" });
+  const pet1 = await createBale(owner, { yardId: sorting.id, stream: "PET", grade: "Clair", weightKg: "170" });
+  await createBale(owner, { yardId: sorting.id, stream: "PET", grade: "Couleur", weightKg: "450" });
+  await createBale(owner, { yardId: sorting.id, stream: "PAPER_CARDBOARD", weightKg: "600" });
+  const demoSale = await createSale(owner, { yardId: sorting.id, buyerId: recycler.id, baleIds: [pet1.id], prices: { PET: "1" } });
+  await deliverSale(owner, demoSale.id, { buyerWeighedKg: "168" });
 
   // Invoices built from that history through the normal services (one paid, one partially paid).
   const finance = (await loadContext((await prisma.user.findUniqueOrThrow({ where: { email: "finance@demo-collecte.test" } })).id, reg.org.id))!;

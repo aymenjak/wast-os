@@ -1,7 +1,7 @@
 "use client";
 import { useMemo, useState } from "react";
 import { CLASS_LETTER, NOMENCLATURE_06_104 } from "@/lib/nomenclature-06-104";
-import { ActionForm, Field, Input, Select, SubmitButton } from "@/components/ui/form";
+import { ActionForm, Checkbox, Field, Input, Select, SubmitButton } from "@/components/ui/form";
 import { useI18n } from "@/components/i18n-provider";
 import { classifyCategoryAction, createDestinationAction } from "@/app/actions/business";
 
@@ -18,6 +18,7 @@ export function DestinationForm() {
       <Field label={t("recycling.registrationNumber")} name="registrationNumber" optional hint={t("recycling.registrationHint")}>{(p) => <Input {...p} maxLength={80} />}</Field>
       <Field label={t("common.wilaya")} name="wilaya" optional>{(p) => <Input {...p} maxLength={80} />}</Field>
       <Field label={t("recycling.address")} name="address" optional className="sm:col-span-2">{(p) => <Input {...p} maxLength={300} />}</Field>
+      <div className="sm:col-span-2"><Checkbox name="ownYard" label={t("yard.ownYardCheckbox")} /></div>
       <div className="sm:col-span-2"><SubmitButton>{t("recycling.addDestination")}</SubmitButton></div>
     </ActionForm>
   );

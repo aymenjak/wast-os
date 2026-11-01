@@ -25,9 +25,21 @@
 | I Idempotent financial effects | integration `payments-idempotency` (retry, conflict, 3 concurrent payments, webhook replay ×5) |
 | K Recurring schedules | unit `schedule.test.ts` (daily/weekly/biweekly/monthly, Fri–Sat off, contract bounds); integration `operations.test.ts` (idempotent generation, range limit, role, tenant, invoice price from own line); e2e `operations.spec.ts` |
 | R Recycling R1 | unit `recovery`, `nomenclature`; integration `recycling` (7); e2e `recycling.spec` (4) |
+| S Sorting yard (R2) | integration `yard` (6); e2e `yard.spec` (3) |
 | L Containers | integration (transitions, history, field-worker scope, cross-tenant location rejected); e2e (register + deliver) |
 | M Command palette search | integration (tenant + permission scoping, accent-insensitive, LIKE wildcards literal); e2e (Ctrl+K → result → navigate) |
 | J ar/fr/en desktop & mobile | e2e `i18n-a11y` (lang/dir, translated H1, axe WCAG 2.2 AA serious/critical = 0 on 6 public pages × 3 locales with reduced motion, no overflow at 360 px); screenshots in `docs/screenshots` reviewed |
+
+## Recorded results (2026-11-01, R2 sorting yard)
+
+| Suite | Result |
+|-------|--------|
+| `npm run test:unit` | **9 files, 57 tests passed** |
+| `npm run test:integration` | **19 files, 192 tests passed** (new `yard.test.ts` 6: own yard only for sorting centres; individual sellers keep no registration number; own collections (net − rejects) and purchases enter stock; tare ≥ gross refused; prices typed → exact totals in centimes; field worker and other tenant refused; paid once; void refused after baling; bales/rejects never below zero; broken bale returns weight; **3 concurrent bales on 100 kg → exactly one succeeds**; sale needs a price per material, refuses the own yard as buyer, refuses loose kg above stock and an already-sold bale; claim only after delivery and not above total; settlement; draft cancel returns bales; mass balance and estimated margin with claim spread by amount; report refused to field worker and other tenant) |
+| `npx playwright test` | **51 passed** (new `yard.spec` 3: own yard + buyer → seller → voucher ACH-00001 at 25 DZD/kg = 2,500.00 → paid; bale above stock refused, bale made, QR label rendered; sale VTE-00001 delivered; report revenue 3,200.00; Arabic yard page at 390 px without overflow) |
+| Migration | `20261104090000_r2_sorting_yard` (7 tables, 4 enums, 1 column, 8 CHECKs, 1 partial unique index; no DROP) on dev/test/demo; drift empty |
+
+Defects found in screenshot review and fixed: seller phone number reversed by bidi on the voucher; bale form cramped in its card.
 
 ## Recorded results (2026-11-01, reception and treatment of hazardous transports)
 

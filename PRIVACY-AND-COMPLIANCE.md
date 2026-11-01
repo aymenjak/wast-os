@@ -83,3 +83,8 @@ Invoice emails contain the invoice details (customer name, amounts, line descrip
 ## 13. AI assistant and retention (implemented)
 
 The assistant is off until an organization's owner/admin turns it on in Settings; then the question and the records needed to answer (e.g. customer names and invoice balances) are sent to Anthropic. Conversations are visible only to their author and deleted after 90 days. The retention job (`npm run retention:run`) now deletes GPS positions after 90 days, sensor readings after 400 days, sent emails after 180 days and expired sessions/tokens (configurable; to confirm with a lawyer).
+
+## Informal collectors (R2 sorting yard)
+
+Sellers who are individuals are recorded with a **name and optional phone number only** — no national ID, address or photo — because NEXVO only needs to identify who was paid for which weighed load. Before using the module an organization should check whether a stricter identification is legally required for buying scrap (none was found in the texts read) and declare the processing to the ANPDP under Law 18-07 ⚠. Purchase vouchers are kept as accounting records; there is no retention job for sellers yet (to add with the organization's accounting retention period).
+
