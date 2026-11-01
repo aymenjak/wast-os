@@ -19,6 +19,7 @@ import { submitCivicReport } from "../server/services/civic";
 import { createContainer, moveContainer } from "../server/services/containers";
 import { generateRecurringWorkOrders } from "../server/services/schedules";
 import { classifyCategory, createDestination } from "../server/services/recycling";
+import { assignContainer, createCampaign, createDropOffPoint } from "../server/services/territory";
 import { addAdjustment, createBale, createPurchase, createSale, createSupplier, deliverSale } from "../server/services/yard";
 import { confirmTreatment, createAuthorisation, createMovement, deliver, pickUp } from "../server/services/hazardous";
 import { createDraftInvoice, issueInvoice, recordPayment } from "../server/services/invoices";
@@ -78,14 +79,14 @@ async function main() {
   const today = new Date().toISOString().slice(0, 10);
 
   const customers = [
-    { name: "Clinique Exemple Oran", loc: ["Bâtiment principal", "35.6970", "-0.6330"] },
-    { name: "Hôtel Démonstration", loc: ["Cuisine centrale", "35.7058", "-0.6459"] },
-    { name: "Supérette Test Bir El Djir", loc: ["Magasin", "35.7210", "-0.5500"] },
+    { name: "Clinique Exemple Oran", loc: ["Bâtiment principal", "35.6970", "-0.6330"], commune: "Oran" },
+    { name: "Hôtel Démonstration", loc: ["Cuisine centrale", "35.7058", "-0.6459"], commune: "Oran" },
+    { name: "Supérette Test Bir El Djir", loc: ["Magasin", "35.7210", "-0.5500"], commune: "Bir El Djir" },
   ];
   for (const [i, c] of customers.entries()) {
     const cust = await createCustomer(dispatcher, { name: c.name, kind: "BUSINESS" });
     await addContact(dispatcher, cust.id, { name: `Contact ${i + 1}`, phone: "0550000000", isPrimary: "on" });
-    const loc = await addServiceLocation(dispatcher, cust.id, { label: c.loc[0], addressLine: "Adresse fictive", wilaya: "Oran", latitude: c.loc[1], longitude: c.loc[2] });
+    const loc = await addServiceLocation(dispatcher, cust.id, { label: c.loc[0], addressLine: "Adresse fictive", commune: c.commune, wilaya: "Oran", latitude: c.loc[1], longitude: c.loc[2] });
     const contract = await createContract(owner, {
       customerId: cust.id, title: "Collecte régulière", startDate: today,
       lines: [
@@ -176,6 +177,15 @@ async function main() {
   await createBale(owner, { yardId: sorting.id, stream: "PAPER_CARDBOARD", weightKg: "600" });
   const demoSale = await createSale(owner, { yardId: sorting.id, buyerId: recycler.id, baleIds: [pet1.id], prices: { PET: "1" } });
   await deliverSale(owner, demoSale.id, { buyerWeighedKg: "168" });
+
+  // R3 territory (synthetic): a drop-off point with two containers and simulated fill levels, and a sorting campaign.
+  const pav = await createDropOffPoint(owner, { name: "PAV Place du 1er Novembre (fictif)", commune: "Oran", wilaya: "Oran", latitude: "35.6987", longitude: "-0.6349" });
+  for (const [code, stream, fill] of [["PAV-PET-01", "PET", 86], ["PAV-VER-01", "GLASS", 35]] as const) {
+    const c = await createContainer(owner, { code, type: "BIN_1100L" });
+    await assignContainer(owner, { containerId: c.id, dropOffPointId: pav.id, stream });
+    await prisma.container.update({ where: { id: c.id }, data: { lastFillPct: fill, lastFillAt: new Date() } }); // simulated reading (demo)
+  }
+  await createCampaign(owner, { name: "Tri du carton chez les commerçants (fictif)", commune: "Oran", startsOn: new Date(Date.now() - 6 * 86400_000).toISOString().slice(0, 10), endsOn: new Date(Date.now() + 14 * 86400_000).toISOString().slice(0, 10), streams: ["PAPER_CARDBOARD"], description: "Campagne de démonstration (données synthétiques)." });
 
   // Invoices built from that history through the normal services (one paid, one partially paid).
   const finance = (await loadContext((await prisma.user.findUniqueOrThrow({ where: { email: "finance@demo-collecte.test" } })).id, reg.org.id))!;

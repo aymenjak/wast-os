@@ -17,6 +17,7 @@ import * as iot from "@/server/services/iot";
 import * as recycling from "@/server/services/recycling";
 import * as hazardous from "@/server/services/hazardous";
 import * as yard from "@/server/services/yard";
+import * as territory from "@/server/services/territory";
 import { sendInvoiceEmail } from "@/server/services/mailer";
 import { globalSearch, type SearchHit } from "@/server/services/search";
 import { requireOrg } from "@/server/auth/session";
@@ -324,4 +325,18 @@ export async function settleSaleAction(_: ActionState, fd: FormData) {
 }
 export async function cancelSaleAction(_: ActionState, fd: FormData) {
   return orgAction(fd, (ctx) => yard.cancelSale(ctx, s(fd.get("saleId"))), { revalidate: [`/app/recycling/yard/sales/${s(fd.get("saleId"))}`] });
+}
+
+// ── R3 territory ──
+export async function setLocalTargetAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, (ctx, input) => territory.setLocalTarget(ctx, input), { revalidate: ["/app/recycling/territory"] });
+}
+export async function createCampaignAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, async (ctx, input) => void (await territory.createCampaign(ctx, input)), { revalidate: ["/app/recycling/campaigns"] });
+}
+export async function createDropOffPointAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, async (ctx, input) => void (await territory.createDropOffPoint(ctx, input)), { revalidate: ["/app/recycling/drop-off"] });
+}
+export async function assignContainerAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, (ctx, input) => territory.assignContainer(ctx, input), { revalidate: ["/app/recycling/drop-off"] });
 }

@@ -7,9 +7,10 @@ import { toCsv } from "./services/reports";
 import { toMinor } from "@/lib/money";
 import { getDictionary } from "@/lib/i18n";
 import { recoveryLedger } from "./services/recycling";
+import { territoryLedger } from "./services/territory";
 import type { Locale } from "@/lib/i18n/config";
 
-export const EXPORT_KINDS = ["work-orders", "invoices", "customers", "containers", "recovery"] as const;
+export const EXPORT_KINDS = ["work-orders", "invoices", "customers", "containers", "recovery", "territory"] as const;
 export type ExportKind = (typeof EXPORT_KINDS)[number];
 type Table = { header: string[]; rows: (string | number | Date | null)[][] };
 
@@ -69,6 +70,16 @@ export async function buildExport(ctx: OrgContext, kind: ExportKind, from: strin
           t.destination?.name ?? null, t.destination ? d.enums.DestinationKind[t.destination.kind] : null, t.destination?.registrationNumber ?? null,
           Number(t.netKg), Number(t.rejectedKg), t.contaminated ? "✓" : "", split.recovered / 100, split.disposed / 100, split.untracked / 100,
         ]),
+      };
+    }
+    case "territory": {
+      // Annual indicators by wilaya, commune and material (quantities listed in law 01-19 art. 33 bis 2). NEXVO format —
+      // the official SNID/AND format has not been obtained, so this is not presented as an official declaration.
+      const rows = await territoryLedger(ctx, from, to);
+      const stream = (k: string) => (k === "NONE" ? d.recycling.unclassified : d.enums.MaterialStream[k as keyof typeof d.enums.MaterialStream]);
+      return {
+        header: [d.common.wilaya, d.common.commune, d.recycling.stream, d.territory.totalKg, d.territory.materialKg, d.territory.energyKg, d.territory.disposedKg, d.territory.untrackedKg],
+        rows: rows.map((r) => [r.wilaya, r.commune, stream(r.stream), r.totalKg, r.materialKg, r.energyKg, r.disposedKg, r.untrackedKg]),
       };
     }
     case "containers": {

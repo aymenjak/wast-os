@@ -1,6 +1,6 @@
 # Recycling (الرسكلة / valorisation) — research and proposed module
 
-Status: 2026-11-01 — **Phases R1 and R2 implemented** (§6, §7); R3 remains a proposal. Figures are cited with their source and evidence grade; conflicting figures are shown side by side. The primary texts of **law 25-02** (JORA n° 12/2025, §1.2) and **décret 06-104** (§1.5) were read from PDFs supplied by the project owner; implementing decrees of law 25-02 were not found.
+Status: 2026-11-01 — **Phases R1, R2 and R3 implemented** (§6–§8); SNID export and EPR declarations remain gated. Figures are cited with their source and evidence grade; conflicting figures are shown side by side. The primary texts of **law 25-02** (JORA n° 12/2025, §1.2) and **décret 06-104** (§1.5) were read from PDFs supplied by the project owner; implementing decrees of law 25-02 were not found.
 
 ## 1. What the research says
 
@@ -170,4 +170,12 @@ Implementing decrees of law 25-02 not published/obtained; no reliable price data
 - **Sales** (VTE-…) of bales and/or loose material to a registered buyer, price per kg per material typed by the operator; **delivery note** with signature boxes; buyer weighbridge; **quality claim** (weight and/or amount, with reason); settled; draft cancel returns bales. Amounts **excluding tax** — taxes on material sales are not computed (to check with an accountant).
 - **Mass balance and estimated margin** per material and period: inbound (collected, bought, opening), baled, rejects, reject rate, sold; revenue net of claims (spread by line amount); **estimated** material cost = sold kg × weighted average inbound cost (purchases at their price, own collections at zero material cost; transport, labour, energy not included).
 - Not done: payments to collectors through Chargily or mobile money (cash recorded only); buyer invoices through the invoice module; carbon/CO₂ claims; price indices (gated, §3).
+
+## 8. What is implemented (Phase R3 — territory, 2026-11-01)
+
+- **Territorial report** (`/app/recycling/territory`): by wilaya and commune of the work order's service location (missing → "not recorded", never guessed): handled, recovered, overall rate (material + energy) and **material rate** separately; by material for one commune; printable **commune report** (for the commune that delegates collection — law 01-19 art. 32–33); **Excel export of annual indicators** by wilaya × commune × material (total, material, energy, disposed, untracked — the quantities law 01-19 art. 33 bis 2 mentions), in a NEXVO format, clearly not the SNID format.
+- **Targets**: the official reference targets (30 % recycled by 2029; 47 % of household waste by 2035) are shown **with their source and grade B**, compared with the **material** rate (closest measure), plus an optional local target set by the organization.
+- **Drop-off points (PAV)**: points with coordinates on the map; containers placed per material (not containers at a customer site — DB CHECK); latest fill level from the existing sensors; "full" when above the container's threshold.
+- **Sorting campaigns**: commune, period, materials; compared with the period of the same length just before, from weight tickets — explicitly **not** a measure of effect.
+- Still gated: **SNID/AND export** (format not obtained — do not guess), **EPR / éco-contribution declarations** (law 25-02 decrees not published), **Eco Points** for citizens (art. 35 bis 2 mentions incentives; no approved, costed policy).
 

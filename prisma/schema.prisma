@@ -124,6 +124,10 @@ model Organization {
   slug                      String             @unique
   name                      String
   kind                      OrganizationKind   @default(SERVICE_PROVIDER)
+  /// Optional local recovery target set by the organization (R3), shown next to the official reference targets.
+  recoveryTargetPct         Int?
+  recoveryTargetYear        Int?
+  recoveryTargetLabel       String?
   legalName                 String?
   taxId                     String? // NIF
   statisticalId             String? // NIS
@@ -170,6 +174,8 @@ model Organization {
   destinations               Destination[]
   hazardousMovements         HazardousMovement[]
   hazTransportAuthorisations HazTransportAuthorisation[]
+  dropOffPoints              DropOffPoint[]
+  sortingCampaigns           SortingCampaign[]
   materialSuppliers          MaterialSupplier[]
   materialPurchases          MaterialPurchase[]
   bales                      Bale[]
@@ -709,6 +715,46 @@ model MaterialSaleLine {
   amountMinor         BigInt
 
   sale MaterialSale @relation(fields: [saleId], references: [id], onDelete: Cascade)
+}
+
+// ───────────────────────────── R3 — territory: drop-off points and sorting campaigns ─────────────────────────────
+
+/// Point d'apport volontaire: a public spot with containers per material, monitored by the existing fill sensors.
+model DropOffPoint {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  commune        String?
+  wilaya         String?
+  address        String?
+  latitude       Decimal  @db.Decimal(9, 6)
+  longitude      Decimal  @db.Decimal(9, 6)
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now()) @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  containers   Container[]
+
+  @@unique([organizationId, name])
+  @@unique([organizationId, id])
+}
+
+/// A source-separation campaign in a commune over a period; evaluated against the period just before (not causal).
+model SortingCampaign {
+  id             String           @id @default(cuid())
+  organizationId String
+  name           String
+  commune        String
+  startsOn       DateTime         @db.Date
+  endsOn         DateTime         @db.Date
+  streams        MaterialStream[]
+  description    String?
+  createdById    String
+  createdAt      DateTime         @default(now()) @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, commune])
 }
 
 // ───────────────────────────── AI assistant ─────────────────────────────
@@ -1447,6 +1493,9 @@ model Container {
   type              ContainerType
   status            ContainerStatus @default(IN_YARD)
   serviceLocationId String?
+  /// Public voluntary drop-off point (PAV) where the container stands, and the material it is for (R3).
+  dropOffPointId    String?
+  stream            MaterialStream?
   placedAt          DateTime?       @db.Timestamptz(3)
   notes             String?
   createdAt         DateTime        @default(now()) @db.Timestamptz(3)
@@ -1459,6 +1508,7 @@ model Container {
   organization    Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   serviceLocation ServiceLocation?    @relation(fields: [organizationId, serviceLocationId], references: [organizationId, id])
   movements       ContainerMovement[]
+  dropOffPoint    DropOffPoint?       @relation(fields: [organizationId, dropOffPointId], references: [organizationId, id])
   devices         IotDevice[]
   readings        SensorReading[]
   alerts          IotAlert[]

@@ -25,10 +25,22 @@
 | I Idempotent financial effects | integration `payments-idempotency` (retry, conflict, 3 concurrent payments, webhook replay ×5) |
 | K Recurring schedules | unit `schedule.test.ts` (daily/weekly/biweekly/monthly, Fri–Sat off, contract bounds); integration `operations.test.ts` (idempotent generation, range limit, role, tenant, invoice price from own line); e2e `operations.spec.ts` |
 | R Recycling R1 | unit `recovery`, `nomenclature`; integration `recycling` (7); e2e `recycling.spec` (4) |
+| T Territory (R3) | integration `territory` (4); e2e `territory.spec` (3) |
 | S Sorting yard (R2) | integration `yard` (6); e2e `yard.spec` (3) |
 | L Containers | integration (transitions, history, field-worker scope, cross-tenant location rejected); e2e (register + deliver) |
 | M Command palette search | integration (tenant + permission scoping, accent-insensitive, LIKE wildcards literal); e2e (Ctrl+K → result → navigate) |
 | J ar/fr/en desktop & mobile | e2e `i18n-a11y` (lang/dir, translated H1, axe WCAG 2.2 AA serious/critical = 0 on 6 public pages × 3 locales with reduced motion, no overflow at 360 px); screenshots in `docs/screenshots` reviewed |
+
+## Recorded results (2026-11-01, R3 territory)
+
+| Suite | Result |
+|-------|--------|
+| `npm run test:unit` | **9 files, 57 tests passed** |
+| `npm run test:integration` | **20 files, 196 tests passed** (new `territory.test.ts` 4: figures grouped by commune and wilaya with overall and material rates, untracked kept apart, ledger rows; other tenant empty, field worker refused; local target needs a year, admins only, clearable; campaigns: period validation, role, during vs same-length before restricted to commune + materials, planned status; drop-off points: unique name, material required, container at a customer refused (service and DB CHECK), fill shown, tenant isolation) |
+| `npx playwright test` | **54 passed** (new `territory.spec` 3: container → drop-off point for glass; campaign running; territory empty state + local target saved + grade-B reference lines; Arabic drop-off page at 390 px without overflow) |
+| Migration | `20261104100000_r3_territory` (2 tables, 5 columns, 4 CHECKs; no DROP) on dev/test/demo; drift empty |
+
+Defects found in screenshot review and fixed: Arabic dates scrambled inside LTR blocks (RLM marks from Intl — now isolated per date; same fix on the hazardous authorisation list); campaign date inputs and container form cramped; local-target form hidden until data existed (now always available).
 
 ## Recorded results (2026-11-01, R2 sorting yard)
 

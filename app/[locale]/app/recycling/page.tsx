@@ -29,6 +29,9 @@ export default async function RecyclingPage({ params, searchParams }: { params: 
     <>
       <PageHeader title={d.recycling.title} description={d.recycling.lead}
         actions={<div className="flex flex-wrap gap-2">
+          <Link className={buttonClass("secondary", "sm")} href={`/${locale}/app/recycling/territory`}>{d.territory.title}</Link>
+          <Link className={buttonClass("secondary", "sm")} href={`/${locale}/app/recycling/campaigns`}>{d.territory.campaigns}</Link>
+          <Link className={buttonClass("secondary", "sm")} href={`/${locale}/app/recycling/drop-off`}>{d.territory.dropOff}</Link>
           <Link className={buttonClass("secondary", "sm")} href={`/${locale}/app/recycling/yard`}>{d.yard.title}</Link>
           <Link className={buttonClass("secondary", "sm")} href={`/${locale}/app/recycling/hazardous`}>{d.hazardous.title}</Link>
           {ctx.permissions.has("settings.manage") ? <Link className={buttonClass("secondary", "sm")} href={`/${locale}/app/recycling/destinations`}>{d.recycling.destinations}</Link> : null}

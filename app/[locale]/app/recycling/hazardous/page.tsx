@@ -41,7 +41,7 @@ export default async function HazardousPage({ params }: { params: Promise<{ loca
             <thead><tr><Th>{d.hazardous.authNumber}</Th><Th>{d.hazardous.authCodes}</Th><Th>{d.hazardous.authVehicles}</Th><Th>{d.hazardous.route}</Th><Th>{d.common.status}</Th>{isAdmin ? <Th /> : null}</tr></thead>
             <tbody>{authorisations.map((a) => (
               <tr key={a.id} className={a.state === "valid" ? "" : "opacity-70"}>
-                <Td><span className="num font-medium">{a.number}</span><div className="text-xs text-ink-600 whitespace-nowrap" dir="ltr">{formatDay(a.validFrom, locale)} → {formatDay(a.validUntil, locale)}</div></Td>
+                <Td><span className="num font-medium">{a.number}</span><div className="text-xs text-ink-600"><bdi>{formatDay(a.validFrom, locale)}</bdi> – <bdi>{formatDay(a.validUntil, locale)}</bdi></div></Td>
                 <Td><span className="num text-xs">{a.wasteCodes.join(", ")}</span></Td>
                 <Td><span className="num text-xs">{a.plates.join(", ")}</span></Td>
                 <Td><span className="text-xs">{a.loadingPoint} → {a.unloadingPoint}</span></Td>
