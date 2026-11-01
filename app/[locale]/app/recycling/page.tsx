@@ -42,10 +42,16 @@ export default async function RecyclingPage({ params, searchParams }: { params: 
         <>
           <MetricStrip className="lg:grid-cols-4">
             <Stat label={d.recycling.diversionRate} value={pct(r.rate)} sub={d.recycling.rateRule} />
-            <Stat label={d.recycling.recovered} value={tt(r.total.recovered)} />
+            <Stat label={d.recycling.recovered} value={tt(r.total.recovered)} sub={r.total.energy > 0 ? `${d.recycling.energyShare}: ${tt(r.total.energy)}` : undefined} />
             <Stat label={d.recycling.disposed} value={tt(r.total.disposed)} />
             <Stat label={d.recycling.untracked} value={tt(r.total.untracked)} tone={r.total.untracked > 0 ? "warning" : "default"} sub={d.recycling.untrackedHint} />
           </MetricStrip>
+          {r.organicElsewhere > 0 ? (
+            <p role="status" className="mt-4 rounded-[var(--radius-card)] border border-warning-700/30 bg-warning-100 px-4 py-3 text-sm text-warning-700">
+              <span className="font-semibold">{d.recycling.organicElsewhere}: {tt(r.organicElsewhere)}</span>
+              <span className="mt-0.5 block text-ink-800">{d.recycling.organicElsewhereHint}</span>
+            </p>
+          ) : null}
           <Card className="mt-6">
             <CardHeader title={d.recycling.byMonth} action={<Legend items={[{ name: d.recycling.recovered, color: CHART.completed }, { name: d.recycling.notRecovered, color: CHART.neutral }]} />} />
             <CardBody>

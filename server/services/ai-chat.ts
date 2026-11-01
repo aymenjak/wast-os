@@ -112,7 +112,7 @@ const TOOLS: Tool[] = [
   },
   {
     name: "get_recycling_summary",
-    description: "Recycling over the last 90 days: tonnes recovered vs disposed vs untracked (no destination recorded), diversion rate, and tonnes per material stream. Computed from weight tickets only.",
+    description: "Recycling over the last 90 days: kg valorised (material + energy, definitions of law 01-19 as amended by law 25-02) vs disposed vs untracked (no destination recorded), recovery rate, kg per material stream, and organic kg not sent to composting/anaerobic digestion (art. 35 bis; animal-origin waste is exempt). Computed from weight tickets only.",
     inputSchema: { type: "object", properties: {}, additionalProperties: false },
     permission: "reports.read",
     input: z.object({}).passthrough(),

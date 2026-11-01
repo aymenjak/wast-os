@@ -5,7 +5,7 @@ import { hasPermission, requirePermission, type OrgContext } from "../context";
 import { DomainError, ForbiddenError, NotFoundError } from "../domain/errors";
 import { audit } from "../audit";
 import { dateOnly, isoDate, optionalText, parse, requiredText } from "../validation";
-import { addSplits, diversionRate, EMPTY_SPLIT, splitTicket, type Split } from "../domain/recovery";
+import { addSplits, diversionRate, EMPTY_SPLIT, organicOutsideBiological, splitTicket, type Split } from "../domain/recovery";
 import { toMinor, fromMinor } from "@/lib/money";
 import type { DestinationKind, MaterialStream } from "@/lib/generated/prisma/enums";
 
@@ -15,7 +15,7 @@ import type { DestinationKind, MaterialStream } from "@/lib/generated/prisma/enu
  * Destinations and tickets are tenant-scoped through composite foreign keys.
  */
 export const STREAMS = ["PAPER_CARDBOARD", "PET", "HDPE_PP", "PLASTIC_FILM", "MIXED_PLASTIC", "FERROUS", "ALUMINIUM", "GLASS", "ORGANIC", "WOOD", "TEXTILE", "INERT", "SPECIAL", "RESIDUAL"] as const;
-export const DESTINATION_KINDS = ["RECYCLER", "SORTING_CENTRE", "COMPOSTING", "LANDFILL", "INCINERATION", "OTHER_DISPOSAL"] as const;
+export const DESTINATION_KINDS = ["RECYCLER", "SORTING_CENTRE", "COMPOSTING", "ANAEROBIC_DIGESTION", "REUSE_REPAIR", "ENERGY_RECOVERY", "LANDFILL", "INCINERATION", "OTHER_DISPOSAL"] as const;
 
 // ── Destinations ──
 
@@ -100,7 +100,8 @@ async function tickets(ctx: OrgContext, f: Filter) {
 
 type Row = Awaited<ReturnType<typeof tickets>>[number];
 const streamOf = (t: Row): MaterialStream | null => t.stream ?? t.workOrder.wasteCategory?.stream ?? null;
-const split = (t: Row) => splitTicket({ netMinor: toMinor(t.netKg), rejectedMinor: toMinor(t.rejectedKg), stream: streamOf(t), contaminated: t.contaminated, destinationKind: (t.destination?.kind ?? null) as DestinationKind | null });
+const forRecovery = (t: Row) => ({ netMinor: toMinor(t.netKg), rejectedMinor: toMinor(t.rejectedKg), stream: streamOf(t), contaminated: t.contaminated, destinationKind: (t.destination?.kind ?? null) as DestinationKind | null });
+const split = (t: Row) => splitTicket(forRecovery(t));
 
 function summarize(rows: Row[]) {
   const total = rows.reduce((s, t) => addSplits(s, split(t)), EMPTY_SPLIT);
@@ -112,7 +113,8 @@ function summarize(rows: Row[]) {
     }
     return [...m.entries()].map(([k, s]) => ({ key: k, ...s, rate: diversionRate(s) })).sort((a, b) => b.recovered + b.disposed + b.untracked - (a.recovered + a.disposed + a.untracked));
   };
-  return { total, rate: diversionRate(total), tickets: rows.length, byStream: by((t) => streamOf(t)), byDestination: by((t) => t.destination?.id ?? null) };
+  const organicElsewhere = rows.reduce((n, t) => n + organicOutsideBiological(forRecovery(t)), 0);
+  return { total, rate: diversionRate(total), tickets: rows.length, organicElsewhere, byStream: by((t) => streamOf(t)), byDestination: by((t) => t.destination?.id ?? null) };
 }
 
 /** Organization-wide recovery report (reports.read). Quantities in hundredths of kg. */
@@ -179,7 +181,8 @@ export async function recoveryCertificate(ctx: OrgContext, customerId: string, m
 export async function recyclingKpis(ctx: OrgContext, from: string, to: string) {
   const s = summarize(await tickets(ctx, { from, to }));
   return {
-    recoveredKg: s.total.recovered / 100, disposedKg: s.total.disposed / 100, untrackedKg: s.total.untracked / 100, diversionRate: s.rate,
+    recoveredKg: s.total.recovered / 100, energyValorisationKg: s.total.energy / 100, disposedKg: s.total.disposed / 100, untrackedKg: s.total.untracked / 100, diversionRate: s.rate,
+    organicNotBiologicallyTreatedKg: s.organicElsewhere / 100,
     byStream: s.byStream.map((x) => ({ stream: x.key, recoveredKg: x.recovered / 100, totalKg: (x.recovered + x.disposed + x.untracked) / 100 })),
   };
 }

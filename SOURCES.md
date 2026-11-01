@@ -105,6 +105,7 @@ Each source ID (S-xx) is referenced from `RESEARCH-DOSSIER.md` and `DECISIONS.md
 | S-88 | Animmaster Lib (paid catalog of ~300 animated components, delivered via Google Drive) | https://animmasterlib.dev/ · https://xiry.app/resources/animmaster-lib | C (site blocked here) |
 | S-89 | Motion (motion.dev) 14.9.0, MIT — animation library used by Skiper UI | https://www.npmjs.com/package/motion | A |
 | S-90 | Décret exécutif n° 06-104 du 28 février 2006 fixant la nomenclature des déchets, y compris les déchets spéciaux dangereux — JORA n° 13 du 5 mars 2006 (annexes I–III). PDF supplied by the project owner (me.gov.dz and Scribd links were unreachable from this environment) | https://www.me.gov.dz/wp-content/uploads/2022/05/Decret-executif-06-104.pdf | A (primary text read in full; transcribed to `lib/nomenclature-06-104.ts`) |
+| S-91 | Loi n° 25-02 du 20 février 2025 modifiant et complétant la loi n° 01-19 du 12 décembre 2001 relative à la gestion, au contrôle et à l'élimination des déchets — JORA n° 12 du 23 février 2025, pp. 16–21 (Arabic edition, file A2025012.pdf supplied by the project owner) | https://www.joradp.dz | A (primary text read in full; summary in RECYCLING.md §1.2) |
 
 ## Sources not yet consulted (open items)
 

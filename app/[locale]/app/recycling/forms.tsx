@@ -5,7 +5,7 @@ import { ActionForm, Field, Input, Select, SubmitButton } from "@/components/ui/
 import { useI18n } from "@/components/i18n-provider";
 import { classifyCategoryAction, createDestinationAction } from "@/app/actions/business";
 
-const KINDS = ["RECYCLER", "SORTING_CENTRE", "COMPOSTING", "LANDFILL", "INCINERATION", "OTHER_DISPOSAL"] as const;
+const KINDS = ["RECYCLER", "SORTING_CENTRE", "COMPOSTING", "ANAEROBIC_DIGESTION", "REUSE_REPAIR", "ENERGY_RECOVERY", "LANDFILL", "INCINERATION", "OTHER_DISPOSAL"] as const;
 const STREAMS = ["PAPER_CARDBOARD", "PET", "HDPE_PP", "PLASTIC_FILM", "MIXED_PLASTIC", "FERROUS", "ALUMINIUM", "GLASS", "ORGANIC", "WOOD", "TEXTILE", "INERT", "SPECIAL", "RESIDUAL"] as const;
 const CLASSES = ["HOUSEHOLD_SIMILAR", "INERT", "SPECIAL", "SPECIAL_HAZARDOUS"] as const;
 

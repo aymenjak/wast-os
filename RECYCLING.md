@@ -1,6 +1,6 @@
 # Recycling (الرسكلة / valorisation) — research and proposed module
 
-Status: 2026-11-01 — **Phase R1 implemented** (§6); R2/R3 remain proposals. Figures are cited with their source and evidence grade; conflicting figures are shown side by side. The primary text of Law 25-02 could **not** be read from this environment (hosts blocked); every statement about it comes from secondary summaries and must be checked against the Journal officiel n° 12 of 2025 before it appears in product or sales material. The primary text of **décret 06-104** (nomenclature) **was** read — see §1.5.
+Status: 2026-11-01 — **Phase R1 implemented** (§6); R2/R3 remain proposals. Figures are cited with their source and evidence grade; conflicting figures are shown side by side. The primary texts of **law 25-02** (JORA n° 12/2025, §1.2) and **décret 06-104** (§1.5) were read from PDFs supplied by the project owner; implementing decrees of law 25-02 were not found.
 
 ## 1. What the research says
 
@@ -18,11 +18,36 @@ Status: 2026-11-01 — **Phase R1 implemented** (§6); R2/R3 remain proposals. F
 
 **Reading:** recovery is low (single digits to ~12 %) against an official target of 30 % by 2029 — a large gap that creates demand for tools that *measure and prove* recovery.
 
-### 1.2 Law (grade C until the JO text is read)
+### 1.2 Law 25-02 (grade A: primary text read — JORA n° 12 of 23 February 2025, pp. 16–21, Arabic edition supplied by the project owner)
 
-- **Law 25-02 of 20 Feb 2025** amends and supplements Law 01-19 (not a replacement), JO n° 12/2025. Summaries report: waste hierarchy, eco-design, **extended producer responsibility (REP/EPR)**, an obligation for producers/holders to **recover (valoriser)** their waste or pay an **éco-contribution**, a **national digital waste-management system**, progressive replacement of **single-use plastics** (art. 10 bis), mandatory **biological treatment of organic waste**, heavier penalties. Sources: [Regask](https://regask.com/algeria-waste-management-law/), [JORADP news](https://joradp.news/en/N/2025-02-23), [UNEP LEAP record](https://leap.unep.org/en/countries/dz/national-legislation/loi-ndeg-25-02-du-21-chaabane-1446-correspondant-au-20-fevrier), [Algérie Confluences](https://algerieconfluences.dz/economie-vertela-loi-25-02publiee-au-journal-officiel/).
-- **Implementing decrees** (amounts of éco-contribution, who declares what, format of the digital system) were not found → the product must not assume them.
-- **Special hazardous waste:** declaration (décret 05-315), transport (décret 04-409), export (décret 19-10), nomenclature (décret 06-104). No Algerian tracking-slip template was found ([FAOLEX](https://faolex.fao.org/docs/pdf/alg200194.pdf), [UpGrowth](https://www.upgrowth.dz/reference/decret-executif-n-19-10-du-23-janvier-2019-reglementant-l-exportation-des)).
+**Law n° 25-02 of 20 February 2025 amends and supplements law 01-19** of 12 December 2001 (it does not replace it). Article numbers below are those of law 01-19 as amended.
+
+| Article (01-19) | What the text says | NEXVO impact |
+|---|---|---|
+| 2 | Principles add **eco-design**, the **hierarchy** (preparation for reuse, reuse, repair, **valorisation**, disposal — in that order) and **extended producer responsibility** | Reports use this vocabulary |
+| 3 | Definitions: organic, marine and **final (ultimate) waste**; **valorisation** = material (preparation for reuse, repair, reuse, **recycling**, **composting**, **anaerobic digestion**) **or energy** (heat/electricity from incineration); circular economy, eco-organisation, end-of-waste, "producer/placer on the market", EPR, single-use plastic | Destination kinds and recovery rules aligned (D-57) |
+| 5 bis, 5 bis 1 | National integrated waste strategy (environment minister); **national information and mapping system** for waste data | Future export once its format exists — not guessed |
+| 6, 7 | Every producer and/or holder must ensure (or have ensured) the **valorisation** of the waste from the materials they import, market or make — through an **eco-organisation**; set-up and operation **by regulation** | Recovery certificate is the evidence customers will need; no decree yet |
+| 7 bis | **End-of-waste** status: conditions (specific use, a market, technical requirements, no harm); criteria **by regulation** | Not modelled |
+| 7 bis 1 | Every producer or placer on the market pays an **"éco-contribution" (إيكو-مساهمة)** for the management of waste from its products; modalities **by regulation** | No amounts/flows modelled until the decree (D-56) |
+| 8 | If waste cannot be avoided or valorised, the producer/holder must ensure its **disposal at its own cost**, rationally | — |
+| 10 bis | **Single-use plastic products replaced progressively**; modalities by regulation | — |
+| 14 bis | **Wilaya plan for special waste** (regional projection of the national plan) | R3 |
+| 15 | Special waste, incl. hazardous, treated **only in facilities licensed** by the competent authorities | Special waste requires a destination with a recorded licence/approval number (D-58) |
+| 18 bis | Special waste may not be used on agricultural land as is — only after treatment in a licensed facility | — |
+| 19 | Forbidden to hand special waste (incl. hazardous) to a **non-approved collector**, transporter or unlicensed facility | Same rule (D-58) |
+| 25 | Import of special waste prohibited, except valorisable waste licensed by the environment minister | — |
+| 33 bis, 33 bis 1 | **Wilaya plan** for household & similar and inert waste (approved by the wali): inventory of types/quantities/sources **prioritising valorisation**, collection and sorting equipment, responsibilities, land for facilities, **sorting / valorisation / recycling plan**, treatment branches; coastal wilayas: marine waste | R3 commune/wilaya dashboards |
+| 33 bis 2 | **National plan**: annual quantities by type (especially those with valorisation characteristics), total landfilled as final waste vs directed to valorisation, by category | Same indicators as our report |
+| 35 bis | **Organic waste must first undergo biological treatment** (composting and/or anaerobic digestion), except waste of animal origin (special management) | Indicator "organic not sent to biological treatment" |
+| 35 bis 1 | Every household-waste treatment facility or rehabilitated landfill producing biogas must have **energy valorisation** | — |
+| 35 bis 2 | A system for producers and distributors to **incentivise consumers to take part in separate collection** | Relevant to the gated Eco Points idea (still gated) |
+| 53, 46 | Environmental police and inspection bodies enforce | — |
+| 55–66 | Penalties (examples): 2,000–10,000 DA for a person who dumps household waste or **refuses to use the collection and sorting system** set by the commune (art. 55); 20,000–80,000 DA for businesses doing the same (56); 20,000–90,000 DA for dumping inert waste (57); 70,000–140,000 DA for **not declaring special hazardous waste** (58); 1–3 years and 600,000–1,800,000 DA for handing special hazardous waste to an unlicensed facility (62); 2–5 years and 1.2–3 M DA for dumping it (64); 5–10 years and 3–6 M DA for illegal import/export (66) | Reference only — NEXVO never states a legal verdict |
+
+**Corrections to the earlier secondary-source summary:** the obligation is *both* to ensure valorisation (art. 7, through eco-organisations) *and* to pay an éco-contribution (art. 7 bis 1) — not "recover **or** pay"; the "national digital system" is a *national information and mapping system for waste data* (art. 5 bis 1); the JO issue is dated **23 February 2025**. Every operational detail (eco-organisations, éco-contribution amounts, end-of-waste criteria, plastics schedule, information-system format) is left **to implementing regulations not yet obtained** → still not assumed by the product.
+
+**Special hazardous waste (other texts):** declaration (décret 05-315), transport (décret 04-409), export (décret 19-10) — not yet read; nomenclature décret 06-104 read (§1.5).
 
 ### 1.5 Décret exécutif 06-104 — waste nomenclature (grade A: primary text, JORA n° 13 of 5 March 2006, pp. 9–61)
 
@@ -80,11 +105,11 @@ Waste categories per contract line, work orders with weight tickets and photos, 
 3. How are informal collectors paid and recorded today? What would they accept (cash voucher, mobile payment)?
 4. Which sorting centres are operational in the pilot wilaya, and who runs them?
 5. What format does the AND expect from recyclers/collectors in SNID?
-6. Exact text of Law 25-02 (JO n° 12/2025) and any implementing decrees.
+6. Implementing decrees of law 25-02 (eco-organisations, éco-contribution, end-of-waste, plastics, information system). *(Law text itself: read, §1.2.)*
 
 ## 5. Risks
 
-Legal details unverified (primary text not read); no reliable price data; informal-sector inclusion must protect personal data (Law 18-07); recycling claims must never be inflated — every percentage must trace to weight tickets.
+Implementing decrees of law 25-02 not published/obtained; no reliable price data; informal-sector inclusion must protect personal data (Law 18-07); recycling claims must never be inflated — every percentage must trace to weight tickets.
 
 ## 6. What is implemented (Phase R1, 2026-11-01)
 
@@ -93,6 +118,7 @@ Legal details unverified (primary text not read); no reliable price data; inform
 - **Recovery report** (`/app/recycling`): rate = recovered ÷ (recovered + disposed + untracked), by month, material, destination and customer; Excel/CSV ledger export at ticket level. Rules in DECISIONS D-54.
 - **Recovery certificate** (attestation de valorisation) per customer and month, printable, also in the customer portal for the customer's own data; lists every ticket and the method.
 - **Category classification** with stream, regulatory class and a décret 06-104 code **validated against the decree for that class** (D-55); the demo seed uses 20.3.1 / 20.1.1 / 20.1.2.
+- **Law 25-02 alignment (2026-11-01, second pass):** destination kinds add anaerobic digestion, reuse/repair and energy recovery; recovery = material **or** energy valorisation as defined in art. 3, energy shown separately; incineration without energy recovery and landfill = disposal; indicator for organic waste outside composting/digestion (art. 35 bis); special waste needs a destination with a recorded approval/licence number (art. 15, 19).
 - AI assistant tool `get_recycling_summary` (read-only, reports.read).
-- Not done (by design, D-56): prices, éco-contribution, SNID export, hazard-criteria handling for SD waste tracking (décrets 04-409 / 05-315 not yet read).
+- Not done (by design, D-56): prices, éco-contribution, national information-system export, hazard-criteria handling for SD waste tracking (décrets 04-409 / 05-315 not yet read).
 

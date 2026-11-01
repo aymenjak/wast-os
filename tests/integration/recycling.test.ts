@@ -76,7 +76,7 @@ describe("recovery report and certificate", () => {
   it("computes recovered / disposed / untracked and the diversion rate from tickets only", async () => {
     const r = await recoveryReport(a, { from: today, to: today });
     // cardboard 1000 − 100 rejects = 900 recovered; disposal = 100 + 2000 + 500 = 2600; untracked 300
-    expect(r.total).toEqual({ recovered: 90000, disposed: 260000, untracked: 30000 });
+    expect(r.total).toEqual({ recovered: 90000, disposed: 260000, untracked: 30000, energy: 0 });
     expect(r.rate).toBeCloseTo(900 / 3800, 6);
     expect(r.byStream.find((s) => s.key === "PAPER_CARDBOARD")).toMatchObject({ recovered: 90000, disposed: 10000 });
     expect(r.tickets).toBe(4);
@@ -116,5 +116,32 @@ describe("category classification (décret 06-104)", () => {
     expect((await prisma.wasteCategory.findUniqueOrThrow({ where: { id: cat.id } })).stream).toBe("PAPER_CARDBOARD");
     const field = await addMember(a, "FIELD_WORKER");
     await expect(classifyCategory(field, cat.id, { stream: "GLASS", regulatoryClass: "HOUSEHOLD_SIMILAR" })).rejects.toThrow();
+  });
+});
+
+describe("law 25-02 alignment", () => {
+  it("special waste only goes to a destination with a recorded approval/licence number (art. 15, 19)", async () => {
+    const wo = await workOrder(a, "SPECIAL", customerId);
+    await expect(addWeightTicket(a, wo.id, { grossKg: "1200", tareKg: "1000", destinationId: landfill })).rejects.toThrow("errors.recycling.specialNeedsLicence");
+    await expect(addWeightTicket(a, wo.id, { grossKg: "1200", tareKg: "1000" })).rejects.toThrow("errors.recycling.specialNeedsLicence");
+    await addWeightTicket(a, wo.id, { grossKg: "1200", tareKg: "1000", destinationId: recycler }); // has AGR-0001
+    // A non-special category can still declare a SPECIAL stream on one ticket — same rule.
+    const mixed = await workOrder(a, "MSW", customerId);
+    await expect(addWeightTicket(a, mixed.id, { grossKg: "1100", tareKg: "1000", stream: "SPECIAL", destinationId: landfill })).rejects.toThrow("errors.recycling.specialNeedsLicence");
+  });
+
+  it("reports energy valorisation separately and flags organic waste outside biological treatment (art. 35 bis)", async () => {
+    const energy = (await createDestination(a, { name: "Valorisation énergétique Démo (synthetic)", kind: "ENERGY_RECOVERY" })).id;
+    const before = await recoveryReport(a, { from: today, to: today });
+    const wo = await workOrder(a, "ORGANIC", customerId);
+    await addWeightTicket(a, wo.id, { grossKg: "1300", tareKg: "1000", destinationId: landfill });
+    const res = await workOrder(a, "MSW", customerId);
+    await addWeightTicket(a, res.id, { grossKg: "1500", tareKg: "1000", destinationId: energy });
+    const after = await recoveryReport(a, { from: today, to: today });
+    expect(after.organicElsewhere - before.organicElsewhere).toBe(30000);
+    expect(after.total.energy - before.total.energy).toBe(50000);
+    expect(after.total.recovered - before.total.recovered).toBe(50000);
+    // Other tenants see none of it.
+    expect((await recoveryReport(b, { from: today, to: today })).total).toEqual({ recovered: 0, disposed: 0, untracked: 0, energy: 0 });
   });
 });

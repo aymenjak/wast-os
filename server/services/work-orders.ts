@@ -230,7 +230,11 @@ export async function addWeightTicket(ctx: OrgContext, workOrderId: string, inpu
     if (!["IN_PROGRESS", "COMPLETED"].includes(wo.status)) throw new DomainError("errors.workOrder.weightClosed");
     const destination = await assertDestination(tx, ctx, data.destinationId);
     // Default stream: the work order's waste category (can be overridden per ticket for mixed loads).
-    const category = wo.wasteCategoryId ? await tx.wasteCategory.findFirst({ where: { id: wo.wasteCategoryId, organizationId: ctx.org.id }, select: { stream: true } }) : null;
+    const category = wo.wasteCategoryId ? await tx.wasteCategory.findFirst({ where: { id: wo.wasteCategoryId, organizationId: ctx.org.id }, select: { stream: true, regulatoryClass: true } }) : null;
+    // Law 01-19 art. 15 and 19 as amended by law 25-02: special waste may only be handed to an approved collector or a
+    // licensed facility — require a destination whose approval/licence number is recorded.
+    const special = data.stream === "SPECIAL" || (!data.stream && category?.stream === "SPECIAL") || category?.regulatoryClass === "SPECIAL" || category?.regulatoryClass === "SPECIAL_HAZARDOUS";
+    if (special && !destination?.registrationNumber) throw new DomainError("errors.recycling.specialNeedsLicence");
     const gross = toMinor(data.grossKg.toFixed(2));
     const tare = toMinor(data.tareKg.toFixed(2));
     const t = await tx.weightTicket.create({

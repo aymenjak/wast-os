@@ -29,6 +29,16 @@
 | M Command palette search | integration (tenant + permission scoping, accent-insensitive, LIKE wildcards literal); e2e (Ctrl+K → result → navigate) |
 | J ar/fr/en desktop & mobile | e2e `i18n-a11y` (lang/dir, translated H1, axe WCAG 2.2 AA serious/critical = 0 on 6 public pages × 3 locales with reduced motion, no overflow at 360 px); screenshots in `docs/screenshots` reviewed |
 
+## Recorded results (2026-11-01, law 25-02 alignment)
+
+| Suite | Result |
+|-------|--------|
+| `npm run test:unit` | **9 files, 57 tests passed** (`recovery.test.ts` +3: anaerobic digestion / reuse-repair = material, energy recovery = valorisation tracked separately even for residual, incineration = disposal, organic outside biological treatment flagged) |
+| `npm run test:integration` | **17 files, 179 tests passed** (`recycling.test.ts` +2: special waste refused without a licensed destination — category or per-ticket stream; energy share and organic indicator in the report; other tenant sees nothing) |
+| `npx playwright test` | **45 passed** |
+| `npx tsc --noEmit` / `npx next build` | 0 errors / success |
+| Migration | `20261103090000_destination_kinds_law_25_02` (3 × `ALTER TYPE … ADD VALUE`, non-destructive) applied to dev, test and demo DBs; drift check empty |
+
 ## Recorded results (2026-11-01, recycling R1 + décret 06-104)
 
 | Suite | Result |

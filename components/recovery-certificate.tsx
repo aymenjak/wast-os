@@ -37,6 +37,7 @@ export function RecoveryCertificateView({ data, d, locale, month }: { data: Data
               <div key={k} className="rounded-md border border-ink-200 p-3"><dt className="text-xs text-ink-600">{k}</dt><dd className="num display text-xl font-bold text-ink-950">{v}</dd></div>
             ))}
           </dl>
+          {data.total.energy > 0 ? <p className="mt-2 text-sm text-ink-700">{d.recycling.energyShare}: <span className="num">{`\u2066${t(data.total.energy)} kg\u2069`}</span></p> : null}
           <h2 className="mt-8 text-lg font-bold text-ink-900">{d.recycling.byStream}</h2>
           <Table className="mt-2">
             <thead><tr><Th>{d.recycling.stream}</Th><Th numeric>{d.recycling.recovered}</Th><Th numeric>{d.recycling.disposed}</Th><Th numeric>{d.recycling.untracked}</Th></tr></thead>
