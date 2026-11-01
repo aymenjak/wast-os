@@ -29,6 +29,17 @@
 | M Command palette search | integration (tenant + permission scoping, accent-insensitive, LIKE wildcards literal); e2e (Ctrl+K → result → navigate) |
 | J ar/fr/en desktop & mobile | e2e `i18n-a11y` (lang/dir, translated H1, axe WCAG 2.2 AA serious/critical = 0 on 6 public pages × 3 locales with reduced motion, no overflow at 360 px); screenshots in `docs/screenshots` reviewed |
 
+## Recorded results (2026-11-01, special hazardous waste — décrets 04-409, 05-315)
+
+| Suite | Result |
+|-------|--------|
+| `npm run test:unit` | **9 files, 57 tests passed** |
+| `npm run test:integration` | **18 files, 184 tests passed** (new `hazardous.test.ts` 5: no transport without a valid authorisation, expired refused, admins only set it; only SD codes (MA and S refused), only licensed consignees, cross-tenant reads/writes refused; labels before pickup, decontamination before delivery, refusal final, all steps audited; DB CHECK refuses a delivered row without decontamination; declaration pre-fill — code, designation, criteria, 0.75 t merged from ticket + unlinked transport, section C, portal own-customer only, other tenant and field worker refused) |
+| `npx playwright test` | **48 passed** (new `hazardous.spec` 3: authorisation → licensed destination → transport with 06-104 designation; signatures in order, browser blocks delivery without decontamination **and keeps the typed name**; declaration page; Arabic transport page at 390 px without overflow) |
+| Migration | `20261103100000_hazardous_movements` (new table + 2 CHECK constraints) on dev/test/demo; drift empty |
+
+Defects found and fixed: React 19 form reset wiped user input after any server error (app-wide, `ActionForm` now restores it — D-61); status column clipped in the transports table; Arabic signature timestamps reversed by an LTR class (same pitfall as before).
+
 ## Recorded results (2026-11-01, law 25-02 alignment)
 
 | Suite | Result |

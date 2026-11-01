@@ -13,6 +13,24 @@ const FieldErrors = createContext<Record<string, string> | undefined>(undefined)
  * Progressive-enhancement form bound to a server action. Shows a summary alert and
  * per-field messages from the server; the server is always the source of validation truth.
  */
+/** Restores text, select, textarea, checkbox and radio values from a FormData snapshot (files and hidden fields are left alone). */
+function restoreFields(form: HTMLFormElement, data: FormData) {
+  for (const el of Array.from(form.elements)) {
+    if (!(el instanceof HTMLInputElement || el instanceof HTMLSelectElement || el instanceof HTMLTextAreaElement) || !el.name) continue;
+    if (el instanceof HTMLInputElement) {
+      if (el.type === "file" || el.type === "hidden" || el.type === "password") continue;
+      if (el.type === "checkbox" || el.type === "radio") { el.checked = data.getAll(el.name).includes(el.value || "on"); continue; }
+    }
+    if (el instanceof HTMLSelectElement && el.multiple) {
+      const values = data.getAll(el.name).map(String);
+      for (const o of Array.from(el.options)) o.selected = values.includes(o.value);
+      continue;
+    }
+    const v = data.get(el.name);
+    if (typeof v === "string") el.value = v;
+  }
+}
+
 export function ActionForm({
   action,
   children,
@@ -36,16 +54,19 @@ export function ActionForm({
   const [state, formAction] = useActionState(action, initialState);
   const ref = useRef<HTMLFormElement>(null);
   const alertRef = useRef<HTMLDivElement>(null);
+  const submitted = useRef<FormData | null>(null);
   useEffect(() => {
     if (!state.nonce) return;
     if (state.ok && resetOnSuccess) ref.current?.reset();
+    // React 19 resets uncontrolled fields after every form action; on an error, put back what the user typed.
+    if (state.error && ref.current && submitted.current) restoreFields(ref.current, submitted.current);
     if (state.error) alertRef.current?.focus();
     onResult?.(state);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.nonce]);
 
   return (
-    <form ref={ref} action={formAction} className={className} encType={encType} noValidate>
+    <form ref={ref} action={formAction} onSubmit={(e) => { submitted.current = new FormData(e.currentTarget); }} className={className} encType={encType} noValidate>
       <input type="hidden" name="locale" value={locale} />
       {hidden && Object.entries(hidden).map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />)}
       {state.error ? (

@@ -8,9 +8,11 @@ import { EmptyState, Forbidden, PageHeader, Table, Td, Th } from "@/components/u
 import { InlineAction } from "@/components/inline-action";
 import { setDestinationActiveAction } from "@/app/actions/business";
 import { CLASS_LETTER, findNomenclature } from "@/lib/nomenclature-06-104";
+import { RECOVERY_KINDS } from "@/server/domain/recovery";
 import { ClassifyForm, DestinationForm } from "../forms";
 
-const RECOVERY = new Set(["RECYCLER", "SORTING_CENTRE", "COMPOSTING"]);
+// Valorisation kinds (law 01-19 art. 3 as amended by law 25-02).
+const RECOVERY: ReadonlySet<string> = RECOVERY_KINDS;
 
 export default async function DestinationsPage({ params }: { params: Promise<{ locale: Locale }> }) {
   const { locale, ctx, d } = await appPage(params);

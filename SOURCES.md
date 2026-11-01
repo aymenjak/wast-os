@@ -106,6 +106,8 @@ Each source ID (S-xx) is referenced from `RESEARCH-DOSSIER.md` and `DECISIONS.md
 | S-89 | Motion (motion.dev) 14.9.0, MIT — animation library used by Skiper UI | https://www.npmjs.com/package/motion | A |
 | S-90 | Décret exécutif n° 06-104 du 28 février 2006 fixant la nomenclature des déchets, y compris les déchets spéciaux dangereux — JORA n° 13 du 5 mars 2006 (annexes I–III). PDF supplied by the project owner (me.gov.dz and Scribd links were unreachable from this environment) | https://www.me.gov.dz/wp-content/uploads/2022/05/Decret-executif-06-104.pdf | A (primary text read in full; transcribed to `lib/nomenclature-06-104.ts`) |
 | S-91 | Loi n° 25-02 du 20 février 2025 modifiant et complétant la loi n° 01-19 du 12 décembre 2001 relative à la gestion, au contrôle et à l'élimination des déchets — JORA n° 12 du 23 février 2025, pp. 16–21 (Arabic edition, file A2025012.pdf supplied by the project owner) | https://www.joradp.dz | A (primary text read in full; summary in RECYCLING.md §1.2) |
+| S-92 | Décret exécutif n° 04-409 du 14 décembre 2004 fixant les modalités de transport des déchets spéciaux dangereux — JORA n° 81 du 19 décembre 2004, pp. 3–5 (FAOLEX copy alg68432.pdf supplied by the project owner) | https://faolex.fao.org | A (primary text read in full) |
+| S-93 | Décret exécutif n° 05-315 du 10 septembre 2005 fixant les modalités de déclaration des déchets spéciaux dangereux, with annex form — JORA n° 62 du 11 septembre 2005, pp. 5–7 (file F2005062.pdf supplied by the project owner) | https://www.joradp.dz | A (primary text and annex read) |
 
 ## Sources not yet consulted (open items)
 

@@ -39,6 +39,7 @@ export default async function PortalHome({ params, searchParams }: { params: Pro
         <div className="flex flex-wrap gap-4">
           <a href={`/${locale}/portal/certificate?month=${month}`} className="inline-block text-sm font-medium text-ink-800 underline">{d.certificate.generate}</a>
           <a href={`/${locale}/portal/recovery?month=${month}`} className="inline-block text-sm font-medium text-ink-800 underline">{d.recycling.certificate}</a>
+          <a href={`/${locale}/portal/hazardous-declaration`} className="ms-4 inline-block text-sm font-medium text-ink-800 underline">{d.hazardous.declarationShort}</a>
         </div>
         <Disclosure summary={d.portal.newRequest}>
           <RequestForm portal customers={[customer]} categories={cats.map((c) => ({ id: c.id, name: name(c) }))} defaultCustomerId={customer.id} today={orgToday(ctx)} />

@@ -47,7 +47,7 @@ Status: 2026-11-01 — **Phase R1 implemented** (§6); R2/R3 remain proposals. F
 
 **Corrections to the earlier secondary-source summary:** the obligation is *both* to ensure valorisation (art. 7, through eco-organisations) *and* to pay an éco-contribution (art. 7 bis 1) — not "recover **or** pay"; the "national digital system" is a *national information and mapping system for waste data* (art. 5 bis 1); the JO issue is dated **23 February 2025**. Every operational detail (eco-organisations, éco-contribution amounts, end-of-waste criteria, plastics schedule, information-system format) is left **to implementing regulations not yet obtained** → still not assumed by the product.
 
-**Special hazardous waste (other texts):** declaration (décret 05-315), transport (décret 04-409), export (décret 19-10) — not yet read; nomenclature décret 06-104 read (§1.5).
+**Special hazardous waste (other texts):** declaration (décret 05-315) and transport (décret 04-409) read (§1.6); nomenclature décret 06-104 read (§1.5); export (décret 19-10) not yet read.
 
 ### 1.5 Décret exécutif 06-104 — waste nomenclature (grade A: primary text, JORA n° 13 of 5 March 2006, pp. 9–61)
 
@@ -57,6 +57,21 @@ Read in full from the PDF supplied by the project owner ([SOURCES S-90](SOURCES.
 - **The same code exists in both annexes with different meanings** — `20.1.1` is "Papier et carton" (MA, annex II) and "Solvants" (SD, annex III); `20.1.21` "Métaux" exists only in annex III as S. A waste is therefore identified by **(code, class)**, never by the code alone.
 - Art. 4: the nomenclature applies whether the waste goes to recovery or disposal; being listed does not by itself make a material a waste.
 - Useful annex II rubrics for collectors: 20.1.1 Papier et carton · 20.1.2 Verre · 20.1.3 Déchets de cuisine et de cantine biodégradables · 20.1.7 Matières plastiques · 20.2.1 Déchets biodégradables (jardins) · 20.3.1 Déchets communaux en mélange · 20.3.2 Déchets de marchés · 15.1.x packaging by material · 17.x construction waste (I). Note: annex II has **no municipal metals rubric** (metal packaging is 15.1.4 MA; "Métaux" 20.1.21 is S in annex III).
+
+### 1.6 Special hazardous waste — décrets 04-409 and 05-315 (grade A: primary texts, PDFs supplied by the project owner)
+
+**Décret exécutif 04-409 of 14 December 2004 — transport of special hazardous waste (JORA n° 81 of 19 December 2004, pp. 3–5).**
+- Definitions (art. 2): *expéditeur* (holds the waste, transports it or hands it over for transport), *transporteur*, *destinataire* (receives it for valorisation or disposal).
+- Packaging suited to nature/state/danger (art. 4); types fixed by joint arrêté (art. 5); **legible, indelible labels** identifying the waste (art. 6, label specs by arrêté).
+- Vehicles adapted, periodic technical inspection, external signage (art. 7–9); carrier holds a **professional certificate** (art. 10); accident → notify police/gendarmerie, civil protection and local authorities (art. 11).
+- **Transport authorisation** required (art. 13, under law 01-19 art. 24); it attests the carrier's habilitation (art. 14); file contents/granting by joint arrêté (art. 15); **valid authorisation on every transport**, shown on inspection (art. 16).
+- **Movement document** accompanies every transport to check legal conformity, each operator's intervention **and any refusal by a party**, route and timing (art. 17); its characteristics fixed by an interministerial arrêté (defence, interior, environment, transport) (art. 18) — **not obtained**.
+- Carrier may not leave the treatment facility before the container is **cleaned and decontaminated**, at the holder's cost (art. 19); authorities may sample (art. 20); **shipper, carrier and consignee sign** the document (art. 21). Sea/rail by arrêté (art. 22).
+
+**Décret exécutif 05-315 of 10 September 2005 — declaration of special hazardous waste (JORA n° 62 of 11 September 2005, pp. 5–7).**
+- The declaration covers nature, quantity, characteristics, treatment and prevention measures, **on the annex form** (art. 2), sent to the environment administration **within three months after the close of the year** (art. 3).
+- Annex sections: identification of the generator/holder (status, name, head office, activity, certification, person in charge); **A** nature (raw material, name, **code**, consistency solid/liquid/gaseous/pasty, mixtures), **quantity t/year**, characteristics (chemical composition, **hazard criterion**), storage (temporary/permanent, t/year, method); **B** treatment (management, control, disposal methods, installation types, treatment types, quantities treated t/year, yield); **C** measures — **reuse / recycling / valorisation / elimination t/year**, and five families of measures (minimisation, good practice, available techniques, cleaner production, risk management).
+- Same JO: décret 05-314 (approval of groupings of generators/holders of special waste) — noted, not modelled.
 
 ### 1.3 Ecosystem
 
@@ -119,6 +134,7 @@ Implementing decrees of law 25-02 not published/obtained; no reliable price data
 - **Recovery certificate** (attestation de valorisation) per customer and month, printable, also in the customer portal for the customer's own data; lists every ticket and the method.
 - **Category classification** with stream, regulatory class and a décret 06-104 code **validated against the decree for that class** (D-55); the demo seed uses 20.3.1 / 20.1.1 / 20.1.2.
 - **Law 25-02 alignment (2026-11-01, second pass):** destination kinds add anaerobic digestion, reuse/repair and energy recovery; recovery = material **or** energy valorisation as defined in art. 3, energy shown separately; incineration without energy recovery and landfill = disposal; indicator for organic waste outside composting/digestion (art. 35 bis); special waste needs a destination with a recorded approval/licence number (art. 15, 19).
+- **Special hazardous waste (2026-11-01, third pass):** carrier transport authorisation with expiry (no transport without a valid one, 04-409 art. 13–16); transports with SD code and hazard criteria copied from 06-104, consistency, packaging, labels required before pickup (art. 6), shipper + carrier signatures at pickup, consignee signature only with decontamination confirmed (art. 19), refusal by any party recorded (art. 17), licensed consignee only (law art. 15/19), printable; DB CHECK constraints mirror the rules. **Annual declaration (05-315)** pre-filled per customer and year in the annex's section order — code, designation, hazard criterion, t/year, installations, section C split — with blanks for what only the generator knows and the due date (31 March of the next year). Clearly labelled as internal tracking: the official movement-document form (04-409 art. 18) is not available.
 - AI assistant tool `get_recycling_summary` (read-only, reports.read).
 - Not done (by design, D-56): prices, éco-contribution, national information-system export, hazard-criteria handling for SD waste tracking (décrets 04-409 / 05-315 not yet read).
 

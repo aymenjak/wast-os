@@ -15,6 +15,7 @@ import * as schedules from "@/server/services/schedules";
 import * as containers from "@/server/services/containers";
 import * as iot from "@/server/services/iot";
 import * as recycling from "@/server/services/recycling";
+import * as hazardous from "@/server/services/hazardous";
 import { sendInvoiceEmail } from "@/server/services/mailer";
 import { globalSearch, type SearchHit } from "@/server/services/search";
 import { requireOrg } from "@/server/auth/session";
@@ -251,4 +252,24 @@ export async function setDestinationActiveAction(_: ActionState, fd: FormData) {
 }
 export async function classifyCategoryAction(_: ActionState, fd: FormData) {
   return orgAction(fd, (ctx, input) => recycling.classifyCategory(ctx, s(input.categoryId), input), { revalidate: ["/app/recycling/destinations"] });
+}
+
+// ── Special hazardous waste (décrets 04-409, 05-315) ──
+export async function setTransportAuthorisationAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, (ctx, input) => hazardous.setTransportAuthorisation(ctx, input), { revalidate: ["/app/recycling/hazardous"] });
+}
+export async function createMovementAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, async (ctx, input) => `/app/recycling/hazardous/${(await hazardous.createMovement(ctx, input)).id}`);
+}
+export async function pickUpMovementAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, (ctx, input) => hazardous.pickUp(ctx, s(input.movementId), input), { revalidate: [`/app/recycling/hazardous/${s(fd.get("movementId"))}`] });
+}
+export async function deliverMovementAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, (ctx, input) => hazardous.deliver(ctx, s(input.movementId), input), { revalidate: [`/app/recycling/hazardous/${s(fd.get("movementId"))}`] });
+}
+export async function refuseMovementAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, (ctx, input) => hazardous.refuse(ctx, s(input.movementId), input), { revalidate: [`/app/recycling/hazardous/${s(fd.get("movementId"))}`] });
+}
+export async function cancelMovementAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, (ctx) => hazardous.cancelMovement(ctx, s(fd.get("movementId"))), { revalidate: [`/app/recycling/hazardous/${s(fd.get("movementId"))}`] });
 }

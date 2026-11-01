@@ -128,6 +128,9 @@ model Organization {
   taxId              String? // NIF
   statisticalId      String? // NIS
   tradeRegister      String? // RC
+  /// Décret 04-409 art. 13–16: authorisation to transport special hazardous waste (number as printed, and expiry).
+  hazTransportAuthNumber    String?
+  hazTransportAuthExpiresOn DateTime? @db.Date
   address            String?
   wilaya             String?
   commune            String?
@@ -164,6 +167,7 @@ model Organization {
   iotDevices         IotDevice[]
   aiConversations    AiConversation[]
   destinations       Destination[]
+  hazardousMovements HazardousMovement[]
   iotIntegrations    IotIntegration[]
   sensorReadings     SensorReading[]
   vehiclePositions   VehiclePosition[]
@@ -407,9 +411,73 @@ model Destination {
 
   organization  Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   weightTickets WeightTicket[]
+  hazardousMovements HazardousMovement[]
 
   @@unique([organizationId, name])
   @@unique([organizationId, id])
+}
+
+enum WasteConsistency {
+  SOLID
+  LIQUID
+  GASEOUS
+  PASTY
+}
+
+enum HazardousMovementStatus {
+  DRAFT
+  IN_TRANSIT
+  DELIVERED
+  REFUSED
+  CANCELLED
+}
+
+/// Internal tracking of one transport of special hazardous waste (décret 04-409 art. 17–21): shipper (customer),
+/// carrier (this organization, with its transport authorisation), consignee (licensed destination), three signatures,
+/// refusal and decontamination. NOT the official "document de mouvement" form, whose layout is fixed by an
+/// interministerial arrêté (art. 18) that has not been obtained.
+model HazardousMovement {
+  id                   String                  @id @default(cuid())
+  organizationId       String
+  number               String
+  status               HazardousMovementStatus @default(DRAFT)
+  customerId           String
+  destinationId        String
+  workOrderId          String?
+  vehicleId            String?
+  /// Décret 06-104 code of class SD, with designation and hazard criteria copied from the decree at creation.
+  wasteCode            String
+  designation          String
+  hazardCriteria       String
+  consistency          WasteConsistency
+  quantityKg           Decimal                 @db.Decimal(12, 2)
+  packaging            String
+  labelled             Boolean                 @default(false)
+  carrierAuthNumber    String
+  carrierAuthExpiresOn DateTime                @db.Date
+  shipperSignedName    String?
+  shipperSignedAt      DateTime?               @db.Timestamptz(3)
+  carrierSignedById    String?
+  carrierSignedAt      DateTime?               @db.Timestamptz(3)
+  consigneeSignedName  String?
+  consigneeSignedAt    DateTime?               @db.Timestamptz(3)
+  decontaminated       Boolean                 @default(false)
+  refusedByRole        String?
+  refusalReason        String?
+  refusedAt            DateTime?               @db.Timestamptz(3)
+  createdById          String
+  createdAt            DateTime                @default(now()) @db.Timestamptz(3)
+  updatedAt            DateTime                @updatedAt @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customer     Customer     @relation(fields: [organizationId, customerId], references: [organizationId, id])
+  destination  Destination  @relation(fields: [organizationId, destinationId], references: [organizationId, id])
+  workOrder    WorkOrder?   @relation(fields: [organizationId, workOrderId], references: [organizationId, id])
+  vehicle      Vehicle?     @relation(fields: [organizationId, vehicleId], references: [organizationId, id])
+
+  @@unique([organizationId, number])
+  @@unique([organizationId, id])
+  @@index([organizationId, status, createdAt])
 }
 
 // ───────────────────────────── AI assistant ─────────────────────────────
@@ -635,6 +703,7 @@ model Customer {
   contracts    Contract[]
   requests     CollectionRequest[]
   workOrders   WorkOrder[]
+  hazardousMovements HazardousMovement[]
   invoices     Invoice[]
   portalUsers  Membership[]
 
@@ -943,6 +1012,7 @@ model Vehicle {
   organization Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   maintenance  VehicleMaintenance[]
   workOrders   WorkOrder[]
+  hazardousMovements HazardousMovement[]
   devices      IotDevice[]
   positions    VehiclePosition[]
 
@@ -1041,6 +1111,7 @@ model WorkOrder {
   team              Team?              @relation(fields: [organizationId, teamId], references: [organizationId, id])
   vehicle           Vehicle?           @relation(fields: [organizationId, vehicleId], references: [organizationId, id])
   weightTickets     WeightTicket[]
+  hazardousMovements HazardousMovement[]
   evidence          EvidenceFile[]
   invoiceLine       InvoiceLine?
   containerMoves    ContainerMovement[]
