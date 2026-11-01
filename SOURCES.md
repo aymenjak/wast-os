@@ -112,6 +112,7 @@ Each source ID (S-xx) is referenced from `RESEARCH-DOSSIER.md` and `DECISIONS.md
 | S-95 | Arrêté interministériel du 2 septembre 2013 fixant les caractéristiques techniques des étiquettes des DSD, with bilingual annex model (supplied by the project owner) | https://www.me.gov.dz/wp-content/uploads/2022/05/ART-DEC-04-409-1.pdf | A (read in full incl. annex) |
 | S-96 | Décret exécutif n° 19-10 du 23 janvier 2019 réglementant l'exportation des déchets spéciaux dangereux — JORA n° 07 du 30 janvier 2019, pp. 7–15, annexes I–IV (supplied by the project owner) | https://douane.gov.dz/IMG/pdf/decret-no19-10-du-23-janvier-2019-reglementant-lexportation-des-dechets-speciaux-dangereux.pdf | A (read: articles and annexes II–IV) |
 | S-97 | Loi n° 01-19 du 12 décembre 2001 (Arabic original) — JORA n° 77 du 15 décembre 2001 (scanned copy supplied by the project owner) | https://www.joradp.dz | A for pp. 12–14 (art. 10–34) read; other pages not read |
+| S-98 | قرناش جمال، « تصدير النفايات الخاصة الخطرة في ضوء مستجدات المرسوم التنفيذي رقم 19-10 »، مجلة الأبحاث القانونية والسياسية، جامعة سطيف 2، العدد 2، مارس 2020، ص 259 وما بعدها (PDF supplied by the project owner) | Secondary (academic) | B — commentary on décret 19-10; consistent with S-96; adds that Algeria acceded to the Basel Convention with a reservation on 16 May 1998 (not verified against the accession decree); does not cite the domestic movement-document arrêté |
 
 ## Sources not yet consulted (open items)
 
