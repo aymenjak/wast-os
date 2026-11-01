@@ -255,8 +255,11 @@ export async function classifyCategoryAction(_: ActionState, fd: FormData) {
 }
 
 // ── Special hazardous waste (décrets 04-409, 05-315) ──
-export async function setTransportAuthorisationAction(_: ActionState, fd: FormData) {
-  return orgAction(fd, (ctx, input) => hazardous.setTransportAuthorisation(ctx, input), { revalidate: ["/app/recycling/hazardous"] });
+export async function createAuthorisationAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, async (ctx, input) => void (await hazardous.createAuthorisation(ctx, input)), { revalidate: ["/app/recycling/hazardous"] });
+}
+export async function setAuthorisationActiveAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, (ctx) => hazardous.setAuthorisationActive(ctx, s(fd.get("authorisationId")), fd.get("active") === "true"), { revalidate: ["/app/recycling/hazardous"] });
 }
 export async function createMovementAction(_: ActionState, fd: FormData) {
   return orgAction(fd, async (ctx, input) => `/app/recycling/hazardous/${(await hazardous.createMovement(ctx, input)).id}`);

@@ -13,7 +13,9 @@ import type { DestinationKind } from "@/lib/generated/prisma/enums";
 /**
  * Special hazardous waste (déchets spéciaux dangereux, class SD of décret 06-104).
  *
- *  - Décret 04-409 (JORA n° 81/2004): the carrier needs a valid transport authorisation on every trip (art. 13–16); every
+ *  - Décret 04-409 (JORA n° 81/2004) and arrêté interministériel du 2 septembre 2013: the carrier needs, on every trip, a
+ *    valid authorisation covering the waste code and naming the vehicle (art. 13–16; arrêté annex); labels follow the
+ *    arrêté of the same date on labels (art. 3–4); every
  *    trip is accompanied by a movement document signed by shipper, carrier and consignee (art. 17, 21), which also records
  *    a party's refusal (art. 17); the carrier may not leave the treatment facility before the container is decontaminated
  *    (art. 19). The official form is fixed by an interministerial arrêté (art. 18) not obtained → this is internal tracking.
@@ -23,27 +25,72 @@ import type { DestinationKind } from "@/lib/generated/prisma/enums";
  */
 export const CONSISTENCIES = ["SOLID", "LIQUID", "GASEOUS", "PASTY"] as const;
 
-// ───────────────────────────── Carrier authorisation (04-409 art. 13–16) ─────────────────────────────
+// ───────────────────────────── Transport authorisations (04-409 art. 13–16; arrêté du 2 septembre 2013) ─────────────────────────────
 
-export async function setTransportAuthorisation(ctx: OrgContext, input: unknown) {
+const csv = (v: unknown) => (typeof v === "string" ? v.split(/[\s,;]+/).map((x) => x.trim()).filter(Boolean) : Array.isArray(v) ? v.map(String) : []);
+const authSchema = z.object({
+  number: requiredText(80),
+  validFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  validUntil: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  wasteCodes: z.preprocess(csv, z.array(z.string().regex(/^\d{1,2}\.\d{1,2}\.\d{1,2}$/)).min(1).max(50)),
+  vehicleIds: z.preprocess(csv, z.array(z.string().max(64)).min(1).max(50)),
+  loadingPoint: requiredText(200),
+  unloadingPoint: requiredText(200),
+  itinerary: optionalText(500),
+  crew: optionalText(1000),
+});
+
+/**
+ * Records an authorisation as granted (by decision of the environment minister after the transport minister's opinion,
+ * arrêté art. 4). Its scope follows the arrêté's annex: SD wastes by code, named vehicles, loading/unloading points and
+ * route, crew, validity period.
+ */
+export async function createAuthorisation(ctx: OrgContext, input: unknown) {
   requirePermission(ctx, "settings.manage");
-  const data = parse(z.object({
-    hazTransportAuthNumber: z.preprocess((v) => (typeof v === "string" && v.trim() === "" ? null : v), z.string().trim().max(80).nullable()),
-    hazTransportAuthExpiresOn: z.preprocess((v) => (v === "" ? null : v), z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable()),
-  }), input);
-  if (Boolean(data.hazTransportAuthNumber) !== Boolean(data.hazTransportAuthExpiresOn)) throw new DomainError("errors.validation", { fields: { hazTransportAuthExpiresOn: "required" } });
-  await prisma.organization.update({
-    where: { id: ctx.org.id },
-    data: { hazTransportAuthNumber: data.hazTransportAuthNumber, hazTransportAuthExpiresOn: data.hazTransportAuthExpiresOn ? dateOnly(data.hazTransportAuthExpiresOn) : null },
+  const data = parse(authSchema, input);
+  if (data.validUntil < data.validFrom) throw new DomainError("errors.validation", { fields: { validUntil: "invalid" } });
+  const codes = [...new Set(data.wasteCodes)];
+  if (codes.some((c) => !findNomenclature(c, "SD"))) throw new DomainError("errors.hazardous.notSdCode");
+  const vehicleIds = [...new Set(data.vehicleIds)];
+  if ((await prisma.vehicle.count({ where: { organizationId: ctx.org.id, id: { in: vehicleIds } } })) !== vehicleIds.length) throw new NotFoundError("Vehicle");
+  if (await prisma.hazTransportAuthorisation.findFirst({ where: { organizationId: ctx.org.id, number: data.number } })) throw new DomainError("errors.hazardous.authorisationExists");
+  const a = await prisma.hazTransportAuthorisation.create({
+    data: { ...data, organizationId: ctx.org.id, wasteCodes: codes, vehicleIds, validFrom: dateOnly(data.validFrom), validUntil: dateOnly(data.validUntil) },
   });
-  await audit(prisma, { organizationId: ctx.org.id, actorUserId: ctx.userId, action: "hazardous.transport_authorisation_set", entityType: "Organization", entityId: ctx.org.id, data });
+  await audit(prisma, { organizationId: ctx.org.id, actorUserId: ctx.userId, action: "hazardous.authorisation_created", entityType: "HazTransportAuthorisation", entityId: a.id, data: { number: a.number, codes, vehicles: vehicleIds.length } });
+  return a;
 }
 
-async function validAuthorisation(ctx: OrgContext) {
-  const org = await prisma.organization.findUniqueOrThrow({ where: { id: ctx.org.id }, select: { hazTransportAuthNumber: true, hazTransportAuthExpiresOn: true } });
-  if (!org.hazTransportAuthNumber || !org.hazTransportAuthExpiresOn) throw new DomainError("errors.hazardous.noAuthorisation");
-  if (org.hazTransportAuthExpiresOn.toISOString().slice(0, 10) < orgToday(ctx)) throw new DomainError("errors.hazardous.authorisationExpired");
-  return { number: org.hazTransportAuthNumber, expiresOn: org.hazTransportAuthExpiresOn };
+/** Withdrawal (arrêté art. 7) or end of use. */
+export async function setAuthorisationActive(ctx: OrgContext, id: string, active: boolean) {
+  requirePermission(ctx, "settings.manage");
+  const r = await prisma.hazTransportAuthorisation.updateMany({ where: { id, organizationId: ctx.org.id }, data: { active } });
+  if (r.count === 0) throw new NotFoundError("HazTransportAuthorisation");
+  await audit(prisma, { organizationId: ctx.org.id, actorUserId: ctx.userId, action: active ? "hazardous.authorisation_enabled" : "hazardous.authorisation_disabled", entityType: "HazTransportAuthorisation", entityId: id });
+}
+
+export async function listAuthorisations(ctx: OrgContext) {
+  requirePermission(ctx, "workorders.read");
+  const today = orgToday(ctx);
+  const rows = await prisma.hazTransportAuthorisation.findMany({ where: { organizationId: ctx.org.id }, orderBy: [{ active: "desc" }, { validUntil: "desc" }] });
+  const vehicles = await prisma.vehicle.findMany({ where: { organizationId: ctx.org.id, id: { in: rows.flatMap((r) => r.vehicleIds) } }, select: { id: true, plateNumber: true } });
+  const plate = new Map(vehicles.map((v) => [v.id, v.plateNumber]));
+  return rows.map((r) => {
+    const from = r.validFrom.toISOString().slice(0, 10), until = r.validUntil.toISOString().slice(0, 10);
+    return { ...r, validFrom: from, validUntil: until, plates: r.vehicleIds.map((id) => plate.get(id) ?? "?"), state: !r.active ? "withdrawn" : until < today ? "expired" : from > today ? "notYet" : "valid" } as const;
+  });
+}
+
+/** The authorisation must be active, valid today, cover the waste code and name the vehicle (04-409 art. 16; arrêté annex). */
+async function coveringAuthorisation(ctx: OrgContext, authorisationId: string | null, wasteCode: string, vehicleId: string | null) {
+  if (!authorisationId) throw new DomainError("errors.hazardous.noAuthorisation");
+  const a = await prisma.hazTransportAuthorisation.findFirst({ where: { id: authorisationId, organizationId: ctx.org.id } });
+  if (!a || !a.active) throw new DomainError("errors.hazardous.noAuthorisation");
+  const today = orgToday(ctx);
+  if (a.validUntil.toISOString().slice(0, 10) < today || a.validFrom.toISOString().slice(0, 10) > today) throw new DomainError("errors.hazardous.authorisationExpired");
+  if (!a.wasteCodes.includes(wasteCode)) throw new DomainError("errors.hazardous.codeNotAuthorised");
+  if (!vehicleId || !a.vehicleIds.includes(vehicleId)) throw new DomainError("errors.hazardous.vehicleNotAuthorised");
+  return a;
 }
 
 // ───────────────────────────── Movements (04-409 art. 17–21) ─────────────────────────────
@@ -52,7 +99,10 @@ const createSchema = z.object({
   customerId: requiredText(64),
   destinationId: requiredText(64),
   workOrderId: optionalText(64),
-  vehicleId: optionalText(64),
+  vehicleId: requiredText(64),
+  authorisationId: requiredText(64),
+  packageCount: z.coerce.number().int().min(1).max(500).default(1),
+  originAddress: optionalText(300),
   wasteCode: z.string().trim().regex(/^\d{1,2}\.\d{1,2}\.\d{1,2}$/),
   consistency: z.enum(CONSISTENCIES),
   quantityKg: z.coerce.number().positive().max(1_000_000),
@@ -65,28 +115,29 @@ export async function createMovement(ctx: OrgContext, input: unknown) {
   const data = parse(createSchema, input);
   const entry = findNomenclature(data.wasteCode, "SD");
   if (!entry) throw new DomainError("errors.hazardous.notSdCode");
-  const auth = await validAuthorisation(ctx);
+  const auth = await coveringAuthorisation(ctx, data.authorisationId, entry[0], data.vehicleId);
   return prisma.$transaction(async (tx) => {
     const [customer, destination, workOrder, vehicle] = await Promise.all([
       tx.customer.findFirst({ where: { id: data.customerId, organizationId: ctx.org.id } }),
       tx.destination.findFirst({ where: { id: data.destinationId, organizationId: ctx.org.id, active: true } }),
       data.workOrderId ? tx.workOrder.findFirst({ where: { id: data.workOrderId, organizationId: ctx.org.id } }) : null,
-      data.vehicleId ? tx.vehicle.findFirst({ where: { id: data.vehicleId, organizationId: ctx.org.id } }) : null,
+      tx.vehicle.findFirst({ where: { id: data.vehicleId, organizationId: ctx.org.id } }),
     ]);
     if (!customer) throw new NotFoundError("Customer");
     if (!destination) throw new NotFoundError("Destination");
     if (data.workOrderId && !workOrder) throw new NotFoundError("WorkOrder");
-    if (data.vehicleId && !vehicle) throw new NotFoundError("Vehicle");
+    if (!vehicle) throw new NotFoundError("Vehicle");
     if (workOrder && workOrder.customerId !== customer.id) throw new DomainError("errors.validation", { fields: { workOrderId: "invalid" } });
     // Law 01-19 art. 15/19: licensed facility only.
     if (!destination.registrationNumber) throw new DomainError("errors.recycling.specialNeedsLicence");
     const number = await nextNumber(tx, ctx.org.id, "hazmove", "DM");
     const m = await tx.hazardousMovement.create({
       data: {
-        organizationId: ctx.org.id, number, customerId: customer.id, destinationId: destination.id, workOrderId: workOrder?.id ?? null, vehicleId: vehicle?.id ?? null,
+        organizationId: ctx.org.id, number, customerId: customer.id, destinationId: destination.id, workOrderId: workOrder?.id ?? null, vehicleId: vehicle.id, authorisationId: auth.id,
+        packageCount: data.packageCount, originAddress: data.originAddress ?? customer.billingAddress ?? null,
         wasteCode: entry[0], designation: entry[2], hazardCriteria: entry[3], consistency: data.consistency,
         quantityKg: fromMinor(toMinor(data.quantityKg.toFixed(2))), packaging: data.packaging, labelled: data.labelled,
-        carrierAuthNumber: auth.number, carrierAuthExpiresOn: auth.expiresOn, createdById: ctx.userId,
+        carrierAuthNumber: auth.number, carrierAuthExpiresOn: auth.validUntil, createdById: ctx.userId,
       },
     });
     await audit(tx, { organizationId: ctx.org.id, actorUserId: ctx.userId, action: "hazardous.movement_created", entityType: "HazardousMovement", entityId: m.id, data: { number, wasteCode: m.wasteCode } });
@@ -111,7 +162,7 @@ export async function pickUp(ctx: OrgContext, id: string, input: unknown) {
   const m = await loadForUpdate(ctx, id);
   if (m.status !== "DRAFT") throw new DomainError("errors.invalidTransition", { entity: "HazardousMovement", from: m.status, to: "IN_TRANSIT" });
   if (!m.labelled) throw new DomainError("errors.hazardous.notLabelled");
-  await validAuthorisation(ctx);
+  await coveringAuthorisation(ctx, m.authorisationId, m.wasteCode, m.vehicleId);
   const now = new Date();
   const r = await prisma.hazardousMovement.updateMany({ where: { id, organizationId: ctx.org.id, status: "DRAFT" }, data: { status: "IN_TRANSIT", shipperSignedName, shipperSignedAt: now, carrierSignedById: ctx.userId, carrierSignedAt: now } });
   if (r.count !== 1) throw new DomainError("errors.invalidTransition", { entity: "HazardousMovement" });
@@ -174,13 +225,6 @@ export async function getMovement(ctx: OrgContext, id: string) {
   if (!m) return null;
   const carrier = m.carrierSignedById ? await prisma.user.findUnique({ where: { id: m.carrierSignedById }, select: { name: true } }) : null;
   return { ...m, carrierSignedName: carrier?.name ?? null };
-}
-
-export async function hazardousStatus(ctx: OrgContext) {
-  requirePermission(ctx, "workorders.read");
-  const org = await prisma.organization.findUniqueOrThrow({ where: { id: ctx.org.id }, select: { hazTransportAuthNumber: true, hazTransportAuthExpiresOn: true } });
-  const expires = org.hazTransportAuthExpiresOn?.toISOString().slice(0, 10) ?? null;
-  return { authNumber: org.hazTransportAuthNumber, authExpiresOn: expires, authValid: Boolean(org.hazTransportAuthNumber && expires && expires >= orgToday(ctx)) };
 }
 
 // ───────────────────────────── Annual declaration (05-315) ─────────────────────────────

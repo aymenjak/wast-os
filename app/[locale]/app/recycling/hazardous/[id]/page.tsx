@@ -38,7 +38,7 @@ export default async function MovementPage({ params }: { params: Promise<{ local
     <article className="mx-auto max-w-4xl bg-white p-8 print:p-0">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3 print:hidden">
         <Link href={`/${locale}/app/recycling/hazardous`} className="text-sm text-brand-700 hover:underline">← {h.title}</Link>
-        <PrintButton />
+        <div className="flex items-center gap-2"><Link href={`/${locale}/app/recycling/hazardous/${m.id}/labels`} className="inline-flex h-8 items-center rounded-md bg-white px-3 text-sm ring-1 ring-ink-200 hover:bg-ink-50">{h.printLabels}</Link><PrintButton /></div>
       </div>
       <header className="flex flex-wrap items-start justify-between gap-4 border-b-2 border-ink-900 pb-4">
         <div>
@@ -56,7 +56,7 @@ export default async function MovementPage({ params }: { params: Promise<{ local
           <div><dt className="text-xs text-ink-600">{h.hazardCriteria}</dt><dd lang="fr" dir="ltr">{m.hazardCriteria || "—"}</dd></div>
           <div><dt className="text-xs text-ink-600">{h.consistency}</dt><dd>{d.enums.WasteConsistency[m.consistency]}</dd></div>
           <div><dt className="text-xs text-ink-600">{h.quantityKg}</dt><dd className="num">{formatNumber(Number(m.quantityKg), locale)}</dd></div>
-          <div className="sm:col-span-2"><dt className="text-xs text-ink-600">{h.packaging}</dt><dd>{m.packaging} · {m.labelled ? h.labelledYes : h.labelledNo}</dd></div>
+          <div className="sm:col-span-2"><dt className="text-xs text-ink-600">{h.packaging}</dt><dd>{m.packaging} · <span className="num">{m.packageCount}</span> {h.packages} · {m.labelled ? h.labelledYes : h.labelledNo}</dd></div>
         </dl>
       </section>
 
@@ -71,7 +71,7 @@ export default async function MovementPage({ params }: { params: Promise<{ local
       {m.status === "DELIVERED" ? <p className="mt-4 text-sm text-success-700">✓ {h.decontaminatedDone}</p> : null}
       {m.status === "REFUSED" ? (
         <p role="status" className="mt-4 rounded-md border border-danger-700/30 bg-danger-100 px-4 py-3 text-sm text-danger-700">
-          {h.refusedBy}: <strong>{h.role[m.refusedByRole as "SHIPPER" | "CARRIER" | "CONSIGNEE"]}</strong> · {formatDateTime(m.refusedAt, locale)}<span className="mt-1 block text-ink-800">{m.refusalReason}</span>
+          {h.refusedBy}: <strong>{h.role[m.refusedByRole as "SHIPPER" | "CARRIER" | "CONSIGNEE"]}</strong> · {formatDateTime(m.refusedAt, locale)}<span className="mt-1 block text-ink-800">{m.refusalReason}</span>{m.refusedByRole === "CONSIGNEE" ? <span className="mt-2 block text-xs text-ink-700">{h.consigneeRefusalLaw}</span> : null}
         </p>
       ) : null}
 

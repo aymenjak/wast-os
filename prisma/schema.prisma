@@ -128,7 +128,8 @@ model Organization {
   taxId              String? // NIF
   statisticalId      String? // NIS
   tradeRegister      String? // RC
-  /// Décret 04-409 art. 13–16: authorisation to transport special hazardous waste (number as printed, and expiry).
+  /// OBSOLETE since 2026-11-01 (not read by the app; kept to avoid a destructive migration). The authorisation is
+  /// per waste, vehicles, route and crew — see HazTransportAuthorisation (arrêté interministériel du 2 septembre 2013).
   hazTransportAuthNumber    String?
   hazTransportAuthExpiresOn DateTime? @db.Date
   address            String?
@@ -168,6 +169,7 @@ model Organization {
   aiConversations    AiConversation[]
   destinations       Destination[]
   hazardousMovements HazardousMovement[]
+  hazTransportAuthorisations HazTransportAuthorisation[]
   iotIntegrations    IotIntegration[]
   sensorReadings     SensorReading[]
   vehiclePositions   VehiclePosition[]
@@ -445,6 +447,11 @@ model HazardousMovement {
   destinationId        String
   workOrderId          String?
   vehicleId            String?
+  authorisationId      String?
+  /// Number of packages; one label per package (arrêté du 2 septembre 2013, art. 3–4).
+  packageCount         Int                     @default(1)
+  /// Generator/holder address printed on the labels (defaults to the customer's billing address).
+  originAddress        String?
   /// Décret 06-104 code of class SD, with designation and hazard criteria copied from the decree at creation.
   wasteCode            String
   designation          String
@@ -474,10 +481,39 @@ model HazardousMovement {
   destination  Destination  @relation(fields: [organizationId, destinationId], references: [organizationId, id])
   workOrder    WorkOrder?   @relation(fields: [organizationId, workOrderId], references: [organizationId, id])
   vehicle      Vehicle?     @relation(fields: [organizationId, vehicleId], references: [organizationId, id])
+  authorisation HazTransportAuthorisation? @relation(fields: [organizationId, authorisationId], references: [organizationId, id])
 
   @@unique([organizationId, number])
   @@unique([organizationId, id])
   @@index([organizationId, status, createdAt])
+}
+
+/// Authorisation to transport special hazardous waste — decision of the environment minister after the transport
+/// minister's opinion (arrêté interministériel du 2 septembre 2013, art. 4). Its annex lists what it covers: the wastes
+/// (name and code), the vehicles, the loading and unloading points and route, the crew, and the validity period.
+model HazTransportAuthorisation {
+  id             String   @id @default(cuid())
+  organizationId String
+  number         String
+  validFrom      DateTime @db.Date
+  validUntil     DateTime @db.Date
+  /// Décret 06-104 codes of class SD covered by the authorisation.
+  wasteCodes     String[]
+  /// Vehicles named in the authorisation (ids of this organization's vehicles; checked by the service).
+  vehicleIds     String[]
+  loadingPoint   String
+  unloadingPoint String
+  itinerary      String?
+  /// Authorised crew as written in the decision (names, driving licence and professional certificate numbers).
+  crew           String?
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now()) @db.Timestamptz(3)
+
+  organization Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  movements    HazardousMovement[]
+
+  @@unique([organizationId, number])
+  @@unique([organizationId, id])
 }
 
 // ───────────────────────────── AI assistant ─────────────────────────────

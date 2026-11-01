@@ -26,13 +26,28 @@ test.describe.serial("Hazardous waste", () => {
     await page.getByRole("button", { name: "Add a destination" }).click();
     await expect(page.getByText("AUT-DSD-E2E")).toBeVisible();
 
+    await page.goto("/en/app/fleet");
+    await page.locator('input[name="plateNumber"]').fill(`HZ${id}-131-31`);
+    await page.locator('input[name="label"]').fill("Camion DSD (synthetic)");
+    await page.getByRole("button", { name: "Add vehicle" }).click();
+    await expect(page.getByText(`HZ${id}-131-31`.toUpperCase())).toBeVisible();
+
+    // Authorisation as granted (arrêté du 2 septembre 2013): wastes, vehicles, route, period.
     await page.goto("/en/app/recycling/hazardous");
-    await expect(page.getByText("Not recorded")).toBeVisible();
-    await page.locator('input[name="hazTransportAuthNumber"]').fill("AUT-T-E2E");
-    await page.locator('input[name="hazTransportAuthExpiresOn"]').fill(`${new Date().getUTCFullYear() + 1}-12-31`);
-    await page.getByRole("button", { name: "Save" }).click();
+    await page.getByText("Record an authorisation", { exact: true }).first().click();
+    await page.locator('input[name="number"]').fill("AUT-T-E2E");
+    await page.locator('input[name="validFrom"]').fill(`${new Date().getUTCFullYear()}-01-01`);
+    await page.locator('input[name="validUntil"]').fill(`${new Date().getUTCFullYear() + 1}-12-31`);
+    await page.locator('input[name="wasteCodes"]').fill("20.1.1");
+    await page.getByLabel(`HZ${id}-131-31`.toUpperCase()).check();
+    await page.locator('input[name="loadingPoint"]').fill("Garage Démo");
+    await page.locator('input[name="unloadingPoint"]').fill("Installation agréée E2E");
+    await page.getByRole("button", { name: "Record an authorisation" }).click();
     await expect(page.getByText("Valid", { exact: true })).toBeVisible();
 
+    await page.locator('select[name="authorisationId"]').selectOption({ label: "AUT-T-E2E · 20.1.1" });
+    await page.locator('select[name="vehicleId"]').selectOption({ label: `HZ${id}-131-31`.toUpperCase() });
+    await page.locator('input[name="packageCount"]').fill("2");
     await page.locator('select[name="customerId"]').selectOption({ label: "Garage Démo (synthetic)" });
     await page.locator('select[name="destinationId"]').selectOption({ label: "Installation agréée E2E · AUT-DSD-E2E" });
     await page.locator('input[name="wasteCode"]').fill("20.1.1");
@@ -45,6 +60,10 @@ test.describe.serial("Hazardous waste", () => {
     movementUrl = page.url();
     await expect(page.getByRole("heading", { name: /DM-00001/ })).toBeVisible();
     await expect(page.getByText("Solvants")).toBeVisible(); // designation from décret 06-104 annex III
+    // Labels: one per package, model of the arrêté du 2 septembre 2013.
+    await page.getByRole("link", { name: "Print labels" }).click();
+    await expect(page.getByText("Déchets spéciaux dangereux *")).toHaveCount(2);
+    await expect(page.getByText("DM-00001-2/2")).toBeVisible();
   });
 
   test("signatures in order; decontamination required before delivery", async ({ page }) => {

@@ -4,7 +4,8 @@ import { prisma } from "@/server/db";
 import { addServiceLocation, createCustomer } from "@/server/services/customers";
 import { addWeightTicket } from "@/server/services/work-orders";
 import { classifyCategory, createDestination } from "@/server/services/recycling";
-import { annualDeclaration, cancelMovement, createMovement, deliver, getMovement, listMovements, pickUp, refuse, setTransportAuthorisation } from "@/server/services/hazardous";
+import { annualDeclaration, cancelMovement, createAuthorisation, createMovement, deliver, getMovement, listAuthorisations, listMovements, pickUp, refuse, setAuthorisationActive } from "@/server/services/hazardous";
+import { createVehicle } from "@/server/services/fleet";
 import type { OrgContext } from "@/server/context";
 
 /** Special hazardous waste: décret 04-409 (transport), 05-315 (annual declaration), law 01-19 art. 15/19. */
@@ -12,10 +13,12 @@ let a: OrgContext;
 let b: OrgContext;
 let customerId: string;
 let licensed: string, unlicensed: string;
+let truck: string, otherTruck: string, authId = "";
 const year = new Date().getUTCFullYear();
 const nextYear = `${year + 1}-12-31`;
 
-const base = () => ({ customerId, destinationId: licensed, wasteCode: "20.1.1", consistency: "LIQUID", quantityKg: "350", packaging: "Fûts métalliques 200 L (synthetic)", labelled: "on" });
+const base = () => ({ authorisationId: authId, vehicleId: truck, packageCount: "2", customerId, destinationId: licensed, wasteCode: "20.1.1", consistency: "LIQUID", quantityKg: "350", packaging: "Fûts métalliques 200 L (synthetic)", labelled: "on" });
+const auth = (o: Record<string, unknown> = {}) => ({ number: `AUT-${Math.random().toString(36).slice(2, 7)}`, validFrom: `${year}-01-01`, validUntil: nextYear, wasteCodes: "20.1.1, 16.6.1", vehicleIds: [truck], loadingPoint: "Garage (synthetic)", unloadingPoint: "Installation (synthetic)", ...o });
 
 beforeAll(async () => {
   await resetDb();
@@ -24,17 +27,27 @@ beforeAll(async () => {
   customerId = (await createCustomer(a, { name: "Garage Démo (synthetic)" })).id;
   licensed = (await createDestination(a, { name: "Installation agréée Démo", kind: "INCINERATION", registrationNumber: "AUT-DSD-0001 (synthetic)" })).id;
   unlicensed = (await createDestination(a, { name: "Ferrailleur sans agrément", kind: "RECYCLER" })).id;
+  truck = (await createVehicle(a, { plateNumber: "00001-131-31", label: "Camion DSD (synthetic)", type: "OTHER" })).id;
+  otherTruck = (await createVehicle(a, { plateNumber: "00002-131-31", label: "Benne (synthetic)", type: "TIPPER" })).id;
 });
 
-describe("carrier authorisation (04-409 art. 13–16)", () => {
-  it("no movement without a valid authorisation; admins only set it", async () => {
-    await expect(createMovement(a, base())).rejects.toThrow("errors.hazardous.noAuthorisation");
-    await setTransportAuthorisation(a, { hazTransportAuthNumber: "AUT-T-77 (synthetic)", hazTransportAuthExpiresOn: "2020-01-01" });
-    await expect(createMovement(a, base())).rejects.toThrow("errors.hazardous.authorisationExpired");
-    await expect(setTransportAuthorisation(a, { hazTransportAuthNumber: "X", hazTransportAuthExpiresOn: "" })).rejects.toThrow("errors.validation");
-    const driver = await addMember(a, "FIELD_WORKER");
-    await expect(setTransportAuthorisation(driver, { hazTransportAuthNumber: "X", hazTransportAuthExpiresOn: nextYear })).rejects.toThrow();
-    await setTransportAuthorisation(a, { hazTransportAuthNumber: "AUT-T-77 (synthetic)", hazTransportAuthExpiresOn: nextYear });
+describe("transport authorisation (04-409 art. 13–16, arrêté du 2 septembre 2013)", () => {
+  it("scoped to SD codes, own vehicles and a period; admins only; each transport must fall within one", async () => {
+    await expect(createMovement(a, { ...base(), authorisationId: "" })).rejects.toThrow("errors.validation");
+    await expect(createAuthorisation(a, auth({ wasteCodes: "20.3.1" }))).rejects.toThrow("errors.hazardous.notSdCode");
+    const foreignTruck = (await createVehicle(b, { plateNumber: "00009-131-31", label: "Other", type: "VAN" })).id;
+    await expect(createAuthorisation(a, auth({ vehicleIds: [foreignTruck] }))).rejects.toThrow();
+    await expect(createAuthorisation(a, auth({ validFrom: "2030-01-02", validUntil: "2030-01-01" }))).rejects.toThrow("errors.validation");
+    await expect(createAuthorisation(await addMember(a, "FIELD_WORKER"), auth())).rejects.toThrow();
+    const expired = await createAuthorisation(a, auth({ validFrom: "2020-01-01", validUntil: "2020-12-31" }));
+    await expect(createMovement(a, { ...base(), authorisationId: expired.id })).rejects.toThrow("errors.hazardous.authorisationExpired");
+    authId = (await createAuthorisation(a, auth({ number: "AUT-T-77 (synthetic)" }))).id;
+    await expect(createAuthorisation(a, auth({ number: "AUT-T-77 (synthetic)" }))).rejects.toThrow("errors.hazardous.authorisationExists");
+    await expect(createMovement(a, { ...base(), wasteCode: "13.2.5" })).rejects.toThrow("errors.hazardous.codeNotAuthorised");
+    await expect(createMovement(a, { ...base(), vehicleId: otherTruck })).rejects.toThrow("errors.hazardous.vehicleNotAuthorised");
+    const states = (await listAuthorisations(a)).map((x) => x.state).sort();
+    expect(states).toEqual(["expired", "valid"]);
+    expect(await listAuthorisations(b)).toHaveLength(0);
   });
 });
 
@@ -50,6 +63,7 @@ describe("movements (04-409 art. 17–21)", () => {
     expect(m.designation).toBe("Solvants"); // copied from annex III
     expect(m.hazardCriteria).toContain("Inflammable");
     expect(m.carrierAuthNumber).toBe("AUT-T-77 (synthetic)");
+    expect(m.packageCount).toBe(2);
     await expect(getMovement(b, m.id)).resolves.toBeNull();
     await expect(pickUp(b, m.id, { shipperSignedName: "X" })).rejects.toThrow();
     expect(await listMovements(b)).toHaveLength(0);
@@ -83,6 +97,17 @@ describe("movements (04-409 art. 17–21)", () => {
   it("the database itself refuses a delivered movement without decontamination", async () => {
     const m = await createMovement(a, base());
     await expect(prisma.hazardousMovement.update({ where: { id: m.id }, data: { status: "DELIVERED", shipperSignedAt: new Date(), carrierSignedAt: new Date(), consigneeSignedAt: new Date(), decontaminated: false } })).rejects.toThrow();
+  });
+});
+
+describe("withdrawal (arrêté art. 7)", () => {
+  it("a withdrawn authorisation blocks new transports and pickup of drafts", async () => {
+    const own = (await createAuthorisation(a, auth())).id;
+    const m = await createMovement(a, { ...base(), authorisationId: own });
+    await setAuthorisationActive(a, own, false);
+    await expect(pickUp(a, m.id, { shipperSignedName: "X" })).rejects.toThrow("errors.hazardous.noAuthorisation");
+    await expect(createMovement(a, { ...base(), authorisationId: own })).rejects.toThrow("errors.hazardous.noAuthorisation");
+    await expect(setAuthorisationActive(b, own, true)).rejects.toThrow();
   });
 });
 

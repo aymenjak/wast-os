@@ -29,6 +29,17 @@
 | M Command palette search | integration (tenant + permission scoping, accent-insensitive, LIKE wildcards literal); e2e (Ctrl+K → result → navigate) |
 | J ar/fr/en desktop & mobile | e2e `i18n-a11y` (lang/dir, translated H1, axe WCAG 2.2 AA serious/critical = 0 on 6 public pages × 3 locales with reduced motion, no overflow at 360 px); screenshots in `docs/screenshots` reviewed |
 
+## Recorded results (2026-11-01, authorisations and labels — arrêtés of 2 September 2013)
+
+| Suite | Result |
+|-------|--------|
+| `npm run test:unit` | **9 files, 57 tests passed** |
+| `npm run test:integration` | **18 files, 185 tests passed** (`hazardous.test.ts` now 6: authorisation scope — SD codes only, own vehicles only, period valid, admins only, duplicate number refused, expired refused, code not covered and vehicle not named refused, tenant isolation of the list; withdrawal blocks new transports and pickup of drafts) |
+| `npx playwright test` | **48 passed** (`hazardous.spec` now creates a vehicle and records an authorisation through the UI, and checks one label per package with the annex header) |
+| Migration | `20261103110000_haz_transport_authorisations` (new table, 3 columns on movements, 3 CHECK constraints; no DROP) on dev/test/demo; drift empty |
+
+Defect found in screenshot review and fixed: authorisation date range reversed by bidi in Arabic (now an LTR block).
+
 ## Recorded results (2026-11-01, special hazardous waste — décrets 04-409, 05-315)
 
 | Suite | Result |

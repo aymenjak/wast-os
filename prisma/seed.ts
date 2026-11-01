@@ -19,7 +19,7 @@ import { submitCivicReport } from "../server/services/civic";
 import { createContainer, moveContainer } from "../server/services/containers";
 import { generateRecurringWorkOrders } from "../server/services/schedules";
 import { classifyCategory, createDestination } from "../server/services/recycling";
-import { createMovement, deliver, pickUp, setTransportAuthorisation } from "../server/services/hazardous";
+import { createAuthorisation, createMovement, deliver, pickUp } from "../server/services/hazardous";
 import { createDraftInvoice, issueInvoice, recordPayment } from "../server/services/invoices";
 import { randomUUID } from "node:crypto";
 
@@ -151,12 +151,16 @@ async function main() {
   }
 
   // Special hazardous waste (synthetic): authorisation, a licensed facility, one delivered and one draft transport.
-  await setTransportAuthorisation(owner, { hazTransportAuthNumber: "AUT-TDSD-DÉMO (fictif)", hazTransportAuthExpiresOn: `${new Date().getUTCFullYear() + 1}-06-30` });
-  const facility = await createDestination(owner, { name: "Installation DSD Démo (fictif)", kind: "RECYCLER", registrationNumber: "AGR-DSD-DÉMO (fictif)", wilaya: "Oran" });
-  const hz = await createMovement(owner, { customerId: custs[0]!.id, destinationId: facility.id, vehicleId: v1.id, wasteCode: "16.6.1", consistency: "SOLID", quantityKg: "640", packaging: "Bacs étanches pour batteries (fictif)", labelled: "on" });
+  const year = new Date().getUTCFullYear();
+  const auth = await createAuthorisation(owner, {
+    number: "AUT-TDSD-DÉMO (fictif)", validFrom: `${year}-01-01`, validUntil: `${year + 1}-06-30`, wasteCodes: "16.6.1, 13.2.5", vehicleIds: [v1.id],
+    loadingPoint: "Sites des clients, wilaya d'Oran (fictif)", unloadingPoint: "Installation DSD Démo (fictif)", itinerary: "RN11 (fictif)", crew: "Chauffeur Démo — permis n° 000000 (fictif)",
+  });
+  const facility = await createDestination(owner, { name: "Installation DSD Démo (fictif)", kind: "RECYCLER", registrationNumber: "AGR-DSD-DÉMO (fictif)", wilaya: "Oran", address: "Zone industrielle (fictive)" });
+  const hz = await createMovement(owner, { authorisationId: auth.id, packageCount: "4", customerId: custs[0]!.id, destinationId: facility.id, vehicleId: v1.id, wasteCode: "16.6.1", consistency: "SOLID", quantityKg: "640", packaging: "Bacs étanches pour batteries (fictif)", labelled: "on" });
   await pickUp(owner, hz.id, { shipperSignedName: "Responsable HSE Démo" });
   await deliver(owner, hz.id, { consigneeSignedName: "Réception Installation Démo", decontaminated: "on" });
-  await createMovement(owner, { customerId: custs[1]?.id ?? custs[0]!.id, destinationId: facility.id, wasteCode: "13.2.5", consistency: "LIQUID", quantityKg: "400", packaging: "Fûts 200 L (fictif)", labelled: "on" });
+  await createMovement(owner, { authorisationId: auth.id, vehicleId: v1.id, packageCount: "2", customerId: custs[1]?.id ?? custs[0]!.id, destinationId: facility.id, wasteCode: "13.2.5", consistency: "LIQUID", quantityKg: "400", packaging: "Fûts 200 L (fictif)", labelled: "on" });
 
   // Invoices built from that history through the normal services (one paid, one partially paid).
   const finance = (await loadContext((await prisma.user.findUniqueOrThrow({ where: { email: "finance@demo-collecte.test" } })).id, reg.org.id))!;
