@@ -52,6 +52,7 @@ Last recorded run (2026-10-31): 211 unit/integration tests and 41 E2E tests pass
 | Design system | `DESIGN-SYSTEM.md`, `docs/screenshots/` |
 | Security, privacy, compliance | `SECURITY.md`, `PRIVACY-AND-COMPLIANCE.md` |
 | Testing, deployment, roadmap, decisions | `TEST-PLAN.md`, `DEPLOYMENT.md`, `ROADMAP.md`, `DECISIONS.md` |
+| Recycling research and module proposal | `RECYCLING.md` |
 | Agent workflow, skills, MCP | `AGENTS.md`, `.claude/skills/`, `docs/skills/`, `docs/mcp/` |
 
 The original Bolt-generated "Waste City OS" prototype is preserved, unmodified, in `archive/bolt-prototype/` (excluded from the build).
