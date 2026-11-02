@@ -105,8 +105,8 @@ const en = {
     tour: {
       title: "See the real product", lead: "These are screenshots of NEXVO itself, not mock-ups. Pick a screen.",
       note: "real screen, synthetic demo data",
-      tabs: { dashboard: "Overview", iot: "Sensors", invoice: "Invoicing", field: "Field phone" },
-      captions: { dashboard: "Today's progress, 14-day trend, failures and tonnage at a glance.", iot: "Fill-level alerts, forecasts and devices — collections stay a human decision.", invoice: "Invoices built from completed work, with payments, PDF and email.", field: "Crews start, photograph, weigh and complete jobs from a basic Android phone." },
+      tabs: { dashboard: "Overview", iot: "Sensors", invoice: "Invoicing", field: "Field phone", recycling: "Recycling" },
+      captions: { dashboard: "Today's progress, 14-day trend, failures and tonnage at a glance.", iot: "Fill-level alerts, forecasts and devices — collections stay a human decision.", invoice: "Invoices built from completed work, with payments, PDF and email.", field: "Crews start, photograph, weigh and complete jobs from a basic Android phone, even without network: it syncs when the connection returns.", recycling: "Recovery rate by material and destination, from the weight tickets themselves." },
     },
     sensors: {
       title: "Sensors that tell you which bins to empty",
@@ -117,7 +117,7 @@ const en = {
     eyebrow: "Waste operations, made traceable",
     title: "Run every collection from request to paid invoice.",
     lead:
-      "NEXVO gives private waste collection companies one system for customers, contracts, dispatch, field evidence and receivables — and gives municipalities a verified way to act on citizen reports.",
+      "NEXVO gives private waste collection companies one system for customers, contracts, dispatch, field evidence, recycling and receivables — and gives municipalities a verified way to act on citizen reports.",
     ctaPrimary: "Start a 30-day trial",
     ctaSecondary: "See how it works",
     flowTitle: "One continuous record",
@@ -143,7 +143,18 @@ const en = {
       evidence: { title: "Evidence by default", body: "Before/after photos, weighbridge tickets and timestamps are attached to the work order — useful in disputes and contract reviews." },
       bilingual: { title: "Arabic, French, English", body: "Full right-to-left Arabic, not a translated layer. Every user picks their language." },
       tenancy: { title: "Your data stays yours", body: "Each company is an isolated workspace. Access is checked on the server for every record, not hidden in menus." },
-      mobile: { title: "Works on a field phone", body: "Large controls, short forms and camera capture for crews on the road." },
+      mobile: { title: "Works on a field phone", body: "Large controls, short forms and camera capture for crews on the road. Keeps working without network and sends everything once, when the connection returns." },
+    },
+    recovery: {
+      title: "From collected tonnes to recovered tonnes",
+      body: "Every weight ticket records the material and where the load went, so recovery figures come from your own operations, not from estimates.",
+      cta: "See all modules",
+      items: {
+        recycling: { title: "Recycling & recovery", body: "Recovery rate by material and destination, recovery certificates for your customers, décret 06-104 classification." },
+        yard: { title: "Sorting yard", body: "Purchases from suppliers and collectors, bales with QR labels, stock, sales, mass balance and margin." },
+        hazardous: { title: "Special hazardous waste", body: "Transport authorisations, movements with labels, reception and treatment, data for the annual declaration." },
+        territory: { title: "Territory", body: "Reports per commune against your targets, drop-off points with fill levels, sorting campaigns compared before and after." },
+      },
     },
     civicTitle: "For municipalities: verified citizen reports",
     civicBody:

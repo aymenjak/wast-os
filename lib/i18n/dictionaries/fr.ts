@@ -107,8 +107,8 @@ const fr: Dictionary = {
     tour: {
       title: "Voir le vrai produit", lead: "Ce sont des captures de NEXVO, pas des maquettes. Choisissez un écran.",
       note: "écran réel, données de démonstration",
-      tabs: { dashboard: "Vue d'ensemble", iot: "Capteurs", invoice: "Facturation", field: "Téléphone terrain" },
-      captions: { dashboard: "Avancement du jour, tendance sur 14 jours, échecs et tonnage en un coup d'œil.", iot: "Alertes de remplissage, prévisions et appareils — la collecte reste une décision humaine.", invoice: "Factures issues du travail réalisé, avec paiements, PDF et e-mail.", field: "Les équipes démarrent, photographient, pèsent et terminent depuis un simple téléphone Android." },
+      tabs: { dashboard: "Vue d'ensemble", iot: "Capteurs", invoice: "Facturation", field: "Téléphone terrain", recycling: "Recyclage" },
+      captions: { dashboard: "Avancement du jour, tendance sur 14 jours, échecs et tonnage en un coup d'œil.", iot: "Alertes de remplissage, prévisions et appareils — la collecte reste une décision humaine.", invoice: "Factures issues du travail réalisé, avec paiements, PDF et e-mail.", field: "Les équipes démarrent, photographient, pèsent et terminent depuis un simple téléphone Android, même sans réseau : tout se synchronise au retour de la connexion.", recycling: "Taux de valorisation par matière et par destination, calculé à partir des tickets de pesée." },
     },
     sensors: {
       title: "Des capteurs qui disent quels bacs vider",
@@ -119,7 +119,7 @@ const fr: Dictionary = {
     eyebrow: "L'exploitation des déchets, enfin traçable",
     title: "Pilotez chaque collecte, de la demande à la facture payée.",
     lead:
-      "NEXVO offre aux entreprises privées de collecte un seul outil pour les clients, les contrats, la planification, les preuves terrain et les créances — et offre aux communes un moyen vérifié d'agir sur les signalements citoyens.",
+      "NEXVO offre aux entreprises privées de collecte un seul outil pour les clients, les contrats, la planification, les preuves terrain, le recyclage et les créances — et offre aux communes un moyen vérifié d'agir sur les signalements citoyens.",
     ctaPrimary: "Démarrer un essai de 30 jours",
     ctaSecondary: "Voir le fonctionnement",
     flowTitle: "Un dossier continu",
@@ -145,7 +145,18 @@ const fr: Dictionary = {
       evidence: { title: "La preuve par défaut", body: "Photos avant/après, tickets de pesée et horodatages sont rattachés à l'ordre de travail — utiles en cas de litige et de revue de contrat." },
       bilingual: { title: "Arabe, français, anglais", body: "Arabe de droite à gauche complet, pas une simple traduction. Chaque utilisateur choisit sa langue." },
       tenancy: { title: "Vos données restent les vôtres", body: "Chaque entreprise dispose d'un espace isolé. L'accès est vérifié sur le serveur pour chaque enregistrement, pas seulement masqué dans les menus." },
-      mobile: { title: "Adapté au téléphone de terrain", body: "Grandes commandes, formulaires courts et prise de photo pour les équipes sur la route." },
+      mobile: { title: "Adapté au téléphone de terrain", body: "Grandes commandes, formulaires courts et prise de photo pour les équipes sur la route. Fonctionne sans réseau et envoie tout une seule fois, au retour de la connexion." },
+    },
+    recovery: {
+      title: "Des tonnes collectées aux tonnes valorisées",
+      body: "Chaque ticket de pesée indique la matière et la destination du chargement : les chiffres de valorisation viennent de vos opérations, pas d’estimations.",
+      cta: "Voir tous les modules",
+      items: {
+        recycling: { title: "Recyclage et valorisation", body: "Taux de valorisation par matière et destination, attestations pour vos clients, classification selon le décret 06-104." },
+        yard: { title: "Centre de tri", body: "Achats auprès des fournisseurs et récupérateurs, balles avec étiquette QR, stock, ventes, bilan matière et marge." },
+        hazardous: { title: "Déchets spéciaux dangereux", body: "Autorisations de transport, mouvements avec étiquettes, réception et traitement, données pour la déclaration annuelle." },
+        territory: { title: "Territoire", body: "Rapports par commune face à vos objectifs, points d’apport volontaire avec taux de remplissage, campagnes de tri comparées avant/après." },
+      },
     },
     civicTitle: "Pour les communes : des signalements citoyens vérifiés",
     civicBody:
