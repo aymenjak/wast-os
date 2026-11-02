@@ -11,7 +11,7 @@
 | 6 Business MVP | ✅ | Auth, workspaces, customers, contracts, requests, work orders, field evidence |
 | 7 Commercial ops | ✅ core | Fleet, invoicing, payments, reports. Missing: quotations, credit notes, PDF |
 | 8 Civic pilot | ✅ core | Reports, verification, duplicates, assignment, map, analytics. Missing: contractor assignment, SMS |
-| 9 Hardening | ⏳ next | See below |
+| 9 Hardening | 🟡 | Pre-pilot review done (PILOT-READINESS.md); remaining items below |
 | 10 Launch | ⏳ | Pilots → paid conversion |
 
 ## Done in v2 (2026-10-31)
@@ -23,6 +23,10 @@ Redesign ("Kerbside"), recurring schedules, container tracking, ops map, route s
 Overview dashboard rebuilt with validated charts; server-side tables (search, sort, filters, pagination, Excel/CSV) on customers, work orders, invoices, containers; receivables aging; monthly collection certificate (staff and portal); online payment adapter (Chargily, test mode); remote support (tickets, customer-granted read-only access, staff console, audit); optional AI suggestions (civic triage, operations brief); shared rate limiter, login lockout, nonce CSP.
 
 Platform owner console (organizations, subscriptions, verification, suspension, plans, staff, accounts, audit). Two-step verification (mandatory for staff). Automatic NEXVO subscription billing (off by default). Per-organization Chargily accounts. IoT: fill sensors, GPS trackers, alerts, fill forecast. LoRaWAN (ChirpStack v4, TTN v3). Live vehicles on the dispatch map. Invoice emails (outbox + SMTP).
+
+## Done in round 4 (2026-11-01)
+
+Recycling R1 (material and destination per weight ticket, recovery rate, recovery certificates, décret 06-104 classification, Law 25-02 destination kinds). Special hazardous waste (transport authorisations, movements under décret 04-409 with labels, reception and treatment, data for the décret 05-315 annual declaration). R2 sorting yard (suppliers and collectors, purchases, bales with QR labels, stock, sales, mass balance, margin). R3 territory (commune/wilaya reports against targets, drop-off points, sorting campaigns). Pre-pilot review (security scan, append-only audit trail, backup/restore drill, 40k-order load test, phone field test). Offline driver mode (IndexedDB outbox, idempotent sync, service worker). Public pages updated to describe these modules.
 
 ## Next milestone (M2): pilot-ready hardening — acceptance tests
 
@@ -43,6 +47,6 @@ Platform owner console (organizations, subscriptions, verification, suspension, 
 - Accountant validation of the invoice PDF layout; streaming answers for the assistant; MQTT gateways.
 - Contractor assignment: municipality → provider tenant work orders with SLA reporting.
 - Quotations and credit notes; live online payments (after merchant onboarding and owner approval).
-- Offline-tolerant field app (PWA queue).
+- Offline mode: wipe phone data on sign-out, iOS Safari check on real devices, background sync.
 - NEXVO Market — gated on evidence of supply, buyer demand, material specs and a settlement model.
 - Eco Points — gated on an approved, costed, abuse-resistant policy.

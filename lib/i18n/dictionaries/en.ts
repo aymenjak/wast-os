@@ -101,7 +101,7 @@ const en = {
   },
   home: {
     marqueeLabel: "What NEXVO covers",
-    marquee: "Collection requests|Daily dispatch board|Live vehicles on the map|Photos and weighbridge tickets|Contracts and recurring rounds|Container tracking|Invoices with 19 % VAT|PDF invoices by email|CIB / Edahabia online payment|Fill-level sensors (LoRaWAN)|Bin fire alerts|AI assistant|Citizen reports for municipalities|Arabic, French, English|Two-step verification",
+    marquee: "Collection requests|Daily dispatch board|Live vehicles on the map|Photos and weighbridge tickets|Contracts and recurring rounds|Container tracking|Invoices with 19 % VAT|PDF invoices by email|CIB / Edahabia online payment|Fill-level sensors (LoRaWAN)|Bin fire alerts|AI assistant|Citizen reports for municipalities|Arabic, French, English|Two-step verification|Recycling and recovery rate|Sorting yard: purchases, bales, sales|Special hazardous waste: movements and annual declaration|Drop-off points and sorting campaigns|Driver app that works offline",
     tour: {
       title: "See the real product", lead: "These are screenshots of NEXVO itself, not mock-ups. Pick a screen.",
       note: "real screen, synthetic demo data",
@@ -161,11 +161,16 @@ const en = {
       contracts: { title: "Contracts", body: "Service lines per location and waste category, prices per collection, tonne or month, renewal reminders." },
       requests: { title: "Requests", body: "One-time requests from staff or the customer portal, validated before they become work." },
       dispatch: { title: "Dispatch & routing", body: "Daily board by team, vehicle availability, suggested stop order." },
-      field: { title: "Field execution", body: "Start, complete or fail with reason; photos, weight tickets, customer confirmation." },
+      field: { title: "Field execution", body: "Start, complete or fail with reason; photos, weight tickets, customer confirmation. Drivers keep working without network; it syncs when the connection returns." },
       fleet: { title: "Fleet", body: "Vehicles, capacity, status, maintenance and inspection log." },
       billing: { title: "Invoicing & receivables", body: "Invoices from completed work, sequential numbering, partial payments, reversals, outstanding balance." },
-      reports: { title: "Reports", body: "Completion rate, failed attempts by reason, tonnage by category, vehicle use, receivables. CSV export." },
+      reports: { title: "Reports", body: "Completion rate, failed attempts by reason, tonnage by category, vehicle use, receivables. CSV and Excel export." },
       portal: { title: "Customer portal", body: "Customers submit requests, follow work orders, confirm or dispute service, see invoices." },
+      containers: { title: "Containers", body: "Skips and bins by code: delivered, swapped, removed, with history per customer site." },
+      sensors: { title: "Sensors & live map", body: "Fill-level sensors and GPS trackers (direct or via ChirpStack / The Things Stack), alerts, forecasts, vehicles on the map." },
+      recycling: { title: "Recycling & recovery", body: "Material and destination on every weight ticket, recovery rate, recovery certificates for customers, décret 06-104 classification." },
+      yard: { title: "Sorting yard", body: "Purchases from suppliers and collectors, bales with QR labels, stock, sales, mass balance and margin." },
+      hazardous: { title: "Special hazardous waste", body: "Transport authorisations, movements with labels, reception and treatment, data for the annual declaration (décret 05-315)." },
     },
   },
   civicPage: {
@@ -179,6 +184,10 @@ const en = {
     },
     pilotNote:
       "Municipal deployment follows the public procurement framework (Law 23-12). We start with pilots agreed with each commune.",
+    territory: {
+      title: "Territory: what is sorted where",
+      body: "Reports per commune and wilaya against the targets you set, voluntary drop-off points with their containers and fill levels, and sorting campaigns compared before and after over the same period (a comparison, not a measure of effect).",
+    },
     reportCta: "Report a problem",
     trackCta: "Track a report",
   },

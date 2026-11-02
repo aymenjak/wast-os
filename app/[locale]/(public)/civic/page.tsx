@@ -23,6 +23,10 @@ export default async function CivicPage({ params }: { params: Promise<{ locale: 
           </li>
         ))}
       </ol>
+      <section className="mt-14 max-w-3xl border-t-2 border-ink-900 pt-4" aria-labelledby="civic-territory">
+        <h2 id="civic-territory" className="text-xl font-semibold text-ink-900">{d.civicPage.territory.title}</h2>
+        <p className="mt-2 leading-relaxed text-ink-700">{d.civicPage.territory.body}</p>
+      </section>
       <p className="mt-12 max-w-2xl rounded-[var(--radius-card)] bg-ink-50 p-4 text-sm text-ink-700">{d.civicPage.pilotNote}</p>
       <div className="mt-8 flex flex-wrap gap-3">
         <ButtonLink href={`/${locale}/civic/report`} size="lg">{d.civicPage.reportCta}</ButtonLink>

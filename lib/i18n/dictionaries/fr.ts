@@ -103,7 +103,7 @@ const fr: Dictionary = {
   },
   home: {
     marqueeLabel: "Ce que couvre NEXVO",
-    marquee: "Demandes de collecte|Planning quotidien|Véhicules en direct sur la carte|Photos et tickets de pesée|Contrats et tournées récurrentes|Suivi des conteneurs|Factures avec TVA 19 %|Factures PDF par e-mail|Paiement CIB / Edahabia|Capteurs de remplissage (LoRaWAN)|Alertes incendie de bac|Assistant IA|Signalements citoyens pour les communes|Arabe, français, anglais|Validation en deux étapes",
+    marquee: "Demandes de collecte|Planning quotidien|Véhicules en direct sur la carte|Photos et tickets de pesée|Contrats et tournées récurrentes|Suivi des conteneurs|Factures avec TVA 19 %|Factures PDF par e-mail|Paiement CIB / Edahabia|Capteurs de remplissage (LoRaWAN)|Alertes incendie de bac|Assistant IA|Signalements citoyens pour les communes|Arabe, français, anglais|Validation en deux étapes|Recyclage et taux de valorisation|Centre de tri : achats, balles, ventes|Déchets spéciaux dangereux : mouvements et déclaration annuelle|Points d’apport volontaire et campagnes de tri|Application chauffeur utilisable hors ligne",
     tour: {
       title: "Voir le vrai produit", lead: "Ce sont des captures de NEXVO, pas des maquettes. Choisissez un écran.",
       note: "écran réel, données de démonstration",
@@ -163,11 +163,16 @@ const fr: Dictionary = {
       contracts: { title: "Contrats", body: "Lignes de service par site et catégorie de déchets, prix par collecte, par tonne ou par mois, rappels de renouvellement." },
       requests: { title: "Demandes", body: "Demandes ponctuelles du personnel ou du portail client, validées avant de devenir du travail." },
       dispatch: { title: "Planification et tournées", body: "Tableau journalier par équipe, disponibilité des véhicules, ordre de passage suggéré." },
-      field: { title: "Exécution terrain", body: "Démarrer, terminer ou échouer avec motif ; photos, tickets de pesée, confirmation client." },
+      field: { title: "Exécution terrain", body: "Démarrer, terminer ou échouer avec motif ; photos, tickets de pesée, confirmation client. Les chauffeurs continuent sans réseau ; la synchronisation se fait au retour de la connexion." },
       fleet: { title: "Flotte", body: "Véhicules, capacité, statut, journal d'entretien et d'inspection." },
       billing: { title: "Facturation et créances", body: "Factures issues du travail réalisé, numérotation séquentielle, paiements partiels, annulations, encours." },
-      reports: { title: "Rapports", body: "Taux de réalisation, échecs par motif, tonnage par catégorie, utilisation des véhicules, créances. Export CSV." },
+      reports: { title: "Rapports", body: "Taux de réalisation, échecs par motif, tonnage par catégorie, utilisation des véhicules, créances. Export CSV et Excel." },
       portal: { title: "Portail client", body: "Le client soumet ses demandes, suit les ordres, confirme ou conteste le service, consulte ses factures." },
+      containers: { title: "Conteneurs", body: "Bennes et bacs par code : livrés, échangés, retirés, avec historique par site client." },
+      sensors: { title: "Capteurs et carte en direct", body: "Capteurs de remplissage et traceurs GPS (en direct ou via ChirpStack / The Things Stack), alertes, prévisions, véhicules sur la carte." },
+      recycling: { title: "Recyclage et valorisation", body: "Matière et destination sur chaque ticket de pesée, taux de valorisation, attestations pour les clients, classification selon le décret 06-104." },
+      yard: { title: "Centre de tri", body: "Achats auprès des fournisseurs et récupérateurs, balles avec étiquette QR, stock, ventes, bilan matière et marge." },
+      hazardous: { title: "Déchets spéciaux dangereux", body: "Autorisations de transport, mouvements avec étiquettes, réception et traitement, données pour la déclaration annuelle (décret 05-315)." },
     },
   },
   civicPage: {
@@ -181,6 +186,10 @@ const fr: Dictionary = {
     },
     pilotNote:
       "Le déploiement communal suit le cadre des marchés publics (loi 23-12). Nous commençons par des pilotes convenus avec chaque commune.",
+    territory: {
+      title: "Territoire : ce qui est trié et où",
+      body: "Rapports par commune et wilaya face aux objectifs que vous fixez, points d’apport volontaire avec leurs conteneurs et taux de remplissage, et campagnes de tri comparées avant/après sur une même durée (une comparaison, pas une mesure d’effet).",
+    },
     reportCta: "Signaler un problème",
     trackCta: "Suivre un signalement",
   },

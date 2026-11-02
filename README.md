@@ -40,7 +40,7 @@ npm run test:integration        # real Postgres+PostGIS test DB
 npm run build && npm run test:e2e
 ```
 
-Last recorded run (2026-10-31): 211 unit/integration tests and 41 E2E tests passing (details in `TEST-PLAN.md`).
+Last recorded run (2026-11-01): 57 unit, 208 integration and 58 E2E tests passing (details in `TEST-PLAN.md`).
 
 ## Documentation map
 

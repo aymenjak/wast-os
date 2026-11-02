@@ -1,7 +1,7 @@
 import { getDictionary } from "@/lib/i18n";
 import type { Locale } from "@/lib/i18n/config";
 import { ButtonLink } from "@/components/ui/button";
-import { BarChart3, ClipboardCheck, FileText, Receipt, Route, Smartphone, Truck, Users, Globe } from "lucide-react";
+import { BarChart3, ClipboardCheck, FileText, Receipt, Route, Smartphone, Truck, Users, Globe, Container, Radio, Recycle, Warehouse, TriangleAlert } from "lucide-react";
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: Locale }> }) {
   return { title: getDictionary((await params).locale).businessPage.title };
@@ -13,7 +13,8 @@ export default async function BusinessPage({ params }: { params: Promise<{ local
   const m = d.businessPage.modules;
   const items = [
     [Users, m.crm], [FileText, m.contracts], [ClipboardCheck, m.requests], [Route, m.dispatch], [Smartphone, m.field],
-    [Truck, m.fleet], [Receipt, m.billing], [BarChart3, m.reports], [Globe, m.portal],
+    [Truck, m.fleet], [Container, m.containers], [Radio, m.sensors], [Recycle, m.recycling], [Warehouse, m.yard], [TriangleAlert, m.hazardous],
+    [Receipt, m.billing], [BarChart3, m.reports], [Globe, m.portal],
   ] as const;
   return (
     <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
