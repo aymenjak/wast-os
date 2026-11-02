@@ -200,122 +200,207 @@
     "section": "شركة الجمع — المالك"
   },
   {
-    "file": "41-platform-login-ok.png",
+    "file": "41-recycling.png",
+    "title": "الرسكلة: نسبة التثمين حسب المادة والوجهة",
+    "section": "الرسكلة والتثمين"
+  },
+  {
+    "file": "42-recycling-destinations.png",
+    "title": "الوجهات (مراكز الفرز، المعيدون، المفارغ)",
+    "section": "الرسكلة والتثمين"
+  },
+  {
+    "file": "43-hazardous.png",
+    "title": "النفايات الخاصة الخطرة: الرخص والحركات",
+    "section": "الرسكلة والتثمين"
+  },
+  {
+    "file": "44-hazardous-movement.png",
+    "title": "حركة نفايات خطرة: النقل والاستلام والمعالجة",
+    "section": "الرسكلة والتثمين"
+  },
+  {
+    "file": "45-hazardous-labels.png",
+    "title": "ملصقات الطرود (للطباعة)",
+    "section": "الرسكلة والتثمين"
+  },
+  {
+    "file": "46-yard.png",
+    "title": "مركز الفرز: المخزون والرزم",
+    "section": "الرسكلة والتثمين"
+  },
+  {
+    "file": "47-yard-purchases.png",
+    "title": "مشتريات مركز الفرز",
+    "section": "الرسكلة والتثمين"
+  },
+  {
+    "file": "48-yard-purchase.png",
+    "title": "وصل شراء",
+    "section": "الرسكلة والتثمين"
+  },
+  {
+    "file": "49-yard-bale.png",
+    "title": "رزمة مع ملصق QR",
+    "section": "الرسكلة والتثمين"
+  },
+  {
+    "file": "50-yard-sales.png",
+    "title": "مبيعات الرزم",
+    "section": "الرسكلة والتثمين"
+  },
+  {
+    "file": "51-yard-sale.png",
+    "title": "تفاصيل بيع",
+    "section": "الرسكلة والتثمين"
+  },
+  {
+    "file": "52-yard-report.png",
+    "title": "ميزان المواد والهامش",
+    "section": "الرسكلة والتثمين"
+  },
+  {
+    "file": "53-territory.png",
+    "title": "الإقليم: البلديات مقارنة بالأهداف",
+    "section": "الرسكلة والتثمين"
+  },
+  {
+    "file": "54-drop-off.png",
+    "title": "نقاط الجمع الطوعي",
+    "section": "الرسكلة والتثمين"
+  },
+  {
+    "file": "55-campaigns.png",
+    "title": "حملات الفرز: قبل وبعد",
+    "section": "الرسكلة والتثمين"
+  },
+  {
+    "file": "56-platform-login-ok.png",
     "title": "التحقق بخطوتين مفعّل لفريق المنصة",
     "section": "مالك المنصة"
   },
   {
-    "file": "42-platform.png",
+    "file": "57-platform.png",
     "title": "لوحة مالك المنصة",
     "section": "مالك المنصة"
   },
   {
-    "file": "43-platform-tenants.png",
+    "file": "58-platform-tenants.png",
     "title": "كل المؤسسات: بحث وفلاتر",
     "section": "مالك المنصة"
   },
   {
-    "file": "44-platform-tenant.png",
+    "file": "59-platform-tenant.png",
     "title": "مؤسسة: الاشتراك والأعضاء والإيقاف",
     "section": "مالك المنصة"
   },
   {
-    "file": "45-platform-plans.png",
+    "file": "60-platform-plans.png",
     "title": "الباقات والأسعار والحدود",
     "section": "مالك المنصة"
   },
   {
-    "file": "46-platform-billing.png",
+    "file": "61-platform-billing.png",
     "title": "فوترة اشتراكات NEXVO",
     "section": "مالك المنصة"
   },
   {
-    "file": "47-account-security.png",
+    "file": "62-account-security.png",
     "title": "أمان الحساب: التحقق بخطوتين",
     "section": "مالك المنصة"
   },
   {
-    "file": "48-platform-staff.png",
+    "file": "63-platform-staff.png",
     "title": "فريق المنصة والحسابات",
     "section": "مالك المنصة"
   },
   {
-    "file": "49-platform-audit.png",
+    "file": "64-platform-audit.png",
     "title": "سجل التدقيق",
     "section": "مالك المنصة"
   },
   {
-    "file": "50-support-console.png",
+    "file": "65-support-console.png",
     "title": "لوحة الدعم",
     "section": "فريق دعم NEXVO"
   },
   {
-    "file": "51-support-console-ticket.png",
+    "file": "66-support-console-ticket.png",
     "title": "طلب من زبون مع إذن الوصول",
     "section": "فريق دعم NEXVO"
   },
   {
-    "file": "52-support-view.png",
+    "file": "67-support-view.png",
     "title": "عرض الدعم للقراءة فقط (شريط واضح)",
     "section": "فريق دعم NEXVO"
   },
   {
-    "file": "53-app-work-orders.png",
+    "file": "68-app-work-orders.png",
     "title": "عملي اليوم",
     "section": "السائق — على الهاتف"
   },
   {
-    "file": "54-m-work-order.png",
+    "file": "69-m-work-order.png",
     "title": "أمر العمل في الميدان",
     "section": "السائق — على الهاتف"
   },
   {
-    "file": "55-m-menu.png",
+    "file": "70-m-menu.png",
     "title": "القائمة على الهاتف",
     "section": "السائق — على الهاتف"
   },
   {
-    "file": "56-portal.png",
+    "file": "71-m-field.png",
+    "title": "وضع بدون إنترنت: مهامي",
+    "section": "السائق — على الهاتف"
+  },
+  {
+    "file": "72-m-field-offline.png",
+    "title": "مهمة بدون إنترنت: محفوظة على الهاتف",
+    "section": "السائق — على الهاتف"
+  },
+  {
+    "file": "73-portal.png",
     "title": "بوابة الزبون",
     "section": "بوابة الزبون"
   },
   {
-    "file": "57-portal-certificate.png",
+    "file": "74-portal-certificate.png",
     "title": "شهادة الجمع للزبون",
     "section": "بوابة الزبون"
   },
   {
-    "file": "58-app-civic.png",
+    "file": "75-app-civic.png",
     "title": "النظرة المدنية",
     "section": "البلدية — NEXVO المدني"
   },
   {
-    "file": "59-app-civic-queue-status-ALL.png",
+    "file": "76-app-civic-queue-status-ALL.png",
     "title": "قائمة التحقق من البلاغات",
     "section": "البلدية — NEXVO المدني"
   },
   {
-    "file": "60-civic-report.png",
+    "file": "77-civic-report.png",
     "title": "مراجعة بلاغ وقرار",
     "section": "البلدية — NEXVO المدني"
   },
   {
-    "file": "61-app-civic-map.png",
+    "file": "78-app-civic-map.png",
     "title": "خريطة البلاغات",
     "section": "البلدية — NEXVO المدني"
   },
   {
-    "file": "62-civic-fleet.png",
+    "file": "79-civic-fleet.png",
     "title": "فرق البلدية",
     "section": "البلدية — NEXVO المدني"
   },
   {
-    "file": "63-m-home.png",
+    "file": "80-m-home.png",
     "title": "الصفحة الرئيسية على الهاتف",
     "section": "المواطن — على الهاتف"
   },
   {
-    "file": "64-m-report.png",
+    "file": "81-m-report.png",
     "title": "نموذج البلاغ على الهاتف",
     "section": "المواطن — على الهاتف"
   }

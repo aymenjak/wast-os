@@ -135,6 +135,35 @@ async function firstHref(page, path, selector) {
   await c.close();
 }
 
+// ── Recycling, hazardous waste, sorting yard, territory (owner) ──
+{
+  const c = await ctx(); const p = await c.newPage();
+  await login(p, "owner@demo-collecte.test");
+  const S = "الرسكلة والتثمين";
+  await shot(p, "/ar/app/recycling", "الرسكلة: نسبة التثمين حسب المادة والوجهة", S, { name: "recycling" });
+  await shot(p, "/ar/app/recycling/destinations", "الوجهات (مراكز الفرز، المعيدون، المفارغ)", S, { name: "recycling-destinations" });
+  await shot(p, "/ar/app/recycling/hazardous", "النفايات الخاصة الخطرة: الرخص والحركات", S, { name: "hazardous" });
+  const hz = await firstHref(p, "/ar/app/recycling/hazardous", "a[href*='/recycling/hazardous/c']");
+  if (hz) {
+    await shot(p, hz, "حركة نفايات خطرة: النقل والاستلام والمعالجة", S, { name: "hazardous-movement" });
+    await shot(p, `${hz}/labels`, "ملصقات الطرود (للطباعة)", S, { name: "hazardous-labels" });
+  }
+  await shot(p, "/ar/app/recycling/yard", "مركز الفرز: المخزون والرزم", S, { name: "yard" });
+  await shot(p, "/ar/app/recycling/yard/purchases", "مشتريات مركز الفرز", S, { name: "yard-purchases" });
+  const pu = await firstHref(p, "/ar/app/recycling/yard/purchases", "a[href*='/yard/purchases/c']");
+  if (pu) await shot(p, pu, "وصل شراء", S, { name: "yard-purchase" });
+  const bale = await firstHref(p, "/ar/app/recycling/yard", "a[href*='/yard/bales/c']");
+  if (bale) await shot(p, bale, "رزمة مع ملصق QR", S, { name: "yard-bale" });
+  await shot(p, "/ar/app/recycling/yard/sales", "مبيعات الرزم", S, { name: "yard-sales" });
+  const sa = await firstHref(p, "/ar/app/recycling/yard/sales", "a[href*='/yard/sales/c']");
+  if (sa) await shot(p, sa, "تفاصيل بيع", S, { name: "yard-sale" });
+  await shot(p, "/ar/app/recycling/yard/report", "ميزان المواد والهامش", S, { name: "yard-report" });
+  await shot(p, "/ar/app/recycling/territory", "الإقليم: البلديات مقارنة بالأهداف", S, { name: "territory" });
+  await shot(p, "/ar/app/recycling/drop-off", "نقاط الجمع الطوعي", S, { name: "drop-off", wait: 1000 });
+  await shot(p, "/ar/app/recycling/campaigns", "حملات الفرز: قبل وبعد", S, { name: "campaigns" });
+  await c.close();
+}
+
 // ── Platform owner ──
 {
   const c = await ctx(); const p = await c.newPage();
@@ -181,6 +210,17 @@ async function firstHref(page, path, selector) {
   await p.goto(base + "/ar/app/work-orders", { waitUntil: "networkidle" });
   await p.locator("button[aria-controls=app-mobile-nav]").click();
   await shot(p, null, "القائمة على الهاتف", S, { name: "m-menu", full: false });
+  // Offline mode: jobs list, then a job started with the network cut (saved on the phone, waiting to send).
+  await shot(p, "/ar/field", "وضع بدون إنترنت: مهامي", S, { name: "m-field", wait: 1500 });
+  const job = p.locator("main ul button").first();
+  if (await job.count()) {
+    await c.setOffline(true);
+    await job.click();
+    const start = p.getByRole("button", { name: "ابدأ" });
+    if (await start.count()) await start.click();
+    await shot(p, null, "مهمة بدون إنترنت: محفوظة على الهاتف", S, { name: "m-field-offline" });
+    // Leave the demo database unchanged: the queued action stays on this throwaway browser.
+  }
   await c.close();
 }
 

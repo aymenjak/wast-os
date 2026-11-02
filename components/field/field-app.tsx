@@ -127,7 +127,11 @@ export function FieldApp({ membershipId }: { membershipId: string }) {
     void sync();
   }, [db, refreshOutbox, sync]);
 
-  const jobs = useMemo(() => overlay(bundle?.jobs ?? [], outbox), [bundle, outbox]);
+  // Work still to do comes first (in progress, then assigned), then finished jobs; by day within each group.
+  const jobs = useMemo(() => {
+    const rank: Record<string, number> = { IN_PROGRESS: 0, ASSIGNED: 1 };
+    return overlay(bundle?.jobs ?? [], outbox).sort((a, b) => (rank[a.status] ?? 2) - (rank[b.status] ?? 2) || a.scheduledDate.localeCompare(b.scheduledDate) || a.number.localeCompare(b.number));
+  }, [bundle, outbox]);
   const pending = outbox.filter((o) => !o.error).length;
   const rejected = outbox.filter((o) => o.error).length;
   const job = selected ? jobs.find((j) => j.id === selected) ?? null : null;

@@ -29,7 +29,7 @@ Assistant screenshots: `docs/screenshots/assistant/` (taken in local demo mode: 
 
 Optional integrations (off unless configured, see `DEPLOYMENT.md`): Chargily online payment (`CHARGILY_SECRET_KEY`, test mode by default) and AI suggestions (`ANTHROPIC_API_KEY`).
 
-All screens in Arabic: `docs/screenshots/ar/` (64 screens, all roles, desktop and mobile; regenerate with `node scripts/screenshots-ar.mjs`).
+All screens in Arabic: `docs/screenshots/ar/` (81 screens, all roles and modules incl. recycling, sorting yard, hazardous waste, territory and offline mode, desktop and mobile; regenerate with `node scripts/screenshots-ar.mjs`).
 
 ## Tests
 
