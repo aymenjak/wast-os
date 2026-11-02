@@ -1343,6 +1343,27 @@ const en = {
     stale: "Saved list: it refreshes when the network is back.",
     storageError: "This browser cannot save data (private mode?). Offline mode will not work.",
   },
+  founders: {
+    eyebrow: "The team",
+    title: "The people behind NEXVO",
+    lead: "An Algerian company, founded and built in Algeria.",
+    more: "Meet the team",
+    chahinez: {
+      name: "Chahinez Lahlali",
+      role: "Founder of NEXVO",
+      short: "Originator of the project idea.",
+      bio: "Chahinez Lahlali founded NEXVO and is the originator of the project idea.",
+    },
+    aymen: {
+      name: "Aymen Rouagha",
+      role: "Co-founder · Head of information systems and infrastructure · Lead developer",
+      short: "Designs and builds the NEXVO platform.",
+      bio: "Software engineer with a Master's degree in artificial intelligence. Since January 2025 he has led the development of GME ERP, a management platform for car workshops, from business requirements to production use. He designs and builds NEXVO: architecture, database, security, infrastructure and deployment.",
+      highlights: "Master's in computer science, artificial intelligence: Université Mohamed Khider, Biskra (2022)|Founder and lead developer of GME ERP (since 2025): customers, work orders, stock, invoicing, reports|Full-stack: Next.js, React, TypeScript, Node.js, PostgreSQL, Prisma, Docker|Applied AI: LLM integration, OCR, document intelligence",
+      linkedin: "LinkedIn",
+      github: "GitHub",
+    },
+  },
   footer: {
     tagline: "Waste operations, made traceable.",
     rights: "© {year} NEXVO. Pilot in Algeria.",

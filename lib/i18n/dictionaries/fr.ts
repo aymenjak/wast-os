@@ -1345,6 +1345,27 @@ const fr: Dictionary = {
     stale: "Liste enregistrée : elle se met à jour au retour du réseau.",
     storageError: "Ce navigateur ne peut pas enregistrer de données (navigation privée ?). Le mode hors ligne ne fonctionnera pas.",
   },
+  founders: {
+    eyebrow: "L’équipe",
+    title: "Les personnes derrière NEXVO",
+    lead: "Une entreprise algérienne, fondée et développée en Algérie.",
+    more: "Découvrir l’équipe",
+    chahinez: {
+      name: "Chahinez Lahlali",
+      role: "Fondatrice de NEXVO",
+      short: "À l’origine de l’idée du projet.",
+      bio: "Chahinez Lahlali a fondé NEXVO et est à l’origine de l’idée du projet.",
+    },
+    aymen: {
+      name: "Aymen Rouagha",
+      role: "Cofondateur · Directeur des systèmes d’information et des infrastructures · Développeur principal",
+      short: "Conçoit et développe la plateforme NEXVO.",
+      bio: "Ingénieur logiciel titulaire d’un master en intelligence artificielle. Depuis janvier 2025, il pilote le développement de GME ERP, une plateforme de gestion pour ateliers automobiles, des besoins métier jusqu’à l’utilisation en production. Il conçoit et développe NEXVO : architecture, base de données, sécurité, infrastructure et déploiement.",
+      highlights: "Master en informatique, intelligence artificielle : Université Mohamed Khider, Biskra (2022)|Fondateur et développeur principal de GME ERP (depuis 2025) : clients, ordres de travail, stocks, facturation, rapports|Full-stack : Next.js, React, TypeScript, Node.js, PostgreSQL, Prisma, Docker|IA appliquée : intégration de LLM, OCR, intelligence documentaire",
+      linkedin: "LinkedIn",
+      github: "GitHub",
+    },
+  },
   footer: {
     tagline: "L'exploitation des déchets, enfin traçable.",
     rights: "© {year} NEXVO. Pilote en Algérie.",

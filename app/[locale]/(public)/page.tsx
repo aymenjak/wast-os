@@ -7,6 +7,7 @@ import { SpotlightCard } from "@/components/home/spotlight-card";
 import { ProductTour } from "@/components/home/product-tour";
 import { SensorBin } from "@/components/home/sensor-bin";
 import { Marquee } from "@/components/home/marquee";
+import { Founders } from "@/components/home/founders";
 import { Recycle, TriangleAlert, Warehouse, MapPinned } from "lucide-react";
 
 export default async function Home({ params }: { params: Promise<{ locale: Locale }> }) {
@@ -124,6 +125,17 @@ export default async function Home({ params }: { params: Promise<{ locale: Local
               </Reveal>
             ))}
           </div>
+        </div>
+      </section>
+
+      <section className="border-t border-ink-200 bg-ink-50" aria-labelledby="founders-title">
+        <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+          <Reveal>
+            <p className="text-sm font-semibold uppercase tracking-wide text-brand-800">{d.founders.eyebrow}</p>
+            <h2 id="founders-title" className="mt-2 max-w-2xl text-3xl leading-tight text-ink-950 sm:text-4xl">{d.founders.title}</h2>
+            <p className="mt-3 max-w-2xl text-ink-700">{d.founders.lead}</p>
+          </Reveal>
+          <Reveal delay={0.1} className="mt-10"><Founders d={d} locale={locale} variant="compact" /></Reveal>
         </div>
       </section>
 
