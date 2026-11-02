@@ -4,13 +4,16 @@ import type { Dictionary } from "@/lib/i18n/dictionaries/en";
 import type { Locale } from "@/lib/i18n/config";
 
 /**
- * The founding team, as provided by the founders themselves (photos and roles; Aymen Rouagha's details come from his CV).
+ * The founding team, as provided by the founders themselves (photos and roles; the biographies and highlights come only from each founder's CV).
  * "compact" for the home page, "full" for the About page. Names are rendered with <bdi> so Latin and Arabic mix safely.
  */
 export function Founders({ d, locale, variant }: { d: Dictionary; locale: Locale; variant: "compact" | "full" }) {
   const f = d.founders;
   const people = [
-    { key: "chahinez", photo: "/team/chahinez-lahlali.jpg", p: f.chahinez, highlights: [] as string[], links: [] as { href: string; label: string }[] },
+    {
+      key: "chahinez", photo: "/team/chahinez-lahlali.jpg", p: f.chahinez, highlights: f.chahinez.highlights.split("|"),
+      links: [{ href: "https://www.linkedin.com/in/chahinez-lahlali-b26a96390", label: f.chahinez.linkedin }],
+    },
     {
       key: "aymen", photo: "/team/aymen-rouagha.jpg", p: f.aymen, highlights: f.aymen.highlights.split("|"),
       links: [

@@ -1352,9 +1352,11 @@ const fr: Dictionary = {
     more: "Découvrir l’équipe",
     chahinez: {
       name: "Chahinez Lahlali",
-      role: "Fondatrice de NEXVO",
-      short: "À l’origine de l’idée du projet.",
-      bio: "Chahinez Lahlali a fondé NEXVO et est à l’origine de l’idée du projet.",
+      role: "Fondatrice de NEXVO · Cheffe de projet",
+      short: "À l’origine de l’idée du projet ; formée à la gestion des déchets urbains.",
+      bio: "Chahinez Lahlali a fondé NEXVO et est à l’origine de l’idée du projet. Étudiante en gestion des déchets urbains, elle a fait de NEXVO, une solution numérique de gestion des déchets urbains, son projet de fin d’études. Elle pilote le modèle économique, la validation du marché et la préparation des pilotes, et coordonne le développement technique et terrain.",
+      highlights: "Licence professionnelle en gestion des déchets urbains (en cours) : Université Larbi Ben M’hidi, Oum El Bouaghi ; projet de fin d’études : NEXVO|Stage chez Clean Bat : organisation de l’entreprise, effectifs et opérations de collecte, méthodes de travail et stratégies de collecte|Planification de la collecte, ArcGIS, géolocalisation et solutions GPS, analyse de données|Modèle économique, validation du marché, gestion de projet, prise de parole en public",
+      linkedin: "LinkedIn",
     },
     aymen: {
       name: "Aymen Rouagha",

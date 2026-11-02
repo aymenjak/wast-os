@@ -1350,9 +1350,11 @@ const en = {
     more: "Meet the team",
     chahinez: {
       name: "Chahinez Lahlali",
-      role: "Founder of NEXVO",
-      short: "Originator of the project idea.",
-      bio: "Chahinez Lahlali founded NEXVO and is the originator of the project idea.",
+      role: "Founder of NEXVO · Project lead",
+      short: "Originator of the project idea; trained in urban waste management.",
+      bio: "Chahinez Lahlali founded NEXVO and is the originator of the project idea. A student in urban waste management, she made NEXVO, a digital solution for urban waste management, her graduation project. She leads the business model, market validation and pilot preparation, and coordinates technical and field development.",
+      highlights: "Professional bachelor's in urban waste management (in progress): Université Larbi Ben M'hidi, Oum El Bouaghi; graduation project: NEXVO|Internship at Clean Bat: company organisation, workforce and waste collection operations, work methods and collection strategies|Waste collection planning, ArcGIS, geolocation and GPS-based solutions, data analysis|Business model development, market validation, project management, public speaking",
+      linkedin: "LinkedIn",
     },
     aymen: {
       name: "Aymen Rouagha",
