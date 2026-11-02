@@ -27,6 +27,8 @@ export default defineConfig({
       RATE_LIMIT_SCALE: "50",
       APP_URL: `http://localhost:${PORT}`,
       PAYMENT_WEBHOOK_SECRET: "e2e-webhook-secret-0123456789",
+      // Synthetic test-only key (same public value as vitest.config.ts); CI has no .env, so the server needs it here.
+      APP_ENCRYPTION_KEY: "dGVzdC1vbmx5LWtleS0wMTIzNDU2Nzg5YWJjZGVmMDE=",
     },
   },
 });
