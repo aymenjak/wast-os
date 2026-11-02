@@ -1,0 +1,41 @@
+name: CI
+on:
+  push:
+    branches: [main, "claude/**"]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_USER: nexvo
+          POSTGRES_PASSWORD: nexvo_ci
+          POSTGRES_DB: nexvo_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U nexvo -d nexvo_test" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://nexvo:nexvo_ci@localhost:5432/nexvo_test
+      TEST_DATABASE_URL: postgresql://nexvo:nexvo_ci@localhost:5432/nexvo_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npm run typecheck
+      - run: npm audit --omit=dev
+      - run: npm run test:unit
+      # Chromium first: the invoice-PDF integration tests render real PDFs (server/pdf.ts needs CHROMIUM_PATH).
+      - run: npx playwright install --with-deps chromium
+      - name: Point PDF rendering at the installed Chromium
+        run: echo "CHROMIUM_PATH=$(node -e "console.log(require('@playwright/test').chromium.executablePath())")" >> "$GITHUB_ENV"
+      - run: npm run test:integration
+      - run: npm run build
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with: { name: playwright, path: test-results }

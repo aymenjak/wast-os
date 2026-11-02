@@ -1,144 +1,139 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@import "@fontsource-variable/archivo/wdth.css";
+@import "@fontsource-variable/noto-kufi-arabic";
 
-@layer base {
-  :root {
-    --background: 210 20% 98%;
-    --foreground: 222 47% 11%;
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-    --primary: 160 84% 39%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 210 20% 96%;
-    --secondary-foreground: 222 47% 11%;
-    --muted: 210 20% 96%;
-    --muted-foreground: 215 16% 47%;
-    --accent: 199 89% 48%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 100%;
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 100%;
-    --success: 142 71% 45%;
-    --success-foreground: 0 0% 100%;
-    --info: 199 89% 48%;
-    --info-foreground: 0 0% 100%;
-    --border: 214 20% 90%;
-    --input: 214 20% 90%;
-    --ring: 160 84% 39%;
-    --chart-1: 160 84% 39%;
-    --chart-2: 199 89% 48%;
-    --chart-3: 38 92% 50%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 0 72% 51%;
-    --sidebar: 222 47% 11%;
-    --sidebar-foreground: 210 20% 90%;
-    --sidebar-accent: 160 84% 39%;
-    --radius: 0.625rem;
-  }
+/*
+ * NEXVO design tokens — see DESIGN-SYSTEM.md ("Kerbside" direction).
+ * Asphalt neutrals, skip-container green for actions and completion,
+ * hi-vis orange reserved for the route signature, "today" and focus (never small text).
+ * All text pairs checked against WCAG 2.2 AA.
+ */
+@theme {
+  --font-sans: "Archivo Variable", "Noto Kufi Arabic Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-arabic: "Noto Kufi Arabic Variable", "Archivo Variable", ui-sans-serif, system-ui, sans-serif;
 
-  .dark {
-    --background: 222 47% 7%;
-    --foreground: 210 20% 92%;
-    --card: 222 47% 10%;
-    --card-foreground: 210 20% 92%;
-    --popover: 222 47% 10%;
-    --popover-foreground: 210 20% 92%;
-    --primary: 160 84% 39%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 222 30% 16%;
-    --secondary-foreground: 210 20% 92%;
-    --muted: 222 30% 16%;
-    --muted-foreground: 215 16% 55%;
-    --accent: 199 89% 48%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 100%;
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 100%;
-    --success: 142 71% 45%;
-    --success-foreground: 0 0% 100%;
-    --info: 199 89% 48%;
-    --info-foreground: 0 0% 100%;
-    --border: 222 30% 18%;
-    --input: 222 30% 18%;
-    --ring: 160 84% 39%;
-    --chart-1: 160 84% 39%;
-    --chart-2: 199 89% 48%;
-    --chart-3: 38 92% 50%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 0 72% 51%;
-    --sidebar: 222 47% 6%;
-    --sidebar-foreground: 210 20% 90%;
-    --sidebar-accent: 160 84% 39%;
-  }
+  --color-ink-950: #141d20;
+  --color-ink-900: #1d2a2e;
+  --color-ink-800: #2a3a3e;
+  --color-ink-700: #3a4b4f;
+  --color-ink-600: #4a5a5e;
+  --color-ink-500: #566468;
+  --color-ink-400: #8a9799;
+  --color-ink-300: #bcc5c5;
+  --color-ink-200: #d9dfde;
+  --color-ink-100: #e5e9e8;
+  --color-ink-50: #edefed;
+
+  --color-brand-900: #0f3326;
+  --color-brand-800: #174634;
+  --color-brand-700: #1f5a44;
+  --color-brand-600: #2a6f55;
+  --color-brand-500: #3a8668;
+  --color-brand-200: #b4d6c6;
+  --color-brand-100: #dcece4;
+  --color-brand-50: #eef6f2;
+
+  --color-hivis-600: #e8590c;
+  --color-hivis-500: #f2661b;
+  --color-hivis-100: #fde6d6;
+  --color-hivis-50: #fff4ec;
+
+  --color-sand-600: #8a5212;
+  --color-sand-100: #f6ecdb;
+
+  --color-info-700: #1d4ed8;
+  --color-info-100: #dbeafe;
+  --color-success-700: #1f5a44;
+  --color-success-100: #dcece4;
+  --color-warning-700: #9a4a07;
+  --color-warning-100: #fdecd8;
+  --color-danger-700: #b42318;
+  --color-danger-100: #fde3e0;
+
+  --radius-control: 0.375rem;
+  --radius-card: 0.625rem;
+
+  --shadow-card: 0 0 #0000;
+  --shadow-pop: 0 12px 32px -8px rgb(20 29 32 / 0.28);
 }
 
 @layer base {
-  * {
-    @apply border-border;
+  html {
+    -webkit-text-size-adjust: 100%;
+    color-scheme: light;
+    /* Keep scrolled-to and keyboard-focused elements clear of the sticky header (h-14) — WCAG 2.4.11. */
+    scroll-padding-top: 4.5rem;
+  }
+  /* Grid items default to min-width:auto and grow to the width of a wide table inside them, which makes the whole page
+     scroll sideways on phones (found in the pre-pilot field test: work-order page, weight-tickets table). Let them shrink
+     so tables scroll inside their own overflow container instead. */
+  .grid > * {
+    min-width: 0;
+  }
+  html[lang="ar"] body {
+    font-family: var(--font-arabic);
+    line-height: 1.75;
   }
   body {
-    @apply bg-background text-foreground;
-    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    @apply bg-ink-50 text-ink-900 antialiased;
+  }
+  /* Headings use Archivo's condensed width: the vernacular of truck livery and road signage. */
+  h1, h2, .display {
+    font-stretch: 80%;
+    letter-spacing: -0.005em;
+  }
+  h1 { font-weight: 700; }
+  html[lang="ar"] h1, html[lang="ar"] h2, html[lang="ar"] .display {
+    font-stretch: 100%;
+    letter-spacing: 0;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-hivis-600);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  /* Identifiers, plates, codes and amounts keep LTR order inside RTL text. */
+  .num {
+    unicode-bidi: isolate;
+    direction: ltr;
+    font-variant-numeric: tabular-nums;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }
 
-@layer utilities {
-  .scrollbar-thin {
-    scrollbar-width: thin;
-    scrollbar-color: hsl(var(--muted-foreground) / 0.3) transparent;
-  }
-  .scrollbar-thin::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-  .scrollbar-thin::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  .scrollbar-thin::-webkit-scrollbar-thumb {
-    background-color: hsl(var(--muted-foreground) / 0.3);
-    border-radius: 3px;
-  }
-  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background-color: hsl(var(--muted-foreground) / 0.5);
-  }
-  .bg-grid {
-    background-image:
-      linear-gradient(to right, hsl(var(--border) / 0.4) 1px, transparent 1px),
-      linear-gradient(to bottom, hsl(var(--border) / 0.4) 1px, transparent 1px);
-    background-size: 24px 24px;
-  }
-  .animate-fade-in {
-    animation: fade-in 0.3s ease-out;
-  }
-  .animate-slide-up {
-    animation: slide-up 0.4s ease-out;
-  }
-  .animate-pulse-ring::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: 50%;
-    background: currentColor;
-    animation: pulse-ring 2s ease-out infinite;
-  }
+/* Leaflet renders LTR internally; keep its controls consistent inside RTL pages. */
+.leaflet-container {
+  font: inherit;
+  direction: ltr;
 }
 
-@keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+/* ─── Route hero: one orchestrated load sequence ─── */
+.route-hero .rh-route { stroke-dasharray: 1; stroke-dashoffset: var(--to); animation: rh-draw var(--draw) cubic-bezier(.45,.05,.35,1) both; }
+@keyframes rh-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: var(--to); } }
+.route-hero .rh-truck { offset-distance: var(--at); offset-rotate: 0deg; animation: rh-drive var(--draw) cubic-bezier(.45,.05,.35,1) both; }
+@keyframes rh-drive { from { offset-distance: 0%; } to { offset-distance: var(--at); } }
+.route-hero .rh-fill { opacity: 0; }
+.route-hero .rh-stop--done .rh-fill { animation: rh-pop 260ms ease-out both; animation-delay: var(--d); }
+.route-hero .rh-stop--done .rh-num { fill: #1d2a2e; animation: rh-num 1ms linear both; animation-delay: var(--d); }
+@keyframes rh-pop { from { opacity: 0; transform: scale(.4); transform-box: fill-box; transform-origin: center; } to { opacity: 1; transform: scale(1); transform-box: fill-box; transform-origin: center; } }
+@keyframes rh-num { to { fill: #ffffff; } }
+.route-hero li .rh-after { opacity: 0; animation: rh-in 200ms ease-out both; animation-delay: var(--d); }
+.route-hero li .rh-before { animation: rh-out 200ms ease-out both; animation-delay: var(--d); }
+@keyframes rh-in { to { opacity: 1; } }
+@keyframes rh-out { to { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .route-hero .rh-route { animation: none; }
+  .route-hero .rh-truck { animation: none; }
+  .route-hero .rh-stop--done .rh-fill, .route-hero li .rh-after { animation: none; opacity: 1; }
+  .route-hero .rh-stop--done .rh-num { animation: none; fill: #ffffff; }
+  .route-hero li .rh-before { animation: none; opacity: 0; }
 }
 
-@keyframes slide-up {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes pulse-ring {
-  0% { transform: scale(0.8); opacity: 0.6; }
-  100% { transform: scale(2.4); opacity: 0; }
-}
+/* Illustration motion (nexvo-illustration skill); only applied through motion-safe: utilities. */
+@keyframes nexvo-route { to { stroke-dashoffset: -26; } }
+@keyframes nexvo-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-1.5px); } }

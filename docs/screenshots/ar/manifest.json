@@ -1,0 +1,407 @@
+[
+  {
+    "file": "01-home.png",
+    "title": "الصفحة الرئيسية",
+    "section": "الموقع العام"
+  },
+  {
+    "file": "02-business.png",
+    "title": "لشركات الجمع",
+    "section": "الموقع العام"
+  },
+  {
+    "file": "03-civic.png",
+    "title": "للبلديات",
+    "section": "الموقع العام"
+  },
+  {
+    "file": "04-pricing.png",
+    "title": "الأسعار",
+    "section": "الموقع العام"
+  },
+  {
+    "file": "05-about.png",
+    "title": "من نحن والاتصال",
+    "section": "الموقع العام"
+  },
+  {
+    "file": "06-register.png",
+    "title": "إنشاء مساحة عمل",
+    "section": "الموقع العام"
+  },
+  {
+    "file": "07-login.png",
+    "title": "تسجيل الدخول",
+    "section": "الموقع العام"
+  },
+  {
+    "file": "08-civic-report.png",
+    "title": "الإبلاغ عن مشكلة (مواطن)",
+    "section": "الموقع العام"
+  },
+  {
+    "file": "09-civic-track.png",
+    "title": "متابعة بلاغ",
+    "section": "الموقع العام"
+  },
+  {
+    "file": "10-app.png",
+    "title": "لوحة النظرة العامة",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "11-command-palette.png",
+    "title": "البحث السريع (Ctrl+K)",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "12-app-requests-status-ALL.png",
+    "title": "طلبات الجمع",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "13-app-requests-new.png",
+    "title": "طلب جمع جديد",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "14-app-dispatch.png",
+    "title": "التخطيط وخريطة الجولات",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "15-route-sheet.png",
+    "title": "ورقة المسار للطباعة",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "16-app-work-orders-status-ALL.png",
+    "title": "أوامر العمل",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "17-work-order.png",
+    "title": "تفاصيل أمر عمل",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "18-app-fleet.png",
+    "title": "الأسطول والفرق",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "19-vehicle.png",
+    "title": "تفاصيل مركبة وسجل الصيانة",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "20-app-containers.png",
+    "title": "الحاويات",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "21-container.png",
+    "title": "تفاصيل حاوية وتنقلاتها",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "22-app-customers.png",
+    "title": "الزبائن",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "23-app-customers-new.png",
+    "title": "زبون جديد",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "24-customer.png",
+    "title": "ملف زبون",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "25-app-contracts.png",
+    "title": "العقود",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "26-contract-new.png",
+    "title": "عقد جديد مع أيام المرور",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "27-contract.png",
+    "title": "تفاصيل عقد",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "28-app-invoices.png",
+    "title": "الفواتير",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "29-invoice.png",
+    "title": "فاتورة مع المدفوعات",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "30-invoice-new.png",
+    "title": "فاتورة جديدة من الأعمال المنجزة",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "31-app-reports.png",
+    "title": "التقارير والتصدير",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "32-app-team.png",
+    "title": "الفريق والدعوات",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "33-app-settings.png",
+    "title": "الإعدادات",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "34-certificate.png",
+    "title": "شهادة جمع شهرية (للطباعة)",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "35-iot.png",
+    "title": "المستشعرات وأجهزة التتبع: تنبيهات وتوقّع الامتلاء",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "36-container-iot.png",
+    "title": "حاوية بمستشعر: القراءات والتوقّع",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "37-billing.png",
+    "title": "اشتراك المؤسسة وفواتير NEXVO",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "38-customers-table.png",
+    "title": "جدول الزبائن: بحث وفرز وتصدير Excel",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "39-support-ticket.png",
+    "title": "طلب دعم ومحادثة",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "40-support.png",
+    "title": "الدعم: طلبات، وإذن وصول مؤقت وسجل الدخول",
+    "section": "شركة الجمع — المالك"
+  },
+  {
+    "file": "41-recycling.png",
+    "title": "الرسكلة: نسبة التثمين حسب المادة والوجهة",
+    "section": "الرسكلة والتثمين"
+  },
+  {
+    "file": "42-recycling-destinations.png",
+    "title": "الوجهات (مراكز الفرز، المعيدون، المفارغ)",
+    "section": "الرسكلة والتثمين"
+  },
+  {
+    "file": "43-hazardous.png",
+    "title": "النفايات الخاصة الخطرة: الرخص والحركات",
+    "section": "الرسكلة والتثمين"
+  },
+  {
+    "file": "44-hazardous-movement.png",
+    "title": "حركة نفايات خطرة: النقل والاستلام والمعالجة",
+    "section": "الرسكلة والتثمين"
+  },
+  {
+    "file": "45-hazardous-labels.png",
+    "title": "ملصقات الطرود (للطباعة)",
+    "section": "الرسكلة والتثمين"
+  },
+  {
+    "file": "46-yard.png",
+    "title": "مركز الفرز: المخزون والرزم",
+    "section": "الرسكلة والتثمين"
+  },
+  {
+    "file": "47-yard-purchases.png",
+    "title": "مشتريات مركز الفرز",
+    "section": "الرسكلة والتثمين"
+  },
+  {
+    "file": "48-yard-purchase.png",
+    "title": "وصل شراء",
+    "section": "الرسكلة والتثمين"
+  },
+  {
+    "file": "49-yard-bale.png",
+    "title": "رزمة مع ملصق QR",
+    "section": "الرسكلة والتثمين"
+  },
+  {
+    "file": "50-yard-sales.png",
+    "title": "مبيعات الرزم",
+    "section": "الرسكلة والتثمين"
+  },
+  {
+    "file": "51-yard-sale.png",
+    "title": "تفاصيل بيع",
+    "section": "الرسكلة والتثمين"
+  },
+  {
+    "file": "52-yard-report.png",
+    "title": "ميزان المواد والهامش",
+    "section": "الرسكلة والتثمين"
+  },
+  {
+    "file": "53-territory.png",
+    "title": "الإقليم: البلديات مقارنة بالأهداف",
+    "section": "الرسكلة والتثمين"
+  },
+  {
+    "file": "54-drop-off.png",
+    "title": "نقاط الجمع الطوعي",
+    "section": "الرسكلة والتثمين"
+  },
+  {
+    "file": "55-campaigns.png",
+    "title": "حملات الفرز: قبل وبعد",
+    "section": "الرسكلة والتثمين"
+  },
+  {
+    "file": "56-platform-login-ok.png",
+    "title": "التحقق بخطوتين مفعّل لفريق المنصة",
+    "section": "مالك المنصة"
+  },
+  {
+    "file": "57-platform.png",
+    "title": "لوحة مالك المنصة",
+    "section": "مالك المنصة"
+  },
+  {
+    "file": "58-platform-tenants.png",
+    "title": "كل المؤسسات: بحث وفلاتر",
+    "section": "مالك المنصة"
+  },
+  {
+    "file": "59-platform-tenant.png",
+    "title": "مؤسسة: الاشتراك والأعضاء والإيقاف",
+    "section": "مالك المنصة"
+  },
+  {
+    "file": "60-platform-plans.png",
+    "title": "الباقات والأسعار والحدود",
+    "section": "مالك المنصة"
+  },
+  {
+    "file": "61-platform-billing.png",
+    "title": "فوترة اشتراكات NEXVO",
+    "section": "مالك المنصة"
+  },
+  {
+    "file": "62-account-security.png",
+    "title": "أمان الحساب: التحقق بخطوتين",
+    "section": "مالك المنصة"
+  },
+  {
+    "file": "63-platform-staff.png",
+    "title": "فريق المنصة والحسابات",
+    "section": "مالك المنصة"
+  },
+  {
+    "file": "64-platform-audit.png",
+    "title": "سجل التدقيق",
+    "section": "مالك المنصة"
+  },
+  {
+    "file": "65-support-console.png",
+    "title": "لوحة الدعم",
+    "section": "فريق دعم NEXVO"
+  },
+  {
+    "file": "66-support-console-ticket.png",
+    "title": "طلب من زبون مع إذن الوصول",
+    "section": "فريق دعم NEXVO"
+  },
+  {
+    "file": "67-support-view.png",
+    "title": "عرض الدعم للقراءة فقط (شريط واضح)",
+    "section": "فريق دعم NEXVO"
+  },
+  {
+    "file": "68-app-work-orders.png",
+    "title": "عملي اليوم",
+    "section": "السائق — على الهاتف"
+  },
+  {
+    "file": "69-m-work-order.png",
+    "title": "أمر العمل في الميدان",
+    "section": "السائق — على الهاتف"
+  },
+  {
+    "file": "70-m-menu.png",
+    "title": "القائمة على الهاتف",
+    "section": "السائق — على الهاتف"
+  },
+  {
+    "file": "71-m-field.png",
+    "title": "وضع بدون إنترنت: مهامي",
+    "section": "السائق — على الهاتف"
+  },
+  {
+    "file": "72-m-field-offline.png",
+    "title": "مهمة بدون إنترنت: محفوظة على الهاتف",
+    "section": "السائق — على الهاتف"
+  },
+  {
+    "file": "73-portal.png",
+    "title": "بوابة الزبون",
+    "section": "بوابة الزبون"
+  },
+  {
+    "file": "74-portal-certificate.png",
+    "title": "شهادة الجمع للزبون",
+    "section": "بوابة الزبون"
+  },
+  {
+    "file": "75-app-civic.png",
+    "title": "النظرة المدنية",
+    "section": "البلدية — NEXVO المدني"
+  },
+  {
+    "file": "76-app-civic-queue-status-ALL.png",
+    "title": "قائمة التحقق من البلاغات",
+    "section": "البلدية — NEXVO المدني"
+  },
+  {
+    "file": "77-civic-report.png",
+    "title": "مراجعة بلاغ وقرار",
+    "section": "البلدية — NEXVO المدني"
+  },
+  {
+    "file": "78-app-civic-map.png",
+    "title": "خريطة البلاغات",
+    "section": "البلدية — NEXVO المدني"
+  },
+  {
+    "file": "79-civic-fleet.png",
+    "title": "فرق البلدية",
+    "section": "البلدية — NEXVO المدني"
+  },
+  {
+    "file": "80-m-home.png",
+    "title": "الصفحة الرئيسية على الهاتف",
+    "section": "المواطن — على الهاتف"
+  },
+  {
+    "file": "81-m-report.png",
+    "title": "نموذج البلاغ على الهاتف",
+    "section": "المواطن — على الهاتف"
+  }
+]

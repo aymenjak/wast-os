@@ -1,0 +1,1954 @@
+// NEXVO data model.
+// Conventions:
+// - Every tenant-owned row carries `organizationId`; services always filter on it.
+// - Money is DECIMAL(14,2) in the database and integer minor units (centimes) in domain code.
+// - Timestamps are stored in UTC (timestamptz) and rendered in the organization's timezone.
+// - Geographic points are stored as lat/lng decimals; a trigger keeps a PostGIS
+//   `geography(Point,4326)` column in sync for spatial queries (see migrations).
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ───────────────────────────── Identity & tenancy ─────────────────────────────
+
+model User {
+  id              String               @id @default(cuid())
+  email           String               @unique @db.Citext
+  name            String
+  passwordHash    String
+  locale          String               @default("fr")
+  createdAt       DateTime             @default(now()) @db.Timestamptz(3)
+  disabledAt      DateTime?            @db.Timestamptz(3)
+  /// NEXVO operator staff (support desk). Grants no tenant access by itself — see SupportAccessGrant.
+  isPlatformStaff Boolean              @default(false)
+  /// Platform role (OWNER > ADMIN > SUPPORT). Set iff isPlatformStaff (CHECK constraint).
+  platformRole    PlatformRole?
+  /// TOTP second factor: secret encrypted with APP_ENCRYPTION_KEY; enabled once confirmed with a valid code.
+  totpSecretEnc   String?
+  totpEnabledAt   DateTime?            @db.Timestamptz(3)
+  /// Last accepted TOTP time step (replay protection).
+  totpLastStep    Int?
+  recoveryCodes   RecoveryCode[]
+  passwordResets  PasswordResetToken[]
+  loginChallenges LoginChallenge[]
+  /// Account lockout after repeated failed logins (credential-stuffing defence).
+  failedLogins    Int                  @default(0)
+  lockedUntil     DateTime?            @db.Timestamptz(3)
+
+  sessions    Session[]
+  memberships Membership[]
+}
+
+model RecoveryCode {
+  id        String    @id @default(cuid())
+  userId    String
+  codeHash  String    @unique
+  usedAt    DateTime? @db.Timestamptz(3)
+  createdAt DateTime  @default(now()) @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+/// One-time password reset link (only the hash is stored; 30-minute lifetime).
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime  @db.Timestamptz(3)
+  usedAt    DateTime? @db.Timestamptz(3)
+  createdAt DateTime  @default(now()) @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+/// Password accepted, second factor pending. Short-lived; only the token hash is stored.
+model LoginChallenge {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  attempts  Int      @default(0)
+  expiresAt DateTime @db.Timestamptz(3)
+  userAgent String?
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum PlatformRole {
+  OWNER
+  ADMIN
+  SUPPORT
+}
+
+model Session {
+  id                   String   @id @default(cuid())
+  tokenHash            String   @unique
+  userId               String
+  activeOrganizationId String?
+  expiresAt            DateTime @db.Timestamptz(3)
+  createdAt            DateTime @default(now()) @db.Timestamptz(3)
+  lastSeenAt           DateTime @default(now()) @db.Timestamptz(3)
+  userAgent            String?
+  /// Set when a platform staff member is inside a tenant through an active support grant.
+  supportGrantId       String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+enum OrganizationKind {
+  SERVICE_PROVIDER
+  MUNICIPALITY
+}
+
+enum VerificationStatus {
+  UNVERIFIED
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+model Organization {
+  id                        String             @id @default(cuid())
+  slug                      String             @unique
+  name                      String
+  kind                      OrganizationKind   @default(SERVICE_PROVIDER)
+  /// Optional local recovery target set by the organization (R3), shown next to the official reference targets.
+  recoveryTargetPct         Int?
+  recoveryTargetYear        Int?
+  recoveryTargetLabel       String?
+  legalName                 String?
+  taxId                     String? // NIF
+  statisticalId             String? // NIS
+  tradeRegister             String? // RC
+  /// OBSOLETE since 2026-11-01 (not read by the app; kept to avoid a destructive migration). The authorisation is
+  /// per waste, vehicles, route and crew — see HazTransportAuthorisation (arrêté interministériel du 2 septembre 2013).
+  hazTransportAuthNumber    String?
+  hazTransportAuthExpiresOn DateTime?          @db.Date
+  address                   String?
+  wilaya                    String?
+  commune                   String?
+  phone                     String?
+  email                     String?
+  verificationStatus        VerificationStatus @default(UNVERIFIED)
+  country                   String             @default("DZ")
+  currency                  String             @default("DZD")
+  timezone                  String             @default("Africa/Algiers")
+  defaultLocale             String             @default("fr")
+  /// Default VAT rate in basis points (1900 = 19%). Configurable per organization.
+  defaultTaxRateBps         Int                @default(1900)
+  invoicePrefix             String             @default("INV")
+  /// Municipalities only: target hours between verification and resolution.
+  civicSlaHours             Int                @default(72)
+  /// ISO weekdays on which crews work (1=Mon … 7=Sun). Algerian default: Sunday–Thursday.
+  workingWeekdays           Int[]              @default([7, 1, 2, 3, 4])
+  createdAt                 DateTime           @default(now()) @db.Timestamptz(3)
+  /// Set by the platform operator; members lose access while set. Data is kept.
+  suspendedAt               DateTime?          @db.Timestamptz(3)
+  suspendedReason           String?
+  /// True when the suspension was applied automatically for unpaid NEXVO invoices (lifted automatically on payment).
+  suspendedByBilling        Boolean            @default(false)
+  /// The organization's OWN Chargily merchant account (encrypted). Customer payments go to the organization, never to NEXVO.
+  chargilySecretEnc         String?
+  chargilyMode              String             @default("test")
+  /// The in-app AI assistant sends this organization's data to the AI provider: an owner/admin must turn it on.
+  aiChatEnabled             Boolean            @default(false)
+
+  memberships                Membership[]
+  invitations                Invitation[]
+  subscription               Subscription?
+  platformInvoices           PlatformInvoice[]
+  iotDevices                 IotDevice[]
+  aiConversations            AiConversation[]
+  destinations               Destination[]
+  hazardousMovements         HazardousMovement[]
+  hazTransportAuthorisations HazTransportAuthorisation[]
+  dropOffPoints              DropOffPoint[]
+  sortingCampaigns           SortingCampaign[]
+  materialSuppliers          MaterialSupplier[]
+  materialPurchases          MaterialPurchase[]
+  bales                      Bale[]
+  yardAdjustments            YardAdjustment[]
+  materialSales              MaterialSale[]
+  iotIntegrations            IotIntegration[]
+  sensorReadings             SensorReading[]
+  vehiclePositions           VehiclePosition[]
+  iotAlerts                  IotAlert[]
+  branches                   Branch[]
+  serviceZones               ServiceZone[]
+  customers                  Customer[]
+  contacts                   CustomerContact[]
+  locations                  ServiceLocation[]
+  customerNotes              CustomerNote[]
+  wasteCategories            WasteCategory[]
+  contracts                  Contract[]
+  contractLines              ContractServiceLine[]
+  collectionRequests         CollectionRequest[]
+  teams                      Team[]
+  vehicles                   Vehicle[]
+  vehicleLogs                VehicleMaintenance[]
+  workOrders                 WorkOrder[]
+  weightTickets              WeightTicket[]
+  evidence                   EvidenceFile[]
+  invoices                   Invoice[]
+  invoiceLines               InvoiceLine[]
+  payments                   Payment[]
+  counters                   Counter[]
+  auditEvents                AuditEvent[]
+  notifications              Notification[]
+  civicReports               CivicReport[]
+  containers                 Container[]
+  containerMoves             ContainerMovement[]
+  paymentCheckouts           PaymentCheckout[]
+  supportTickets             SupportTicket[]
+  supportGrants              SupportAccessGrant[]
+  aiSuggestions              AiSuggestion[]
+}
+
+enum OrgRole {
+  OWNER
+  ADMIN
+  DISPATCHER
+  FIELD_WORKER
+  FINANCE
+  VIEWER
+  CIVIC_REVIEWER
+  CUSTOMER_PORTAL
+}
+
+enum MembershipStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+model Membership {
+  id             String           @id @default(cuid())
+  organizationId String
+  userId         String
+  role           OrgRole
+  status         MembershipStatus @default(ACTIVE)
+  /// Set only for CUSTOMER_PORTAL members: the customer whose records they may see.
+  customerId     String?
+  createdAt      DateTime         @default(now()) @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  customer     Customer?    @relation(fields: [customerId], references: [id])
+  teams        TeamMember[]
+
+  @@unique([organizationId, userId])
+  @@index([userId])
+}
+
+model Invitation {
+  id             String    @id @default(cuid())
+  organizationId String
+  email          String    @db.Citext
+  role           OrgRole
+  customerId     String?
+  tokenHash      String    @unique
+  invitedById    String
+  expiresAt      DateTime  @db.Timestamptz(3)
+  acceptedAt     DateTime? @db.Timestamptz(3)
+  revokedAt      DateTime? @db.Timestamptz(3)
+  createdAt      DateTime  @default(now()) @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, email])
+}
+
+// ───────────────────────────── Commercial plans ─────────────────────────────
+
+model Plan {
+  code            String  @id
+  name            String
+  /// Hypothesis price, monthly, in DZD. See PRICING-ASSUMPTIONS.md.
+  priceMonthly    Decimal @db.Decimal(14, 2)
+  priceYearly     Decimal @db.Decimal(14, 2)
+  maxUsers        Int
+  maxVehicles     Int
+  maxCustomers    Int
+  customerPortal  Boolean @default(false)
+  advancedReports Boolean @default(false)
+  isPublic        Boolean @default(true)
+  sortOrder       Int     @default(0)
+
+  subscriptions Subscription[]
+}
+
+enum SubscriptionStatus {
+  TRIAL
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+}
+
+model Subscription {
+  id               String             @id @default(cuid())
+  organizationId   String             @unique
+  planCode         String
+  status           SubscriptionStatus @default(TRIAL)
+  currentPeriodEnd DateTime           @db.Timestamptz(3)
+  billingCycle     BillingCycle       @default(MONTHLY)
+  createdAt        DateTime           @default(now()) @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  plan         Plan         @relation(fields: [planCode], references: [code])
+}
+
+enum BillingCycle {
+  MONTHLY
+  YEARLY
+}
+
+enum PlatformInvoiceStatus {
+  ISSUED
+  PAID
+  VOID
+}
+
+/// NEXVO's own invoices to organizations for their subscription.
+model PlatformInvoice {
+  id                 String                @id @default(cuid())
+  number             String                @unique
+  organizationId     String
+  planCode           String
+  cycle              BillingCycle
+  periodStart        DateTime              @db.Date
+  periodEnd          DateTime              @db.Date
+  subtotal           Decimal               @db.Decimal(14, 2)
+  taxRateBps         Int
+  taxTotal           Decimal               @db.Decimal(14, 2)
+  total              Decimal               @db.Decimal(14, 2)
+  currency           String                @default("DZD")
+  status             PlatformInvoiceStatus @default(ISSUED)
+  issueDate          DateTime              @db.Date
+  dueDate            DateTime              @db.Date
+  paidAt             DateTime?             @db.Timestamptz(3)
+  paymentMethod      String?
+  paymentReference   String?
+  voidReason         String?
+  checkoutExternalId String?               @unique
+  checkoutUrl        String?
+  /// Issuer and customer legal details frozen at issue time.
+  issuer             Json
+  billTo             Json
+  createdAt          DateTime              @default(now()) @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, periodStart])
+  @@index([status, dueDate])
+}
+
+/// Singleton (id = 1): NEXVO's billing configuration, edited by the platform owner.
+model PlatformBillingSettings {
+  id                  Int      @id @default(1)
+  enabled             Boolean  @default(false)
+  issuerName          String?
+  issuerAddress       String?
+  issuerTaxId         String?
+  issuerTradeRegister String?
+  issuerStatId        String?
+  taxRateBps          Int      @default(1900)
+  dueDays             Int      @default(15)
+  autoSuspend         Boolean  @default(false)
+  graceDays           Int      @default(15)
+  /// Gapless invoice sequence, incremented under a row lock.
+  lastInvoiceSeq      Int      @default(0)
+  updatedAt           DateTime @default(now()) @updatedAt @db.Timestamptz(3)
+}
+
+// ───────────────────────────── Recycling (R1) ─────────────────────────────
+
+enum MaterialStream {
+  PAPER_CARDBOARD
+  PET
+  HDPE_PP
+  PLASTIC_FILM
+  MIXED_PLASTIC
+  FERROUS
+  ALUMINIUM
+  GLASS
+  ORGANIC
+  WOOD
+  TEXTILE
+  INERT
+  SPECIAL
+  RESIDUAL
+}
+
+enum RegulatoryClass {
+  HOUSEHOLD_SIMILAR
+  INERT
+  SPECIAL
+  SPECIAL_HAZARDOUS
+}
+
+/// Where loads go. RECYCLER / SORTING_CENTRE / COMPOSTING count as recovery; the others as disposal.
+enum DestinationKind {
+  RECYCLER
+  SORTING_CENTRE
+  COMPOSTING
+  ANAEROBIC_DIGESTION
+  REUSE_REPAIR
+  ENERGY_RECOVERY
+  LANDFILL
+  INCINERATION
+  OTHER_DISPOSAL
+}
+
+model Destination {
+  id                 String          @id @default(cuid())
+  organizationId     String
+  name               String
+  kind               DestinationKind
+  /// Approval / registration number of the operator (agrément), as shown on its documents.
+  registrationNumber String?
+  wilaya             String?
+  address            String?
+  active             Boolean         @default(true)
+  /// This organization's own sorting yard (R2): tickets delivered here become inbound stock.
+  ownYard            Boolean         @default(false)
+  createdAt          DateTime        @default(now()) @db.Timestamptz(3)
+
+  organization       Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  weightTickets      WeightTicket[]
+  hazardousMovements HazardousMovement[]
+  purchases          MaterialPurchase[]
+  bales              Bale[]
+  yardAdjustments    YardAdjustment[]
+  salesFromYard      MaterialSale[]      @relation("SaleYard")
+  salesAsBuyer       MaterialSale[]      @relation("SaleBuyer")
+
+  @@unique([organizationId, name])
+  @@unique([organizationId, id])
+}
+
+enum WasteConsistency {
+  SOLID
+  LIQUID
+  GASEOUS
+  PASTY
+}
+
+enum HazardousMovementStatus {
+  DRAFT
+  IN_TRANSIT
+  DELIVERED
+  TREATED
+  REFUSED
+  CANCELLED
+}
+
+/// Internal tracking of one transport of special hazardous waste (décret 04-409 art. 17–21): shipper (customer),
+/// carrier (this organization, with its transport authorisation), consignee (licensed destination), three signatures,
+/// refusal and decontamination. NOT the official "document de mouvement" form, whose layout is fixed by an
+/// interministerial arrêté (art. 18) that has not been obtained.
+model HazardousMovement {
+  id                   String                  @id @default(cuid())
+  organizationId       String
+  number               String
+  status               HazardousMovementStatus @default(DRAFT)
+  customerId           String
+  destinationId        String
+  workOrderId          String?
+  vehicleId            String?
+  authorisationId      String?
+  /// Number of packages; one label per package (arrêté du 2 septembre 2013, art. 3–4).
+  packageCount         Int                     @default(1)
+  /// Generator/holder address printed on the labels (defaults to the customer's billing address).
+  originAddress        String?
+  /// Décret 06-104 code of class SD, with designation and hazard criteria copied from the decree at creation.
+  wasteCode            String
+  designation          String
+  hazardCriteria       String
+  consistency          WasteConsistency
+  quantityKg           Decimal                 @db.Decimal(12, 2)
+  /// Quantity estimated at departure (true) or weighed (false).
+  quantityEstimated    Boolean                 @default(false)
+  /// Planned disposal/recovery operation (D/R code, décret 19-10 annexes).
+  plannedOperation     String?
+  packaging            String
+  labelled             Boolean                 @default(false)
+  carrierAuthNumber    String
+  carrierAuthExpiresOn DateTime                @db.Date
+  shipperSignedName    String?
+  shipperSignedAt      DateTime?               @db.Timestamptz(3)
+  carrierSignedById    String?
+  carrierSignedAt      DateTime?               @db.Timestamptz(3)
+  consigneeSignedName  String?
+  consigneeSignedAt    DateTime?               @db.Timestamptz(3)
+  decontaminated       Boolean                 @default(false)
+  /// Reception by the consignee: net quantity presented and the part refused, with reason (law 01-19 art. 22).
+  receivedKg           Decimal?                @db.Decimal(12, 2)
+  refusedKg            Decimal?                @db.Decimal(12, 2)
+  partialRefusalReason String?
+  /// Operation actually carried out (D/R code), its date and signatory — basis of the certificate of
+  /// elimination/valorisation (décret 19-10 art. 17, annex III box 19).
+  treatmentCode        String?
+  treatmentDate        DateTime?               @db.Date
+  treatmentSignedName  String?
+  treatmentSignedAt    DateTime?               @db.Timestamptz(3)
+  refusedByRole        String?
+  refusalReason        String?
+  refusedAt            DateTime?               @db.Timestamptz(3)
+  createdById          String
+  createdAt            DateTime                @default(now()) @db.Timestamptz(3)
+  updatedAt            DateTime                @updatedAt @db.Timestamptz(3)
+
+  organization  Organization               @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customer      Customer                   @relation(fields: [organizationId, customerId], references: [organizationId, id])
+  destination   Destination                @relation(fields: [organizationId, destinationId], references: [organizationId, id])
+  workOrder     WorkOrder?                 @relation(fields: [organizationId, workOrderId], references: [organizationId, id])
+  vehicle       Vehicle?                   @relation(fields: [organizationId, vehicleId], references: [organizationId, id])
+  authorisation HazTransportAuthorisation? @relation(fields: [organizationId, authorisationId], references: [organizationId, id])
+
+  @@unique([organizationId, number])
+  @@unique([organizationId, id])
+  @@index([organizationId, status, createdAt])
+}
+
+/// Authorisation to transport special hazardous waste — decision of the environment minister after the transport
+/// minister's opinion (arrêté interministériel du 2 septembre 2013, art. 4). Its annex lists what it covers: the wastes
+/// (name and code), the vehicles, the loading and unloading points and route, the crew, and the validity period.
+model HazTransportAuthorisation {
+  id             String   @id @default(cuid())
+  organizationId String
+  number         String
+  validFrom      DateTime @db.Date
+  validUntil     DateTime @db.Date
+  /// Décret 06-104 codes of class SD covered by the authorisation.
+  wasteCodes     String[]
+  /// Vehicles named in the authorisation (ids of this organization's vehicles; checked by the service).
+  vehicleIds     String[]
+  loadingPoint   String
+  unloadingPoint String
+  itinerary      String?
+  /// Authorised crew as written in the decision (names, driving licence and professional certificate numbers).
+  crew           String?
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now()) @db.Timestamptz(3)
+
+  organization Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  movements    HazardousMovement[]
+
+  @@unique([organizationId, number])
+  @@unique([organizationId, id])
+}
+
+// ───────────────────────────── R2 — sorting yard (RECYCLING.md §3) ─────────────────────────────
+
+enum SupplierKind {
+  INDIVIDUAL
+  COMPANY
+}
+
+/// Someone the yard buys material from. Individuals: minimal personal data (law 18-07) — name and optional phone only.
+model MaterialSupplier {
+  id                 String       @id @default(cuid())
+  organizationId     String
+  name               String
+  kind               SupplierKind @default(INDIVIDUAL)
+  phone              String?
+  /// Companies only: trade register / approval number as shown on their documents.
+  registrationNumber String?
+  active             Boolean      @default(true)
+  createdAt          DateTime     @default(now()) @db.Timestamptz(3)
+
+  organization Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  purchases    MaterialPurchase[]
+
+  @@unique([organizationId, id])
+  @@index([organizationId, name])
+}
+
+/// Purchase voucher (bon d'achat): weighed lines at a price per kg entered by the operator — NEXVO never suggests prices.
+model MaterialPurchase {
+  id             String    @id @default(cuid())
+  organizationId String
+  number         String
+  yardId         String
+  supplierId     String
+  purchasedAt    DateTime  @default(now()) @db.Timestamptz(3)
+  totalMinor     BigInt
+  paidAt         DateTime? @db.Timestamptz(3)
+  voidedAt       DateTime? @db.Timestamptz(3)
+  voidReason     String?
+  createdById    String
+  createdAt      DateTime  @default(now()) @db.Timestamptz(3)
+
+  organization Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  yard         Destination            @relation(fields: [organizationId, yardId], references: [organizationId, id])
+  supplier     MaterialSupplier       @relation(fields: [organizationId, supplierId], references: [organizationId, id])
+  lines        MaterialPurchaseLine[]
+
+  @@unique([organizationId, number])
+  @@unique([organizationId, id])
+}
+
+model MaterialPurchaseLine {
+  id                  String         @id @default(cuid())
+  purchaseId          String
+  stream              MaterialStream
+  grade               String?
+  grossKg             Decimal        @db.Decimal(12, 2)
+  tareKg              Decimal        @db.Decimal(12, 2)
+  netKg               Decimal        @db.Decimal(12, 2)
+  /// Price per kg in minor units (centimes of DZD), entered by the operator.
+  unitPriceMinorPerKg Int
+  amountMinor         BigInt
+
+  purchase MaterialPurchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+}
+
+enum BaleStatus {
+  IN_STOCK
+  SOLD
+  VOID
+}
+
+model Bale {
+  id             String         @id @default(cuid())
+  organizationId String
+  number         String
+  yardId         String
+  stream         MaterialStream
+  grade          String?
+  weightKg       Decimal        @db.Decimal(12, 2)
+  status         BaleStatus     @default(IN_STOCK)
+  saleId         String?
+  createdById    String
+  createdAt      DateTime       @default(now()) @db.Timestamptz(3)
+
+  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  yard         Destination   @relation(fields: [organizationId, yardId], references: [organizationId, id])
+  sale         MaterialSale? @relation(fields: [organizationId, saleId], references: [organizationId, id])
+
+  @@unique([organizationId, number])
+  @@unique([organizationId, id])
+  @@index([organizationId, yardId, status])
+}
+
+enum YardAdjustmentKind {
+  OPENING
+  REJECT
+  CORRECTION
+}
+
+/// Opening stock, sorting rejects (sent on as residual) and audited corrections of bulk stock.
+model YardAdjustment {
+  id             String             @id @default(cuid())
+  organizationId String
+  yardId         String
+  stream         MaterialStream
+  kind           YardAdjustmentKind
+  /// Signed for CORRECTION; positive for OPENING (adds) and REJECT (removes).
+  kg             Decimal            @db.Decimal(12, 2)
+  reason         String
+  createdById    String
+  createdAt      DateTime           @default(now()) @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  yard         Destination  @relation(fields: [organizationId, yardId], references: [organizationId, id])
+
+  @@index([organizationId, yardId, stream])
+}
+
+enum MaterialSaleStatus {
+  DRAFT
+  DELIVERED
+  SETTLED
+  CANCELLED
+}
+
+/// Sale of bales and/or loose material to a buyer (a registered destination). Amounts excluding tax — taxes are not computed.
+model MaterialSale {
+  id               String             @id @default(cuid())
+  organizationId   String
+  number           String
+  yardId           String
+  buyerId          String
+  status           MaterialSaleStatus @default(DRAFT)
+  totalMinor       BigInt
+  deliveredAt      DateTime?          @db.Timestamptz(3)
+  /// Net weight measured by the buyer's weighbridge, if reported.
+  buyerWeighedKg   Decimal?           @db.Decimal(12, 2)
+  claimKg          Decimal?           @db.Decimal(12, 2)
+  claimAmountMinor BigInt?
+  claimReason      String?
+  settledAt        DateTime?          @db.Timestamptz(3)
+  createdById      String
+  createdAt        DateTime           @default(now()) @db.Timestamptz(3)
+
+  organization Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  yard         Destination        @relation("SaleYard", fields: [organizationId, yardId], references: [organizationId, id])
+  buyer        Destination        @relation("SaleBuyer", fields: [organizationId, buyerId], references: [organizationId, id])
+  lines        MaterialSaleLine[]
+  bales        Bale[]
+
+  @@unique([organizationId, number])
+  @@unique([organizationId, id])
+}
+
+model MaterialSaleLine {
+  id                  String         @id @default(cuid())
+  saleId              String
+  stream              MaterialStream
+  grade               String?
+  /// Set when the line is a bale; null for loose material taken from bulk stock.
+  baleId              String?
+  weightKg            Decimal        @db.Decimal(12, 2)
+  unitPriceMinorPerKg Int
+  amountMinor         BigInt
+
+  sale MaterialSale @relation(fields: [saleId], references: [id], onDelete: Cascade)
+}
+
+// ───────────────────────────── R3 — territory: drop-off points and sorting campaigns ─────────────────────────────
+
+/// Point d'apport volontaire: a public spot with containers per material, monitored by the existing fill sensors.
+model DropOffPoint {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  commune        String?
+  wilaya         String?
+  address        String?
+  latitude       Decimal  @db.Decimal(9, 6)
+  longitude      Decimal  @db.Decimal(9, 6)
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now()) @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  containers   Container[]
+
+  @@unique([organizationId, name])
+  @@unique([organizationId, id])
+}
+
+/// A source-separation campaign in a commune over a period; evaluated against the period just before (not causal).
+model SortingCampaign {
+  id             String           @id @default(cuid())
+  organizationId String
+  name           String
+  commune        String
+  startsOn       DateTime         @db.Date
+  endsOn         DateTime         @db.Date
+  streams        MaterialStream[]
+  description    String?
+  createdById    String
+  createdAt      DateTime         @default(now()) @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, commune])
+}
+
+// ───────────────────────────── AI assistant ─────────────────────────────
+
+model AiConversation {
+  id             String   @id @default(cuid())
+  organizationId String
+  userId         String
+  title          String
+  createdAt      DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime @default(now()) @updatedAt @db.Timestamptz(3)
+
+  organization Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  messages     AiChatMessage[]
+
+  @@unique([organizationId, id])
+  @@index([organizationId, userId, updatedAt])
+}
+
+model AiChatMessage {
+  id             String   @id @default(cuid())
+  organizationId String
+  conversationId String
+  role           String
+  content        String
+  toolsUsed      String[] @default([])
+  createdAt      DateTime @default(now()) @db.Timestamptz(3)
+
+  conversation AiConversation @relation(fields: [organizationId, conversationId], references: [organizationId, id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
+}
+
+// ───────────────────────────── IoT ─────────────────────────────
+
+enum DeviceKind {
+  FILL_SENSOR
+  GPS_TRACKER
+}
+
+enum LoraProvider {
+  CHIRPSTACK
+  TTN
+}
+
+/// A LoRaWAN network-server integration (ChirpStack or The Things Stack) posting uplinks for many devices.
+/// Authenticates with its own key (hash stored); devices are matched by DevEUI = IotDevice.serial.
+model IotIntegration {
+  id             String       @id @default(cuid())
+  organizationId String
+  provider       LoraProvider
+  name           String
+  keyHash        String       @unique
+  keyPrefix      String
+  lastEventAt    DateTime?    @db.Timestamptz(3)
+  revokedAt      DateTime?    @db.Timestamptz(3)
+  createdById    String
+  createdAt      DateTime     @default(now()) @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+}
+
+enum IotAlertKind {
+  FILL_HIGH
+  BATTERY_LOW
+  FIRE_RISK
+}
+
+/// A sensor or tracker. Authenticates with a per-device key (only its SHA-256 is stored).
+model IotDevice {
+  id             String     @id @default(cuid())
+  organizationId String
+  kind           DeviceKind
+  name           String
+  serial         String
+  keyHash        String     @unique
+  keyPrefix      String
+  containerId    String?
+  vehicleId      String?
+  lastSeenAt     DateTime?  @db.Timestamptz(3)
+  batteryPct     Int?
+  revokedAt      DateTime?  @db.Timestamptz(3)
+  createdById    String
+  createdAt      DateTime   @default(now()) @db.Timestamptz(3)
+
+  organization Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  container    Container?        @relation(fields: [organizationId, containerId], references: [organizationId, id])
+  vehicle      Vehicle?          @relation(fields: [organizationId, vehicleId], references: [organizationId, id])
+  readings     SensorReading[]
+  positions    VehiclePosition[]
+  alerts       IotAlert[]
+
+  @@unique([organizationId, serial])
+  @@unique([organizationId, id])
+}
+
+model SensorReading {
+  id             String   @id @default(cuid())
+  organizationId String
+  deviceId       String
+  containerId    String?
+  fillPct        Int?
+  temperatureC   Decimal? @db.Decimal(5, 1)
+  batteryPct     Int?
+  measuredAt     DateTime @db.Timestamptz(3)
+  receivedAt     DateTime @default(now()) @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  device       IotDevice    @relation(fields: [organizationId, deviceId], references: [organizationId, id], onDelete: Cascade)
+  container    Container?   @relation(fields: [organizationId, containerId], references: [organizationId, id])
+
+  @@unique([deviceId, measuredAt])
+  @@index([organizationId, containerId, measuredAt])
+}
+
+model VehiclePosition {
+  id             String   @id @default(cuid())
+  organizationId String
+  deviceId       String
+  vehicleId      String
+  latitude       Decimal  @db.Decimal(9, 6)
+  longitude      Decimal  @db.Decimal(9, 6)
+  speedKmh       Int?
+  heading        Int?
+  recordedAt     DateTime @db.Timestamptz(3)
+  receivedAt     DateTime @default(now()) @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  device       IotDevice    @relation(fields: [organizationId, deviceId], references: [organizationId, id], onDelete: Cascade)
+  vehicle      Vehicle      @relation(fields: [organizationId, vehicleId], references: [organizationId, id])
+
+  @@unique([deviceId, recordedAt])
+  @@index([organizationId, vehicleId, recordedAt])
+}
+
+model IotAlert {
+  id             String       @id @default(cuid())
+  organizationId String
+  kind           IotAlertKind
+  deviceId       String
+  containerId    String?
+  value          Decimal      @db.Decimal(6, 1)
+  openedAt       DateTime     @default(now()) @db.Timestamptz(3)
+  resolvedAt     DateTime?    @db.Timestamptz(3)
+  resolvedById   String?
+  /// Set when it was resolved automatically (e.g. fill level dropped after collection).
+  autoResolved   Boolean      @default(false)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  device       IotDevice    @relation(fields: [organizationId, deviceId], references: [organizationId, id], onDelete: Cascade)
+  container    Container?   @relation(fields: [organizationId, containerId], references: [organizationId, id])
+
+  @@index([organizationId, resolvedAt])
+}
+
+// ───────────────────────────── Geography ─────────────────────────────
+
+model Branch {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  wilaya         String?
+  commune        String?
+  address        String?
+  createdAt      DateTime @default(now()) @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, name])
+}
+
+model ServiceZone {
+  id             String   @id @default(cuid())
+  organizationId String
+  code           String
+  name           String
+  wilaya         String?
+  commune        String?
+  createdAt      DateTime @default(now()) @db.Timestamptz(3)
+
+  organization Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  locations    ServiceLocation[]
+  civicReports CivicReport[]
+
+  @@unique([organizationId, code])
+}
+
+// ───────────────────────────── Customers ─────────────────────────────
+
+enum CustomerKind {
+  BUSINESS
+  INSTITUTION
+  RESIDENTIAL
+}
+
+enum CustomerStatus {
+  ACTIVE
+  INACTIVE
+}
+
+model Customer {
+  id                String         @id @default(cuid())
+  organizationId    String
+  code              String
+  name              String
+  kind              CustomerKind   @default(BUSINESS)
+  taxId             String?
+  email             String?
+  phone             String?
+  billingAddress    String?
+  status            CustomerStatus @default(ACTIVE)
+  /// Customer-specific service conditions (access hours, PPE, gate codes...).
+  serviceConditions String?
+  createdAt         DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime       @updatedAt @db.Timestamptz(3)
+
+  organization       Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  contacts           CustomerContact[]
+  locations          ServiceLocation[]
+  notes              CustomerNote[]
+  contracts          Contract[]
+  requests           CollectionRequest[]
+  workOrders         WorkOrder[]
+  hazardousMovements HazardousMovement[]
+  invoices           Invoice[]
+  portalUsers        Membership[]
+
+  @@unique([organizationId, code])
+  @@unique([organizationId, id])
+  @@index([organizationId, name])
+}
+
+model CustomerContact {
+  id             String   @id @default(cuid())
+  organizationId String
+  customerId     String
+  name           String
+  jobTitle       String?
+  email          String?
+  phone          String?
+  isPrimary      Boolean  @default(false)
+  createdAt      DateTime @default(now()) @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customer     Customer     @relation(fields: [organizationId, customerId], references: [organizationId, id], onDelete: Cascade)
+
+  @@index([organizationId, customerId])
+}
+
+model ServiceLocation {
+  id             String                                 @id @default(cuid())
+  organizationId String
+  customerId     String
+  label          String
+  addressLine    String
+  commune        String?
+  wilaya         String?
+  latitude       Decimal?                               @db.Decimal(9, 6)
+  longitude      Decimal?                               @db.Decimal(9, 6)
+  /// Maintained by trigger from latitude/longitude. Do not write directly.
+  geog           Unsupported("geography(Point, 4326)")?
+  accessNotes    String?
+  serviceZoneId  String?
+  active         Boolean                                @default(true)
+  createdAt      DateTime                               @default(now()) @db.Timestamptz(3)
+
+  organization   Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customer       Customer              @relation(fields: [organizationId, customerId], references: [organizationId, id], onDelete: Cascade)
+  serviceZone    ServiceZone?          @relation(fields: [serviceZoneId], references: [id])
+  contractLines  ContractServiceLine[]
+  requests       CollectionRequest[]
+  workOrders     WorkOrder[]
+  containers     Container[]
+  containerMoves ContainerMovement[]
+
+  @@unique([organizationId, id])
+  @@index([organizationId, customerId])
+  @@index([geog], type: Gist)
+}
+
+model CustomerNote {
+  id             String   @id @default(cuid())
+  organizationId String
+  customerId     String
+  authorId       String
+  body           String
+  createdAt      DateTime @default(now()) @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customer     Customer     @relation(fields: [organizationId, customerId], references: [organizationId, id], onDelete: Cascade)
+
+  @@index([organizationId, customerId, createdAt])
+}
+
+// ───────────────────────────── Waste taxonomy ─────────────────────────────
+
+model WasteCategory {
+  id               String          @id @default(cuid())
+  organizationId   String
+  code             String
+  nameEn           String
+  nameFr           String
+  nameAr           String
+  /// Hazardous/special streams require separate regulatory handling (Law 01-19 as amended).
+  hazardous        Boolean         @default(false)
+  active           Boolean         @default(true)
+  /// Material stream used for recovery accounting (RECYCLING.md). Null = not classified.
+  stream           MaterialStream?
+  /// Class under décret exécutif 06-104 (household & similar, inert, special, special hazardous).
+  regulatoryClass  RegulatoryClass @default(HOUSEHOLD_SIMILAR)
+  /// Code from the décret exécutif 06-104 nomenclature, entered by the operator from the official text (never pre-filled).
+  nomenclatureCode String?
+
+  organization  Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  contractLines ContractServiceLine[]
+  requests      CollectionRequest[]
+  workOrders    WorkOrder[]
+
+  @@unique([organizationId, code])
+  @@unique([organizationId, id])
+}
+
+// ───────────────────────────── Contracts ─────────────────────────────
+
+enum ContractStatus {
+  DRAFT
+  ACTIVE
+  SUSPENDED
+  EXPIRED
+  TERMINATED
+}
+
+enum BillingUnit {
+  PER_COLLECTION
+  PER_TONNE
+  PER_MONTH
+}
+
+enum Frequency {
+  ON_DEMAND
+  DAILY
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+}
+
+model Contract {
+  id                String         @id @default(cuid())
+  organizationId    String
+  customerId        String
+  reference         String
+  title             String
+  status            ContractStatus @default(DRAFT)
+  startDate         DateTime       @db.Date
+  endDate           DateTime?      @db.Date
+  renewalNoticeDays Int            @default(30)
+  autoRenew         Boolean        @default(false)
+  serviceScope      String?
+  slaResponseHours  Int?
+  createdById       String
+  createdAt         DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime       @updatedAt @db.Timestamptz(3)
+
+  organization Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customer     Customer              @relation(fields: [organizationId, customerId], references: [organizationId, id])
+  lines        ContractServiceLine[]
+  requests     CollectionRequest[]
+  workOrders   WorkOrder[]
+  invoices     Invoice[]
+  documents    EvidenceFile[]
+
+  @@unique([organizationId, reference])
+  @@unique([organizationId, id])
+  @@index([organizationId, status, endDate])
+}
+
+model ContractServiceLine {
+  id                String      @id @default(cuid())
+  organizationId    String
+  contractId        String
+  serviceLocationId String
+  wasteCategoryId   String
+  frequency         Frequency   @default(WEEKLY)
+  /// ISO weekdays (1=Mon..7=Sun) for recurring schedules.
+  weekdays          Int[]
+  billingUnit       BillingUnit @default(PER_COLLECTION)
+  unitPrice         Decimal     @db.Decimal(14, 2)
+  estimatedQuantity Decimal?    @db.Decimal(12, 3)
+
+  organization    Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  contract        Contract        @relation(fields: [organizationId, contractId], references: [organizationId, id], onDelete: Cascade)
+  serviceLocation ServiceLocation @relation(fields: [organizationId, serviceLocationId], references: [organizationId, id])
+  wasteCategory   WasteCategory   @relation(fields: [organizationId, wasteCategoryId], references: [organizationId, id])
+  workOrders      WorkOrder[]
+
+  @@unique([organizationId, id])
+  @@index([organizationId, contractId])
+}
+
+// ───────────────────────────── Operations ─────────────────────────────
+
+enum Priority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum QuantityUnit {
+  KG
+  TONNE
+  CUBIC_METRE
+  CONTAINER
+  BAG
+}
+
+enum TimeWindow {
+  ANY
+  MORNING
+  AFTERNOON
+  EVENING
+}
+
+enum RequestStatus {
+  SUBMITTED
+  VALIDATED
+  REJECTED
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+}
+
+enum RequestSource {
+  STAFF
+  PORTAL
+}
+
+model CollectionRequest {
+  id                String        @id @default(cuid())
+  organizationId    String
+  number            String
+  customerId        String
+  serviceLocationId String
+  contractId        String?
+  wasteCategoryId   String
+  estimatedQuantity Decimal?      @db.Decimal(12, 3)
+  quantityUnit      QuantityUnit  @default(CONTAINER)
+  preferredDate     DateTime      @db.Date
+  preferredWindow   TimeWindow    @default(ANY)
+  priority          Priority      @default(NORMAL)
+  notes             String?
+  status            RequestStatus @default(SUBMITTED)
+  source            RequestSource @default(STAFF)
+  rejectionReason   String?
+  createdById       String
+  createdAt         DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime      @updatedAt @db.Timestamptz(3)
+
+  organization    Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customer        Customer        @relation(fields: [organizationId, customerId], references: [organizationId, id])
+  serviceLocation ServiceLocation @relation(fields: [organizationId, serviceLocationId], references: [organizationId, id])
+  contract        Contract?       @relation(fields: [organizationId, contractId], references: [organizationId, id])
+  wasteCategory   WasteCategory   @relation(fields: [organizationId, wasteCategoryId], references: [organizationId, id])
+  workOrder       WorkOrder?
+
+  @@unique([organizationId, number])
+  @@unique([organizationId, id])
+  @@index([organizationId, status, preferredDate])
+}
+
+model Team {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now()) @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  members      TeamMember[]
+  workOrders   WorkOrder[]
+
+  @@unique([organizationId, name])
+  @@unique([organizationId, id])
+}
+
+model TeamMember {
+  teamId       String
+  membershipId String
+
+  team       Team       @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  membership Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+
+  @@id([teamId, membershipId])
+}
+
+enum VehicleType {
+  COMPACTOR
+  TIPPER
+  SKIP_LOADER
+  HOOK_LIFT
+  VAN
+  OTHER
+}
+
+enum VehicleStatus {
+  AVAILABLE
+  IN_SERVICE
+  MAINTENANCE
+  RETIRED
+}
+
+model Vehicle {
+  id             String        @id @default(cuid())
+  organizationId String
+  plateNumber    String
+  label          String
+  type           VehicleType   @default(COMPACTOR)
+  capacityKg     Int?
+  status         VehicleStatus @default(AVAILABLE)
+  restrictions   String?
+  odometerKm     Int?
+  createdAt      DateTime      @default(now()) @db.Timestamptz(3)
+
+  /// Latest GPS fix from a tracker (denormalised for lists and the map).
+  lastLatitude   Decimal?  @db.Decimal(9, 6)
+  lastLongitude  Decimal?  @db.Decimal(9, 6)
+  lastPositionAt DateTime? @db.Timestamptz(3)
+  lastSpeedKmh   Int?
+
+  organization       Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  maintenance        VehicleMaintenance[]
+  workOrders         WorkOrder[]
+  hazardousMovements HazardousMovement[]
+  devices            IotDevice[]
+  positions          VehiclePosition[]
+
+  @@unique([organizationId, plateNumber])
+  @@unique([organizationId, id])
+}
+
+enum MaintenanceKind {
+  MAINTENANCE
+  INSPECTION
+  REPAIR
+}
+
+model VehicleMaintenance {
+  id             String          @id @default(cuid())
+  organizationId String
+  vehicleId      String
+  kind           MaintenanceKind
+  performedAt    DateTime        @db.Date
+  description    String
+  cost           Decimal?        @db.Decimal(14, 2)
+  odometerKm     Int?
+  nextDueAt      DateTime?       @db.Date
+  recordedById   String
+  createdAt      DateTime        @default(now()) @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  vehicle      Vehicle      @relation(fields: [organizationId, vehicleId], references: [organizationId, id], onDelete: Cascade)
+
+  @@index([organizationId, vehicleId, performedAt])
+}
+
+enum WorkOrderKind {
+  COLLECTION
+  CIVIC_INTERVENTION
+}
+
+enum WorkOrderStatus {
+  PLANNED
+  ASSIGNED
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  CANCELLED
+  DISPUTED
+}
+
+enum FailureReason {
+  NO_ACCESS
+  CUSTOMER_ABSENT
+  WASTE_NOT_READY
+  WRONG_WASTE_TYPE
+  VEHICLE_BREAKDOWN
+  UNSAFE_CONDITIONS
+  OTHER
+}
+
+model WorkOrder {
+  id                  String          @id @default(cuid())
+  organizationId      String
+  number              String
+  kind                WorkOrderKind   @default(COLLECTION)
+  collectionRequestId String?         @unique
+  civicReportId       String?         @unique
+  /// Set when generated from a recurring contract line; unique per day for idempotent generation.
+  contractLineId      String?
+  customerId          String?
+  serviceLocationId   String?
+  contractId          String?
+  wasteCategoryId     String?
+  teamId              String?
+  vehicleId           String?
+  status              WorkOrderStatus @default(PLANNED)
+  priority            Priority        @default(NORMAL)
+  scheduledDate       DateTime        @db.Date
+  actualStart         DateTime?       @db.Timestamptz(3)
+  actualEnd           DateTime?       @db.Timestamptz(3)
+  instructions        String?
+  completionNotes     String?
+  failureReason       FailureReason?
+  failureNotes        String?
+  customerConfirmedAt DateTime?       @db.Timestamptz(3)
+  disputeReason       String?
+  createdById         String
+  createdAt           DateTime        @default(now()) @db.Timestamptz(3)
+  updatedAt           DateTime        @updatedAt @db.Timestamptz(3)
+
+  organization       Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  collectionRequest  CollectionRequest?   @relation(fields: [organizationId, collectionRequestId], references: [organizationId, id])
+  civicReport        CivicReport?         @relation(fields: [civicReportId], references: [id])
+  contractLine       ContractServiceLine? @relation(fields: [organizationId, contractLineId], references: [organizationId, id])
+  customer           Customer?            @relation(fields: [organizationId, customerId], references: [organizationId, id])
+  serviceLocation    ServiceLocation?     @relation(fields: [organizationId, serviceLocationId], references: [organizationId, id])
+  contract           Contract?            @relation(fields: [organizationId, contractId], references: [organizationId, id])
+  wasteCategory      WasteCategory?       @relation(fields: [organizationId, wasteCategoryId], references: [organizationId, id])
+  team               Team?                @relation(fields: [organizationId, teamId], references: [organizationId, id])
+  vehicle            Vehicle?             @relation(fields: [organizationId, vehicleId], references: [organizationId, id])
+  weightTickets      WeightTicket[]
+  hazardousMovements HazardousMovement[]
+  evidence           EvidenceFile[]
+  invoiceLine        InvoiceLine?
+  containerMoves     ContainerMovement[]
+
+  @@unique([contractLineId, scheduledDate])
+  @@unique([organizationId, number])
+  @@unique([organizationId, id])
+  @@unique([organizationId, collectionRequestId])
+  @@index([organizationId, status, scheduledDate])
+  @@index([organizationId, teamId, scheduledDate])
+}
+
+model WeightTicket {
+  id             String          @id @default(cuid())
+  organizationId String
+  /// Id generated on the phone for an offline action (driver app): makes replays idempotent.
+  clientRef      String?
+  workOrderId    String
+  ticketNumber   String?
+  grossKg        Decimal         @db.Decimal(12, 2)
+  tareKg         Decimal         @db.Decimal(12, 2)
+  netKg          Decimal         @db.Decimal(12, 2)
+  facility       String?
+  weighedAt      DateTime        @db.Timestamptz(3)
+  recordedById   String
+  createdAt      DateTime        @default(now()) @db.Timestamptz(3)
+  /// Recovery accounting: what material, where it went, and what the processor sent back as rejects.
+  stream         MaterialStream?
+  destinationId  String?
+  contaminated   Boolean         @default(false)
+  rejectedKg     Decimal         @default(0) @db.Decimal(12, 2)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  workOrder    WorkOrder    @relation(fields: [organizationId, workOrderId], references: [organizationId, id], onDelete: Cascade)
+  destination  Destination? @relation(fields: [organizationId, destinationId], references: [organizationId, id])
+
+  @@unique([organizationId, clientRef])
+  @@index([organizationId, workOrderId])
+}
+
+enum EvidenceKind {
+  BEFORE
+  AFTER
+  DOCUMENT
+  REPORT_PHOTO
+}
+
+model EvidenceFile {
+  id             String       @id @default(cuid())
+  organizationId String
+  /// Id generated on the phone for an offline action (driver app): makes replays idempotent.
+  clientRef      String?
+  kind           EvidenceKind
+  workOrderId    String?
+  civicReportId  String?
+  contractId     String?
+  storageKey     String       @unique
+  originalName   String
+  mimeType       String
+  sizeBytes      Int
+  sha256         String
+  uploadedById   String?
+  createdAt      DateTime     @default(now()) @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  workOrder    WorkOrder?   @relation(fields: [organizationId, workOrderId], references: [organizationId, id], onDelete: Cascade)
+  civicReport  CivicReport? @relation(fields: [civicReportId], references: [id], onDelete: Cascade)
+  contract     Contract?    @relation(fields: [organizationId, contractId], references: [organizationId, id], onDelete: Cascade)
+
+  @@unique([organizationId, clientRef])
+  @@index([organizationId, workOrderId])
+  @@index([civicReportId])
+}
+
+// ───────────────────────────── Containers (bins, skips, roll-offs) ─────────────────────────────
+
+enum ContainerType {
+  BIN_240L
+  BIN_660L
+  BIN_1100L
+  SKIP_6M3
+  SKIP_10M3
+  ROLLOFF_20M3
+  ROLLOFF_30M3
+  COMPACTOR_UNIT
+  OTHER
+}
+
+enum ContainerStatus {
+  IN_YARD
+  AT_CUSTOMER
+  MAINTENANCE
+  RETIRED
+}
+
+enum ContainerMoveKind {
+  DELIVERED
+  REMOVED
+  TO_MAINTENANCE
+  BACK_IN_SERVICE
+  RETIRED
+}
+
+model Container {
+  id                String          @id @default(cuid())
+  organizationId    String
+  code              String
+  type              ContainerType
+  status            ContainerStatus @default(IN_YARD)
+  serviceLocationId String?
+  /// Public voluntary drop-off point (PAV) where the container stands, and the material it is for (R3).
+  dropOffPointId    String?
+  stream            MaterialStream?
+  placedAt          DateTime?       @db.Timestamptz(3)
+  notes             String?
+  createdAt         DateTime        @default(now()) @db.Timestamptz(3)
+
+  /// Fill level (percent) at which an IoT alert opens. Latest reading is denormalised for lists.
+  fillThresholdPct Int       @default(80)
+  lastFillPct      Int?
+  lastFillAt       DateTime? @db.Timestamptz(3)
+
+  organization    Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  serviceLocation ServiceLocation?    @relation(fields: [organizationId, serviceLocationId], references: [organizationId, id])
+  movements       ContainerMovement[]
+  dropOffPoint    DropOffPoint?       @relation(fields: [organizationId, dropOffPointId], references: [organizationId, id])
+  devices         IotDevice[]
+  readings        SensorReading[]
+  alerts          IotAlert[]
+
+  @@unique([organizationId, code])
+  @@unique([organizationId, id])
+  @@index([organizationId, status])
+}
+
+/// Append-only history of where each container has been.
+model ContainerMovement {
+  id                String            @id @default(cuid())
+  organizationId    String
+  containerId       String
+  kind              ContainerMoveKind
+  serviceLocationId String?
+  workOrderId       String?
+  actorUserId       String
+  notes             String?
+  occurredAt        DateTime          @default(now()) @db.Timestamptz(3)
+
+  organization    Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  container       Container        @relation(fields: [organizationId, containerId], references: [organizationId, id], onDelete: Cascade)
+  serviceLocation ServiceLocation? @relation(fields: [organizationId, serviceLocationId], references: [organizationId, id])
+  workOrder       WorkOrder?       @relation(fields: [organizationId, workOrderId], references: [organizationId, id])
+
+  @@index([organizationId, containerId, occurredAt])
+}
+
+// ───────────────────────────── Billing ─────────────────────────────
+
+enum InvoiceStatus {
+  DRAFT
+  ISSUED
+  PARTIALLY_PAID
+  PAID
+  VOID
+}
+
+model Invoice {
+  id             String        @id @default(cuid())
+  organizationId String
+  /// Assigned sequentially at issue time; null while DRAFT.
+  number         String?
+  customerId     String
+  contractId     String?
+  status         InvoiceStatus @default(DRAFT)
+  currency       String        @default("DZD")
+  issueDate      DateTime?     @db.Date
+  dueDate        DateTime?     @db.Date
+  subtotal       Decimal       @default(0) @db.Decimal(14, 2)
+  taxTotal       Decimal       @default(0) @db.Decimal(14, 2)
+  total          Decimal       @default(0) @db.Decimal(14, 2)
+  amountPaid     Decimal       @default(0) @db.Decimal(14, 2)
+  notes          String?
+  /// Snapshot of customer billing identity at issue time.
+  billToName     String?
+  billToTaxId    String?
+  billToAddress  String?
+  voidReason     String?
+  createdById    String
+  issuedById     String?
+  createdAt      DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime      @updatedAt @db.Timestamptz(3)
+
+  organization Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customer     Customer          @relation(fields: [organizationId, customerId], references: [organizationId, id])
+  contract     Contract?         @relation(fields: [organizationId, contractId], references: [organizationId, id])
+  lines        InvoiceLine[]
+  payments     Payment[]
+  checkouts    PaymentCheckout[]
+
+  @@unique([organizationId, number])
+  @@unique([organizationId, id])
+  @@index([organizationId, status, dueDate])
+}
+
+model InvoiceLine {
+  id             String  @id @default(cuid())
+  organizationId String
+  invoiceId      String
+  description    String
+  quantity       Decimal @db.Decimal(12, 3)
+  unitPrice      Decimal @db.Decimal(14, 2)
+  taxRateBps     Int
+  lineSubtotal   Decimal @db.Decimal(14, 2)
+  lineTax        Decimal @db.Decimal(14, 2)
+  lineTotal      Decimal @db.Decimal(14, 2)
+  /// A work order can be billed at most once (unique).
+  workOrderId    String? @unique
+  position       Int     @default(0)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  invoice      Invoice      @relation(fields: [organizationId, invoiceId], references: [organizationId, id], onDelete: Cascade)
+  workOrder    WorkOrder?   @relation(fields: [organizationId, workOrderId], references: [organizationId, id])
+
+  @@unique([organizationId, workOrderId])
+  @@index([organizationId, invoiceId])
+}
+
+enum PaymentMethod {
+  CASH
+  BANK_TRANSFER
+  CHEQUE
+  CARD_ONLINE
+  OTHER
+}
+
+enum PaymentSource {
+  MANUAL
+  WEBHOOK
+}
+
+enum PaymentStatus {
+  RECORDED
+  REVERSED
+}
+
+model Payment {
+  id             String        @id @default(cuid())
+  organizationId String
+  invoiceId      String
+  amount         Decimal       @db.Decimal(14, 2)
+  method         PaymentMethod
+  reference      String?
+  receivedAt     DateTime      @db.Timestamptz(3)
+  source         PaymentSource @default(MANUAL)
+  status         PaymentStatus @default(RECORDED)
+  /// Retries with the same key never create a second payment.
+  idempotencyKey String
+  recordedById   String?
+  createdAt      DateTime      @default(now()) @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  invoice      Invoice      @relation(fields: [organizationId, invoiceId], references: [organizationId, id])
+
+  @@unique([organizationId, idempotencyKey])
+  @@index([organizationId, invoiceId])
+}
+
+model PaymentWebhookEvent {
+  id              String    @id @default(cuid())
+  provider        String
+  externalEventId String
+  payload         Json
+  receivedAt      DateTime  @default(now()) @db.Timestamptz(3)
+  processedAt     DateTime? @db.Timestamptz(3)
+  outcome         String?
+
+  @@unique([provider, externalEventId])
+}
+
+// ───────────────────────────── Platform ─────────────────────────────
+
+/// Per-organization sequences for human-readable numbers (REQ-, WO-, INV-).
+model Counter {
+  organizationId String
+  name           String
+  value          Int    @default(0)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@id([organizationId, name])
+}
+
+enum ActorType {
+  USER
+  SYSTEM
+  CITIZEN
+}
+
+model AuditEvent {
+  id             String    @id @default(cuid())
+  organizationId String?
+  actorType      ActorType
+  actorUserId    String?
+  action         String
+  entityType     String
+  entityId       String
+  data           Json?
+  createdAt      DateTime  @default(now()) @db.Timestamptz(3)
+
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, entityType, entityId])
+  @@index([organizationId, createdAt])
+}
+
+enum NotificationChannel {
+  IN_APP
+  EMAIL
+  SMS
+}
+
+/// Outbox: rows are created inside business transactions and delivered by a worker.
+model Notification {
+  id             String              @id @default(cuid())
+  organizationId String?
+  userId         String?
+  recipient      String?
+  channel        NotificationChannel @default(IN_APP)
+  type           String
+  payload        Json
+  readAt         DateTime?           @db.Timestamptz(3)
+  sentAt         DateTime?           @db.Timestamptz(3)
+  createdAt      DateTime            @default(now()) @db.Timestamptz(3)
+  /// Email outbox delivery state (retries with backoff; failedAt after the last attempt).
+  attempts       Int                 @default(0)
+  nextAttemptAt  DateTime            @default(now()) @db.Timestamptz(3)
+  lastError      String?
+  failedAt       DateTime?           @db.Timestamptz(3)
+
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+  @@index([channel, sentAt])
+  @@index([channel, sentAt, failedAt, nextAttemptAt])
+}
+
+// ───────────────────────────── NEXVO Civic ─────────────────────────────
+
+enum CivicCategory {
+  ILLEGAL_DUMPING
+  OVERFLOWING_BIN
+  MISSED_COLLECTION
+  SANITATION
+  OTHER
+}
+
+enum CivicReportStatus {
+  SUBMITTED
+  UNDER_REVIEW
+  VERIFIED
+  ASSIGNED
+  IN_PROGRESS
+  RESOLVED
+  CONFIRMED
+  REJECTED
+  DUPLICATE
+  DISPUTED
+  REOPENED
+  CANCELLED
+}
+
+model CivicReport {
+  id                 String                                 @id @default(cuid())
+  /// The municipality organization responsible for the report.
+  organizationId     String
+  trackingCode       String                                 @unique
+  /// Client-generated id so a retried submission never creates a second report.
+  clientSubmissionId String                                 @unique
+  category           CivicCategory
+  description        String
+  latitude           Decimal                                @db.Decimal(9, 6)
+  longitude          Decimal                                @db.Decimal(9, 6)
+  geog               Unsupported("geography(Point, 4326)")?
+  addressHint        String?
+  serviceZoneId      String?
+  status             CivicReportStatus                      @default(SUBMITTED)
+  priority           Priority                               @default(NORMAL)
+  /// Optional; personal data, never exposed on public endpoints.
+  reporterName       String?
+  reporterContact    String?
+  duplicateOfId      String?
+  rejectionReason    String?
+  disputeReason      String?
+  reopenCount        Int                                    @default(0)
+  verifiedAt         DateTime?                              @db.Timestamptz(3)
+  slaDueAt           DateTime?                              @db.Timestamptz(3)
+  resolvedAt         DateTime?                              @db.Timestamptz(3)
+  closedAt           DateTime?                              @db.Timestamptz(3)
+  createdAt          DateTime                               @default(now()) @db.Timestamptz(3)
+  updatedAt          DateTime                               @updatedAt @db.Timestamptz(3)
+
+  organization Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  serviceZone  ServiceZone?       @relation(fields: [serviceZoneId], references: [id])
+  duplicateOf  CivicReport?       @relation("Duplicates", fields: [duplicateOfId], references: [id])
+  duplicates   CivicReport[]      @relation("Duplicates")
+  events       CivicReportEvent[]
+  evidence     EvidenceFile[]
+  workOrder    WorkOrder?
+
+  @@index([organizationId, status, createdAt])
+  @@index([geog], type: Gist)
+}
+
+model CivicReportEvent {
+  id          String             @id @default(cuid())
+  reportId    String
+  fromStatus  CivicReportStatus?
+  toStatus    CivicReportStatus
+  actorType   ActorType
+  actorUserId String?
+  /// Public note shown on the citizen tracking page.
+  publicNote  String?
+  createdAt   DateTime           @default(now()) @db.Timestamptz(3)
+
+  report CivicReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@index([reportId, createdAt])
+}
+
+// ───────────────────────────── Online payments ─────────────────────────────
+
+enum CheckoutStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELED
+  EXPIRED
+}
+
+/// One hosted checkout at a payment provider (Chargily Pay: CIB / Edahabia). The amount is
+/// fixed when created; the webhook is accepted only if it matches this row.
+model PaymentCheckout {
+  id             String         @id @default(cuid())
+  organizationId String
+  invoiceId      String
+  provider       String
+  externalId     String
+  amount         Decimal        @db.Decimal(14, 2)
+  currency       String
+  status         CheckoutStatus @default(PENDING)
+  checkoutUrl    String
+  livemode       Boolean        @default(false)
+  createdById    String
+  createdAt      DateTime       @default(now()) @db.Timestamptz(3)
+  settledAt      DateTime?      @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  invoice      Invoice      @relation(fields: [organizationId, invoiceId], references: [organizationId, id])
+
+  @@unique([provider, externalId])
+  @@index([organizationId, invoiceId])
+}
+
+// ───────────────────────────── Security ─────────────────────────────
+
+/// Shared fixed-window rate-limit counters (works across several app instances).
+model RateLimitBucket {
+  key     String   @id
+  count   Int
+  resetAt DateTime @db.Timestamptz(3)
+
+  @@index([resetAt])
+}
+
+// ───────────────────────────── Remote support ─────────────────────────────
+
+enum TicketStatus {
+  OPEN
+  WAITING_SUPPORT
+  WAITING_CUSTOMER
+  RESOLVED
+  CLOSED
+}
+
+enum TicketCategory {
+  QUESTION
+  BUG
+  BILLING
+  ACCESS
+  FEATURE
+}
+
+model SupportTicket {
+  id             String         @id @default(cuid())
+  organizationId String
+  number         String
+  subject        String
+  category       TicketCategory @default(QUESTION)
+  priority       Priority       @default(NORMAL)
+  status         TicketStatus   @default(WAITING_SUPPORT)
+  createdById    String
+  createdAt      DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime       @updatedAt @db.Timestamptz(3)
+
+  organization Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  messages     SupportMessage[]
+  grants       SupportAccessGrant[]
+
+  @@unique([organizationId, number])
+  @@index([status, updatedAt])
+}
+
+model SupportMessage {
+  id            String   @id @default(cuid())
+  ticketId      String
+  authorUserId  String
+  authorIsStaff Boolean  @default(false)
+  body          String
+  createdAt     DateTime @default(now()) @db.Timestamptz(3)
+
+  ticket SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId, createdAt])
+}
+
+/// Customer-granted, time-limited, read-only access for NEXVO support staff. Every use is audited.
+model SupportAccessGrant {
+  id             String    @id @default(cuid())
+  organizationId String
+  ticketId       String?
+  grantedById    String
+  reason         String
+  expiresAt      DateTime  @db.Timestamptz(3)
+  revokedAt      DateTime? @db.Timestamptz(3)
+  revokedById    String?
+  createdAt      DateTime  @default(now()) @db.Timestamptz(3)
+
+  organization Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  ticket       SupportTicket? @relation(fields: [ticketId], references: [id])
+
+  @@index([organizationId, expiresAt])
+}
+
+// ───────────────────────────── AI assistance ─────────────────────────────
+
+/// Every AI suggestion shown to a human, with the decision they took. AI never acts on its own.
+model AiSuggestion {
+  id             String   @id @default(cuid())
+  organizationId String
+  feature        String
+  entityType     String
+  entityId       String
+  model          String
+  output         Json
+  accepted       Boolean?
+  inputTokens    Int?
+  outputTokens   Int?
+  createdById    String
+  createdAt      DateTime @default(now()) @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, entityType, entityId])
+}

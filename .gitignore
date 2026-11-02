@@ -34,3 +34,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# NEXVO
+/lib/generated/
+/.data/
+/test-results/
+/playwright-report/
+/tests/e2e/.artifacts/
