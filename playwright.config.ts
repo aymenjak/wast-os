@@ -21,7 +21,8 @@ export default defineConfig({
     reuseExistingServer: false,
     timeout: 60_000,
     env: {
-      DATABASE_URL: process.env.TEST_DATABASE_URL ?? "",
+      // E2E_APP_DATABASE_URL: run the app as the least-privilege role (RLS enforced) while fixtures use the owner.
+      DATABASE_URL: process.env.E2E_APP_DATABASE_URL ?? process.env.TEST_DATABASE_URL ?? "",
       UPLOAD_DIR: "./.data/e2e-uploads",
       NEXVO_E2E: "1",
       RATE_LIMIT_SCALE: "50",

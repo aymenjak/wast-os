@@ -64,7 +64,11 @@ test.describe.serial("Operations features", () => {
     await page.locator('input[name="password"]').fill("e2e-password-123");
     await page.locator('button[type="submit"]').click();
     await page.waitForURL(/\/app/);
-    await page.keyboard.press("Control+k");
+    // The shortcut works once the page is hydrated: press again until the palette opens.
+    await expect(async () => {
+      await page.keyboard.press("Control+k");
+      await expect(page.getByRole("combobox")).toBeVisible({ timeout: 1000 });
+    }).toPass({ timeout: 15_000 });
     await page.getByRole("combobox").fill("cafe medit");
     await expect(page.getByRole("option").filter({ hasText: "Customer" }).filter({ hasText: "Café Méditerranée" })).toBeVisible();
     await page.keyboard.press("Enter");

@@ -1,3 +1,4 @@
+import { runAsTenant } from "@/server/tenant-scope";
 import { NextResponse } from "next/server";
 import { currentSession } from "@/server/auth/session";
 import { getEvidenceForDownload } from "@/server/services/work-orders";
@@ -12,7 +13,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const s = await currentSession();
   if (!s?.ctx) return new NextResponse("Not found", { status: 404 });
   try {
-    const ev = await getEvidenceForDownload(s.ctx, id);
+    const ev = await runAsTenant(s.ctx.org.id, () => getEvidenceForDownload(s.ctx!, id));
     const bytes = await storage().get(ev.storageKey);
     return new NextResponse(Buffer.from(bytes), {
       headers: {

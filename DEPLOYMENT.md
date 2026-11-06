@@ -96,7 +96,7 @@ cp .env.example .env && npm ci && npx prisma migrate dev && npm run db:seed && n
 ### Database accounts and encrypted backups (2026-11-06)
 
 1. As the database administrator, create the application role once: `sudo -u postgres psql -d nexvo -v app_role=nexvo_app -v app_password='<random>' -f scripts/ops/db-roles.sql`.
-2. `DATABASE_URL` for the running app = the `nexvo_app` role. Migrations (`npx prisma migrate deploy`) run with the owner role's URL, never the app role. Re-run step 1 after each release that adds tables only if default privileges were not set (the script sets them).
+2. `DATABASE_URL` for the running app = the `nexvo_app` role. This is also what enforces row-level security (D-91): the owner role is not restricted by the policies. Migrations (`npx prisma migrate deploy`) run with the owner role's URL, never the app role. Re-run step 1 after each release that adds tables only if default privileges were not set (the script sets them).
 3. Generate the backup key pair **on the owner's computer**: `age-keygen -o nexvo-backup-key.txt`. Keep that file offline (safe, password manager). Put only its public key (`age1…`) on the server as `BACKUP_AGE_RECIPIENT`.
 4. Nightly: `BACKUP_AGE_RECIPIENT=age1… scripts/ops/db-backup.sh "$OWNER_URL" /backups/nexvo-$(date +%F).dump.age`, then copy off-site. Encrypt `UPLOAD_DIR` archives the same way (`tar c uploads | age -r age1… > uploads.tar.age`).
 5. Restore drill: `AGE_IDENTITY=nexvo-backup-key.txt scripts/ops/restore-drill.sh backup.dump.age <empty-db-url>`; remove the key file afterwards.

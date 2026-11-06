@@ -35,6 +35,11 @@ jobs:
         run: echo "CHROMIUM_PATH=$(node -e "console.log(require('@playwright/test').chromium.executablePath())")" >> "$GITHUB_ENV"
       - run: npm run test:integration
       - run: npm run build
+      # The e2e app connects as the least-privilege role, as in production, so row-level security is enforced (D-91).
+      - name: Least-privilege application role
+        run: |
+          psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -v app_role=nexvo_app -v app_password=nexvo_app_ci -f scripts/ops/db-roles.sql
+          echo "E2E_APP_DATABASE_URL=postgresql://nexvo_app:nexvo_app_ci@localhost:5432/nexvo_test" >> "$GITHUB_ENV"
       - run: npm run test:e2e
       - uses: actions/upload-artifact@v4
         if: failure()

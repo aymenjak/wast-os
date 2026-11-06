@@ -1,3 +1,4 @@
+import { runAsTenant } from "@/server/tenant-scope";
 import "server-only";
 import { NextResponse } from "next/server";
 import { currentSession } from "../auth/session";
@@ -26,7 +27,7 @@ export async function withFieldSession(req: Request, fn: (ctx: OrgContext) => Pr
   if (!s?.ctx) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   if (!(await rateLimit(`field:${s.ctx.userId}`, 600, 10 * 60_000)).ok) return NextResponse.json({ error: "errors.rateLimited" }, { status: 429 });
   try {
-    const body = await fn(s.ctx);
+    const body = await runAsTenant(s.ctx.org.id, () => fn(s.ctx!));
     return NextResponse.json(body, { headers: { "Cache-Control": "private, no-store" } });
   } catch (e) {
     if (e instanceof NotFoundError) return NextResponse.json({ error: e.code }, { status: 404 });
