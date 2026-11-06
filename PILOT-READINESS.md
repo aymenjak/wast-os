@@ -96,3 +96,27 @@ Remaining for the field: the **first visit on slow 3G takes 8 s** (JavaScript do
 4. Legal review items (PRIVACY-AND-COMPLIANCE.md §5, ANPDP declaration) and invoice format validated by an accountant.
 5. CI run on GitHub (`.github/workflows/ci.yml`) — not observable from this environment.
 6. A real-phone check with two or three drivers (the emulation above does not replace real devices, sunlight and gloves).
+
+## System review — 2026-11-06
+
+Requested by the project owner: review the whole system and user experience, remove defects and anything that blocks users, and harden data protection.
+
+**Method.** A crawler signed in as each role (owner, dispatcher, driver, finance, municipality, customer portal, platform owner, NEXVO support, anonymous visitor), followed every link (GET only, no form submitted) on a 390 px phone screen, and replayed every page in Arabic, French and English: 243 distinct pages, 738 page views. Each view checked HTTP status, browser console errors, horizontal overflow, untranslated keys or `undefined`/`NaN`, load time, and (Arabic) axe WCAG 2.1 AA serious/critical rules. Translations were checked statically (no missing key; no Arabic/French text left in English).
+
+| Finding (round 1) | Count | Fix |
+|---|---|---|
+| Dispatcher saw a customer's invoices **with amounts** although the role cannot read invoices | security | Service no longer returns invoices without `invoices.read`; card hidden; regression test |
+| Links to pages the role cannot open (driver → customer/contract, finance → vehicle/container, dispatcher → invoice) | 27 dead links | Shown as plain text when the role lacks the permission |
+| Sensors page crashed (HTTP 500) for finance | 1 page | Page-level permission check; two other unguarded pages fixed; friendly error page for the app |
+| 404 page with no way back (link to the public site, request left pending) | all 404s | Localised page with Back / My workspace / Home |
+| Signed-in user shown the sign-in form at `/login` (looked like being signed out) | — | Redirect to the workspace; public header shows "My workspace" |
+| Horizontal overflow on phones: new-invoice form, platform and support consoles | 34 views | `min-w-0`, wrapping headers |
+| Sign-out button without accessible name (phones) | 195 views | `aria-label` |
+| Scroll areas not reachable by keyboard; meters without names; contrast in console headers; link not distinguishable | 49 views | Focusable scroll regions, labelled meters, contrast and underline fixes |
+| React hydration error on the home page (reduced motion read during render) | 3 views | Preference read after mount; CSS shows fade-in sections at once with reduced motion |
+
+**Round 2 (after fixes, same crawl): 717 page views — 0 HTTP errors, 0 overflow, 0 console errors, 0 untranslated strings, 0 serious axe violations.**
+
+**Added because the pilot needs it:** customer import from Excel/CSV (onboarding blocker), "Needs attention" strip on the dashboard (supplies to reorder, supplier invoices to pay), sign-out wipes offline driver data with nothing left to send.
+
+**Data protection (SECURITY.md §Database and data protection):** citizens' name and contact encrypted at rest (AES-256-GCM, migration script for older rows); least-privilege database role for the application — verified that TRUNCATE, ALTER (disabling the append-only triggers), DROP, CREATE and changes to migration history are refused, and that the whole application works under that role; backups encrypted with `age`, plain dumps refused by default, restore drill from an encrypted backup passed. Random ids in URLs kept, per OWASP's IDOR guidance (access is checked on every request; encrypting ids is advised against). Next layer planned: PostgreSQL row-level security.

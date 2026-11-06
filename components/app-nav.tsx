@@ -2,14 +2,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import {
+import { Package,
   BarChart3, Bot, Box, Recycle, Building2, CreditCard, LifeBuoy, Radio, CalendarRange, ClipboardList, FileText, Gauge, Map, Menu, Receipt, Settings, ShieldCheck, Truck, Users, Wrench, X, Home,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/components/i18n-provider";
 import { LanguageSwitcher } from "@/components/language-switcher";
 
-const ICONS = { Bot, Box, Recycle, CreditCard, LifeBuoy, Radio, Gauge, Building2, FileText, ClipboardList, CalendarRange, Wrench, Truck, Receipt, BarChart3, Users, Settings, ShieldCheck, Map, Home } as const;
+const ICONS = { Package, Bot, Box, Recycle, CreditCard, LifeBuoy, Radio, Gauge, Building2, FileText, ClipboardList, CalendarRange, Wrench, Truck, Receipt, BarChart3, Users, Settings, ShieldCheck, Map, Home } as const;
 export type NavItem = { href: string; label: string; icon: keyof typeof ICONS };
 export type NavSection = { title?: string; items: NavItem[] };
 

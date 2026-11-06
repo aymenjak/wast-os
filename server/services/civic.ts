@@ -1,3 +1,4 @@
+import { decryptPII, encryptPII } from "../crypto";
 import { z } from "zod";
 import { prisma } from "../db";
 import { requirePermission, type OrgContext } from "../context";
@@ -65,8 +66,8 @@ export async function submitCivicReport(input: unknown, photos: { name: string; 
           latitude: data.latitude.toFixed(6),
           longitude: data.longitude.toFixed(6),
           addressHint: data.addressHint,
-          reporterName: data.reporterName,
-          reporterContact: data.reporterContact,
+          reporterName: encryptPII(data.reporterName),
+          reporterContact: encryptPII(data.reporterContact),
           events: { create: { toStatus: "SUBMITTED", actorType: "CITIZEN" } },
           evidence: { create: stored.map((s) => ({ ...s, organizationId: municipality.id, kind: "REPORT_PHOTO" as const })) },
         },
@@ -175,7 +176,7 @@ export async function getCivicReport(ctx: OrgContext, reportId: string) {
     },
   });
   if (!r) throw new NotFoundError("CivicReport");
-  return { ...r, duplicates: await findPossibleDuplicates(ctx, r.id), nextStatuses: nextCivicStatuses(r.status, "reviewer") };
+  return { ...r, reporterName: decryptPII(r.reporterName), reporterContact: decryptPII(r.reporterContact), duplicates: await findPossibleDuplicates(ctx, r.id), nextStatuses: nextCivicStatuses(r.status, "reviewer") };
 }
 
 const reviewSchema = z.object({
@@ -259,7 +260,7 @@ export async function reviewCivicReport(ctx: OrgContext, reportId: string, input
       data: { reportId: r.id, fromStatus: r.status, toStatus: data.to, actorType: "USER", actorUserId: ctx.userId, publicNote: data.publicNote },
     });
     await audit(tx, { organizationId: ctx.org.id, actorUserId: ctx.userId, action: "civic.reviewed", entityType: "CivicReport", entityId: r.id, data: { from: r.status, to: data.to, reason: data.reason ?? null } });
-    await notifyCitizen(tx, ctx.org.id, r.reporterContact, r.trackingCode, data.to, "civic.status_changed");
+    await notifyCitizen(tx, ctx.org.id, decryptPII(r.reporterContact), r.trackingCode, data.to, "civic.status_changed");
     return data.to;
   });
 }

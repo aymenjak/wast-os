@@ -177,6 +177,10 @@ model Organization {
   dropOffPoints              DropOffPoint[]
   sortingCampaigns           SortingCampaign[]
   materialSuppliers          MaterialSupplier[]
+  stockItems                 StockItem[]
+  stockSuppliers             StockSupplier[]
+  stockPurchases             StockPurchase[]
+  stockMovements             StockMovement[]
   materialPurchases          MaterialPurchase[]
   bales                      Bale[]
   yardAdjustments            YardAdjustment[]
@@ -1287,6 +1291,7 @@ model Vehicle {
   lastSpeedKmh   Int?
 
   organization       Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  stockMovements     StockMovement[]
   maintenance        VehicleMaintenance[]
   workOrders         WorkOrder[]
   hazardousMovements HazardousMovement[]
@@ -1951,4 +1956,135 @@ model AiSuggestion {
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@index([organizationId, entityType, entityId])
+}
+
+// ───────────────────────────── Stock & procurement (operating supplies) ─────────────────────────────
+// Spare parts, lubricants, tyres, cleaning products, protective equipment and consumables (STOCK.md).
+// Recovered materials are NOT here: the sorting yard (MaterialPurchase, Bale…) tracks them.
+// Quantities are DECIMAL(14,3) (thousandths in domain code); values are integer centimes (BigInt), signed on movements.
+
+enum StockCategory {
+  SPARE_PART
+  LUBRICANT
+  TYRE
+  CLEANING
+  PPE
+  CONSUMABLE
+  OTHER
+}
+
+enum StockUnit {
+  UNIT
+  LITRE
+  KG
+  PAIR
+  BOX
+  ROLL
+  METRE
+}
+
+enum StockMovementKind {
+  OPENING
+  RECEIPT
+  ISSUE
+  ADJUSTMENT
+  RECEIPT_VOID
+}
+
+model StockItem {
+  id             String        @id @default(cuid())
+  organizationId String
+  /// Internal reference, unique per organization (stored upper-case).
+  code           String
+  name           String
+  category       StockCategory
+  unit           StockUnit
+  /// Reorder level: an alert is shown when the quantity on hand is at or below it.
+  reorderLevel   Decimal       @default(0) @db.Decimal(14, 3)
+  notes          String?
+  active         Boolean       @default(true)
+  createdAt      DateTime      @default(now()) @db.Timestamptz(3)
+
+  organization Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  movements    StockMovement[]
+
+  @@unique([organizationId, code])
+  @@unique([organizationId, id])
+  @@index([organizationId, category])
+}
+
+/// Supplier of operating supplies (companies; NIF/RC as printed on their invoices).
+model StockSupplier {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  phone          String?
+  email          String?
+  /// Tax identification number (NIF) as printed on the supplier's invoices.
+  taxId          String?
+  address        String?
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now()) @db.Timestamptz(3)
+
+  organization Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  purchases    StockPurchase[]
+
+  @@unique([organizationId, id])
+  @@index([organizationId, name])
+}
+
+/// Goods receipt for a supplier invoice (bon de réception). Its lines are the RECEIPT movements.
+model StockPurchase {
+  id                 String    @id @default(cuid())
+  organizationId     String
+  number             String
+  supplierId         String
+  /// The supplier's own invoice number, to match the paper invoice.
+  supplierInvoiceRef String?
+  receivedOn         DateTime  @db.Date
+  /// Total excluding VAT (the stock is valued excluding recoverable VAT), and the VAT amount as printed.
+  totalMinor         BigInt
+  vatMinor           BigInt    @default(0)
+  paidAt             DateTime? @db.Timestamptz(3)
+  voidedAt           DateTime? @db.Timestamptz(3)
+  voidReason         String?
+  createdById        String
+  createdAt          DateTime  @default(now()) @db.Timestamptz(3)
+
+  organization Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  supplier     StockSupplier   @relation(fields: [organizationId, supplierId], references: [organizationId, id])
+  movements    StockMovement[]
+
+  @@unique([organizationId, number])
+  @@unique([organizationId, id])
+  @@index([organizationId, receivedOn])
+}
+
+/// Append-only stock ledger (database trigger refuses UPDATE/DELETE). Quantity and value are signed:
+/// in > 0 (OPENING, RECEIPT, positive ADJUSTMENT), out < 0 (ISSUE, RECEIPT_VOID, negative ADJUSTMENT).
+model StockMovement {
+  id             String            @id @default(cuid())
+  organizationId String
+  itemId         String
+  kind           StockMovementKind
+  quantity       Decimal           @db.Decimal(14, 3)
+  valueMinor     BigInt
+  /// Receipts and openings: unit cost excluding VAT, in centimes, as entered.
+  unitCostMinor  BigInt?
+  purchaseId     String?
+  /// Issues: the vehicle the supplies were used for (consumption per truck).
+  vehicleId      String?
+  reason         String?
+  occurredOn     DateTime          @db.Date
+  createdById    String
+  createdAt      DateTime          @default(now()) @db.Timestamptz(3)
+
+  organization Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  item         StockItem      @relation(fields: [organizationId, itemId], references: [organizationId, id])
+  purchase     StockPurchase? @relation(fields: [organizationId, purchaseId], references: [organizationId, id])
+  vehicle      Vehicle?       @relation(fields: [organizationId, vehicleId], references: [organizationId, id])
+
+  @@index([organizationId, itemId, occurredOn])
+  @@index([organizationId, vehicleId, occurredOn])
+  @@index([organizationId, purchaseId])
 }

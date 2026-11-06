@@ -18,6 +18,9 @@ import * as recycling from "@/server/services/recycling";
 import * as hazardous from "@/server/services/hazardous";
 import * as yard from "@/server/services/yard";
 import * as territory from "@/server/services/territory";
+import * as stock from "@/server/services/stock";
+import { importCustomers, previewCustomerImport, type ImportPreview } from "@/server/services/customer-import";
+import { revalidatePath } from "next/cache";
 import { sendInvoiceEmail } from "@/server/services/mailer";
 import { globalSearch, type SearchHit } from "@/server/services/search";
 import { requireOrg } from "@/server/auth/session";
@@ -339,4 +342,56 @@ export async function createDropOffPointAction(_: ActionState, fd: FormData) {
 }
 export async function assignContainerAction(_: ActionState, fd: FormData) {
   return orgAction(fd, (ctx, input) => territory.assignContainer(ctx, input), { revalidate: ["/app/recycling/drop-off"] });
+}
+
+// ── Stock & procurement ──
+export async function createStockItemAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, async (ctx, input) => `/app/stock/${(await stock.createItem(ctx, input)).id}`);
+}
+export async function updateStockItemAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, async (ctx, input) => void (await stock.updateItem(ctx, s(input.itemId), input)), { revalidate: [`/app/stock/${s(fd.get("itemId"))}`, "/app/stock"] });
+}
+export async function issueStockAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, async (ctx, input) => void (await stock.issueStock(ctx, input)), { revalidate: [`/app/stock/${s(fd.get("itemId"))}`, "/app/stock"] });
+}
+export async function openingStockAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, async (ctx, input) => void (await stock.openingStock(ctx, input)), { revalidate: [`/app/stock/${s(fd.get("itemId"))}`, "/app/stock"] });
+}
+export async function adjustStockAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, async (ctx, input) => void (await stock.adjustStock(ctx, input)), { revalidate: [`/app/stock/${s(fd.get("itemId"))}`, "/app/stock"] });
+}
+export async function createStockSupplierAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, async (ctx, input) => void (await stock.createSupplier(ctx, input)), { revalidate: ["/app/stock/purchases"] });
+}
+export async function createStockPurchaseAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, async (ctx, input) => `/app/stock/purchases/${(await stock.createPurchase(ctx, { ...input, lines: rows(input, "lines", 6, ["itemId", "quantity", "unitCost"]) })).id}`);
+}
+export async function markStockPurchasePaidAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, (ctx) => stock.markPurchasePaid(ctx, s(fd.get("purchaseId"))), { revalidate: [`/app/stock/purchases/${s(fd.get("purchaseId"))}`] });
+}
+export async function voidStockPurchaseAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, (ctx, input) => stock.voidPurchase(ctx, s(input.purchaseId), input), { revalidate: [`/app/stock/purchases/${s(fd.get("purchaseId"))}`] });
+}
+
+// ── Customer import (onboarding) ──
+type ImportResult = { ok: true; preview?: ImportPreview; imported?: { customers: number; locations: number; skipped: number } } | { ok: false; error: string; details?: unknown };
+async function importStep(locale: string, csv: string, commit: boolean): Promise<ImportResult> {
+  const l = isLocale(locale) ? locale : "fr";
+  const ctx = await requireOrg(l);
+  if (ctx.support) return { ok: false, error: "errors.support.readOnly" };
+  try {
+    if (!commit) return { ok: true, preview: await previewCustomerImport(ctx, String(csv ?? "")) };
+    const imported = await importCustomers(ctx, String(csv ?? ""));
+    revalidatePath(`/${l}/app/customers`, "page");
+    return { ok: true, imported };
+  } catch (e) {
+    if (e instanceof DomainError) return { ok: false, error: e.code, details: e.details ?? null };
+    throw e;
+  }
+}
+export async function previewCustomerImportAction(locale: string, csv: string) {
+  return importStep(locale, csv, false);
+}
+export async function importCustomersAction(locale: string, csv: string) {
+  return importStep(locale, csv, true);
 }

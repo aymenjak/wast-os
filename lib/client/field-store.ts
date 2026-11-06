@@ -138,3 +138,28 @@ export async function fetchBundle(): Promise<{ bundle?: FieldBundle; unauthorize
     return {};
   }
 }
+
+/**
+ * Sign-out hygiene (SECURITY.md gap 8): delete this phone's offline copies whose outbox is empty, so customer names and
+ * addresses do not stay on a shared or lost phone. A database with unsent work is kept: it is sent at the next sign-in.
+ */
+export async function wipeSentFieldData(timeoutMs = 1500): Promise<void> {
+  if (typeof indexedDB === "undefined" || typeof indexedDB.databases !== "function") return;
+  const work = (async () => {
+    const dbs = (await indexedDB.databases()).filter((x) => x.name?.startsWith("nexvo-field-"));
+    for (const info of dbs) {
+      const name = info.name!;
+      const db = await new Promise<IDBDatabase | null>((resolve) => {
+        const r = indexedDB.open(name);
+        r.onsuccess = () => resolve(r.result);
+        r.onerror = () => resolve(null);
+        r.onupgradeneeded = () => { r.transaction?.abort(); resolve(null); };
+      });
+      if (!db) continue;
+      const pending = db.objectStoreNames.contains("outbox") ? await req(db.transaction("outbox").objectStore("outbox").count()) : 0;
+      db.close();
+      if (pending === 0) await new Promise<void>((resolve) => { const d = indexedDB.deleteDatabase(name); d.onsuccess = d.onerror = d.onblocked = () => resolve(); });
+    }
+  })();
+  await Promise.race([work.catch(() => undefined), new Promise((r) => setTimeout(r, timeoutMs))]);
+}

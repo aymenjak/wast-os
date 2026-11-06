@@ -1,3 +1,4 @@
+import { useId } from "react";
 import type { ReactNode } from "react";
 import { CHART } from "./palette";
 
@@ -25,13 +26,14 @@ export function RankedBars({ items }: { items: { label: string; value: number; d
 /** A ratio against a limit: same-ramp track and fill, value as text. */
 export function Meter({ value, max, label, display }: { value: number; max: number; label: ReactNode; display: string }) {
   const pct = max > 0 ? Math.min(100, (value / max) * 100) : 0;
+  const id = useId();
   return (
     <div>
       <div className="flex items-baseline justify-between gap-3 text-sm">
-        <span className="text-ink-800">{label}</span>
+        <span id={id} className="text-ink-800">{label}</span>
         <span className="num font-semibold text-ink-950">{display}</span>
       </div>
-      <div role="meter" aria-valuemin={0} aria-valuemax={max} aria-valuenow={value} aria-label={typeof label === "string" ? label : undefined} className="mt-1.5 h-2 rounded-full bg-[#d6e4f7]">
+      <div role="meter" aria-valuemin={0} aria-valuemax={max} aria-valuenow={value} aria-labelledby={id} aria-valuetext={display} className="mt-1.5 h-2 rounded-full bg-[#d6e4f7]">
         <div className="h-full rounded-full" style={{ inlineSize: `${pct}%`, background: CHART.single }} />
       </div>
     </div>
@@ -53,7 +55,7 @@ export function DataTableToggle({ label, children }: { label: string; children: 
   return (
     <details className="mt-3 text-sm">
       <summary className="cursor-pointer text-xs font-medium text-ink-600 hover:text-ink-900">{label}</summary>
-      <div className="mt-2 overflow-x-auto">{children}</div>
+      <div tabIndex={0} className="mt-2 overflow-x-auto focus-visible:outline-2">{children}</div>
     </details>
   );
 }

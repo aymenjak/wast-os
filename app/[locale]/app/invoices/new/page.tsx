@@ -22,9 +22,9 @@ export default async function NewInvoice({ params, searchParams }: { params: Pro
       <Card className="max-w-3xl">
         <CardBody className="space-y-6">
           <form className="flex items-end gap-2">
-            <div className="flex flex-1 flex-col gap-1.5">
+            <div className="flex min-w-0 flex-1 flex-col gap-1.5">
               <label htmlFor="customer" className="text-sm font-medium text-ink-800">{d.invoices.customer}</label>
-              <select id="customer" name="customer" defaultValue={selected?.id ?? ""} required className="h-10 rounded-[var(--radius-control)] border border-ink-300 bg-white px-3 text-sm">
+              <select id="customer" name="customer" defaultValue={selected?.id ?? ""} required className="h-10 w-full min-w-0 rounded-[var(--radius-control)] border border-ink-300 bg-white px-3 text-sm">
                 <option value="" disabled>—</option>
                 {customers.map((c) => <option key={c.id} value={c.id}>{c.name} ({c.code})</option>)}
               </select>

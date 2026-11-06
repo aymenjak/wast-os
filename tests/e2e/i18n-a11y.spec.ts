@@ -25,7 +25,7 @@ for (const { l, dir, heading } of LOCALES) {
       await page.goto(`/${l}${p}`);
       const r = await new AxeBuilder({ page: page as never }).withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"]).disableRules(["region"]).exclude(".leaflet-container").analyze();
       const serious = r.violations.filter((v) => v.impact === "serious" || v.impact === "critical");
-      expect(serious.map((v) => `${p}: ${v.id} (${v.nodes.length})`)).toEqual([]);
+      expect(serious.map((v) => `${p}: ${v.id} (${v.nodes.length}) ${v.nodes.slice(0, 3).map((n) => n.target.join(" ")).join(" | ")}`)).toEqual([]);
     }
   });
 

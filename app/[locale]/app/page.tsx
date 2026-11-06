@@ -8,6 +8,7 @@ import { businessDashboard, dailyTrend, orgToday, receivablesAging, type AgingBu
 import { contractsDueForRenewal } from "@/server/services/contracts";
 import { aiEnabled } from "@/server/services/ai";
 import { iotKpis } from "@/server/services/iot";
+import { stockSummary } from "@/server/services/stock";
 import { prisma } from "@/server/db";
 import { formatDateTime, formatDay, formatMinor, formatNumber, formatPercent } from "@/lib/i18n/format";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
@@ -44,9 +45,18 @@ export default async function Dashboard({ params }: { params: Promise<{ locale: 
     canInvoices ? receivablesAging(ctx) : Promise.resolve(null),
     iotKpis(ctx),
   ]);
+  // Needs attention: supplies at or below their reorder level, supplier invoices still to pay (STOCK.md).
+  const canStock = ctx.permissions.has("fleet.read") || ctx.permissions.has("reports.read");
+  const [stock, unpaidSuppliers] = canStock
+    ? await Promise.all([stockSummary(ctx), prisma.stockPurchase.count({ where: { organizationId: ctx.org.id, paidAt: null, voidedAt: null } })])
+    : [null, 0];
+  const attention = [
+    ...(stock?.low.length ? [{ href: "/app/stock", text: d.dashboard.attentionStock.replace("{n}", formatNumber(stock.low.length, locale)) }] : []),
+    ...(unpaidSuppliers ? [{ href: "/app/stock/purchases", text: d.dashboard.attentionSuppliers.replace("{n}", formatNumber(unpaidSuppliers, locale)) }] : []),
+  ];
   const [nCustomers, nContracts, nTeams, nRequests] = counts;
   const onboarding = [
-    [nCustomers > 0, d.dashboard.stepCustomer, "/app/customers/new"],
+    [nCustomers > 0, d.dashboard.stepCustomer, "/app/customers"],
     [nContracts > 0, d.dashboard.stepContract, "/app/contracts/new"],
     [nTeams > 0, d.dashboard.stepTeam, "/app/fleet"],
     [nRequests > 0, d.dashboard.stepRequest, "/app/requests/new"],
@@ -79,6 +89,13 @@ export default async function Dashboard({ params }: { params: Promise<{ locale: 
             </ol>
           </CardBody>
         </Card>
+      ) : null}
+
+      {attention.length ? (
+        <section aria-label={d.dashboard.attention} className="mb-6 flex flex-wrap items-center gap-2 rounded-[var(--radius-card)] border border-warning-700/25 bg-warning-100 px-4 py-3">
+          <h2 className="text-sm font-semibold text-warning-700">{d.dashboard.attention}</h2>
+          {attention.map((a) => <Link key={a.href} href={`/${locale}${a.href}`} className="rounded-full bg-white px-3 py-1 text-sm font-medium text-warning-700 underline-offset-2 hover:underline">{a.text}</Link>)}
+        </section>
       ) : null}
 
       {/* Hero: the one number the operations day is about. */}
@@ -183,7 +200,7 @@ export default async function Dashboard({ params }: { params: Promise<{ locale: 
 
       {iot.devices > 0 ? (
         <Card className="mt-6">
-          <CardHeader title={d.iot.forecastTitle} description={d.iot.forecastLead} action={<Link className="text-sm font-medium text-ink-800 hover:underline" href={`/${locale}/app/iot`}>{d.nav.iot}</Link>} />
+          <CardHeader title={d.iot.forecastTitle} description={d.iot.forecastLead} action={ctx.permissions.has("fleet.read") ? <Link className="text-sm font-medium text-ink-800 hover:underline" href={`/${locale}/app/iot`}>{d.nav.iot}</Link> : undefined} />
           <CardBody className="grid gap-4 md:grid-cols-2">
             {iot.forecasts.slice(0, 6).map((f) => (
               <div key={f.id}>

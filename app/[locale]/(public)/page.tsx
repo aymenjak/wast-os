@@ -7,6 +7,8 @@ import { SpotlightCard } from "@/components/home/spotlight-card";
 import { ProductTour } from "@/components/home/product-tour";
 import { SensorBin } from "@/components/home/sensor-bin";
 import { Marquee } from "@/components/home/marquee";
+import { Founders } from "@/components/home/founders";
+import { Recycle, TriangleAlert, Warehouse, MapPinned } from "lucide-react";
 
 export default async function Home({ params }: { params: Promise<{ locale: Locale }> }) {
   const { locale } = await params;
@@ -16,6 +18,7 @@ export default async function Home({ params }: { params: Promise<{ locale: Local
   const shot = (name: string) => `/showcase/${locale}-${name}.jpg`;
   const tour = [
     { id: "dashboard", label: d.home.tour.tabs.dashboard, caption: d.home.tour.captions.dashboard, src: shot("dashboard"), width: 1700, height: 1063 },
+    { id: "recycling", label: d.home.tour.tabs.recycling, caption: d.home.tour.captions.recycling, src: shot("recycling"), width: 1700, height: 1063 },
     { id: "iot", label: d.home.tour.tabs.iot, caption: d.home.tour.captions.iot, src: shot("iot"), width: 1700, height: 1063 },
     { id: "invoice", label: d.home.tour.tabs.invoice, caption: d.home.tour.captions.invoice, src: shot("invoice"), width: 1700, height: 1063 },
     { id: "field", label: d.home.tour.tabs.field, caption: d.home.tour.captions.field, src: shot("field"), width: 780, height: 1560, phone: true },
@@ -101,6 +104,38 @@ export default async function Home({ params }: { params: Promise<{ locale: Local
             </ul>
           </Reveal>
           <Reveal delay={0.1}><SensorBin t={d.home.sensors.demo} /></Reveal>
+        </div>
+      </section>
+
+      <section className="border-t border-ink-200 bg-white">
+        <div className="mx-auto grid max-w-6xl gap-10 px-4 py-20 sm:px-6 lg:grid-cols-[1fr_1.4fr]">
+          <Reveal>
+            <h2 className="text-3xl leading-tight text-ink-950 sm:text-4xl">{d.home.recovery.title}</h2>
+            <p className="mt-4 max-w-xl leading-relaxed text-ink-700">{d.home.recovery.body}</p>
+            <div className="mt-6"><ButtonLink href={`/${locale}/business`} variant="secondary">{d.home.recovery.cta}</ButtonLink></div>
+          </Reveal>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {([[Recycle, d.home.recovery.items.recycling], [Warehouse, d.home.recovery.items.yard], [TriangleAlert, d.home.recovery.items.hazardous], [MapPinned, d.home.recovery.items.territory]] as const).map(([Icon, it], i) => (
+              <Reveal key={it.title} delay={i * 0.08}>
+                <SpotlightCard className="h-full">
+                  <Icon aria-hidden className="mb-3 size-5 text-brand-700" />
+                  <h3 className="font-bold text-ink-900">{it.title}</h3>
+                  <p className="mt-1.5 text-sm leading-relaxed text-ink-700">{it.body}</p>
+                </SpotlightCard>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="border-t border-ink-200 bg-ink-50" aria-labelledby="founders-title">
+        <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+          <Reveal>
+            <p className="text-sm font-semibold uppercase tracking-wide text-brand-800">{d.founders.eyebrow}</p>
+            <h2 id="founders-title" className="mt-2 max-w-2xl text-3xl leading-tight text-ink-950 sm:text-4xl">{d.founders.title}</h2>
+            <p className="mt-3 max-w-2xl text-ink-700">{d.founders.lead}</p>
+          </Reveal>
+          <Reveal delay={0.1} className="mt-10"><Founders d={d} locale={locale} variant="compact" /></Reveal>
         </div>
       </section>
 

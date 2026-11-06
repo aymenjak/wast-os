@@ -1,13 +1,13 @@
 import { z } from "zod";
 import { prisma } from "../db";
-import { requirePermission, type OrgContext } from "../context";
+import { hasPermission, requirePermission, type OrgContext } from "../context";
 import { NotFoundError } from "../domain/errors";
 import { audit } from "../audit";
 import { nextNumber } from "../counters";
 import { enforcePlanLimit } from "./accounts";
 import { email, latitude, longitude, optionalText, parse, requiredText } from "../validation";
 
-const customerSchema = z.object({
+export const customerSchema = z.object({
   name: requiredText(160),
   kind: z.enum(["BUSINESS", "INSTITUTION", "RESIDENTIAL"]).default("BUSINESS"),
   taxId: optionalText(40),
@@ -42,7 +42,8 @@ export async function getCustomer(ctx: OrgContext, customerId: string) {
       notes: { orderBy: { createdAt: "desc" }, take: 50 },
       contracts: { orderBy: { startDate: "desc" } },
       workOrders: { orderBy: { scheduledDate: "desc" }, take: 10 },
-      invoices: { orderBy: { createdAt: "desc" }, take: 10 },
+      // Amounts are finance data: only for roles that may read invoices (dispatchers see the customer, not its billing).
+      invoices: hasPermission(ctx, "invoices.read") ? { orderBy: { createdAt: "desc" }, take: 10 } : { where: { id: "__none__" } },
     },
   });
   if (!c) throw new NotFoundError("Customer");
@@ -101,7 +102,7 @@ export async function addContact(ctx: OrgContext, customerId: string, input: unk
   });
 }
 
-const locationSchema = z
+export const locationSchema = z
   .object({
     label: requiredText(120),
     addressLine: requiredText(300),

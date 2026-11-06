@@ -38,7 +38,7 @@ Recycling R1 (material and destination per weight ticket, recovery rate, recover
 5. Nightly automatic schedule generation + public-holiday calendar (generation itself is done).
 6. Invoice PDF in the validated legal format (after accountant review).
 7. axe on authenticated pages + Arabic screen-reader pass.
-8. CSV import of customers/locations for onboarding.
+8. ~~CSV import of customers/locations for onboarding~~ ✅ (2026-11-06, `/app/customers/import`: preview then all-or-nothing import, FR/EN/AR headers, grouping by NIF).
 
 ## Later
 
@@ -47,6 +47,6 @@ Recycling R1 (material and destination per weight ticket, recovery rate, recover
 - Accountant validation of the invoice PDF layout; streaming answers for the assistant; MQTT gateways.
 - Contractor assignment: municipality → provider tenant work orders with SLA reporting.
 - Quotations and credit notes; live online payments (after merchant onboarding and owner approval).
-- Offline mode: wipe phone data on sign-out, iOS Safari check on real devices, background sync.
+- Offline mode: iOS Safari check on real devices, background sync. (Wipe on sign-out: done 2026-11-06.)
 - NEXVO Market — gated on evidence of supply, buyer demand, material specs and a settlement model.
 - Eco Points — gated on an approved, costed, abuse-resistant policy.

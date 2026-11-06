@@ -74,3 +74,18 @@ export async function clientIp() {
 export async function userAgent() {
   return (await headers()).get("user-agent") ?? undefined;
 }
+
+/**
+ * Where a signed-in visitor belongs, or null when not signed in. Used by the public pages so a signed-in user is never
+ * shown the sign-in form (it looked like being signed out) and the header offers "My workspace" instead.
+ */
+export async function workspaceHref(locale: Locale): Promise<string | null> {
+  const s = await currentSession();
+  if (!s) return null;
+  if (s.ctx) {
+    const { homeFor } = await import("../navigation");
+    return homeFor(s.ctx, locale) ?? `/${locale}/app`;
+  }
+  if (s.user.isPlatformStaff) return s.user.platformRole === "OWNER" || s.user.platformRole === "ADMIN" ? `/${locale}/platform` : `/${locale}/support-console`;
+  return null;
+}

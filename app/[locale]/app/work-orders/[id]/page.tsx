@@ -71,7 +71,7 @@ export default async function WorkOrderDetail({ params }: { params: Promise<{ lo
                 <div className="flex items-start gap-3">
                   <MapPin aria-hidden className="mt-0.5 size-4 text-ink-500" />
                   <div className="min-w-0 text-sm">
-                    <Link href={`/${locale}/app/customers/${wo.customer.id}`} className="font-medium text-ink-900 hover:underline">{wo.customer.name}</Link>
+                    {ctx.permissions.has("customers.read") ? <Link href={`/${locale}/app/customers/${wo.customer.id}`} className="font-medium text-ink-900 hover:underline">{wo.customer.name}</Link> : <span className="font-medium text-ink-900">{wo.customer.name}</span>}
                     <div className="text-ink-700">{wo.serviceLocation?.label} — {wo.serviceLocation?.addressLine}</div>
                     {wo.serviceLocation?.accessNotes ? <div className="mt-1 rounded bg-sand-100 px-2 py-1 text-xs text-ink-800">{wo.serviceLocation.accessNotes}</div> : null}
                     {wo.customer.serviceConditions ? <div className="mt-1 text-xs text-ink-600">{wo.customer.serviceConditions}</div> : null}
@@ -85,13 +85,13 @@ export default async function WorkOrderDetail({ params }: { params: Promise<{ lo
               ) : null}
               {wo.civicReport ? (
                 <div className="rounded-md bg-ink-50 p-3 text-sm">
-                  <div className="font-medium text-ink-900">{d.workOrders.civicReport}, <Link className="num hover:underline" href={`/${locale}/app/civic/reports/${wo.civicReport.id}`}>{wo.civicReport.trackingCode}</Link></div>
+                  <div className="font-medium text-ink-900">{d.workOrders.civicReport}, {ctx.permissions.has("civic.read") ? <Link className="num hover:underline" href={`/${locale}/app/civic/reports/${wo.civicReport.id}`}>{wo.civicReport.trackingCode}</Link> : <span className="num">{wo.civicReport.trackingCode}</span>}</div>
                   <div className="text-ink-700">{d.enums.CivicCategory[wo.civicReport.category]} — {wo.civicReport.description}</div>
                 </div>
               ) : null}
               <DescriptionList items={[
                 [d.contracts.category, wo.wasteCategory ? name(wo.wasteCategory) : null],
-                [d.requests.contract, wo.contract ? <Link className="num hover:underline" href={`/${locale}/app/contracts/${wo.contract.id}`}>{wo.contract.reference}</Link> : null],
+                [d.requests.contract, wo.contract ? (ctx.permissions.has("contracts.read") ? <Link className="num hover:underline" href={`/${locale}/app/contracts/${wo.contract.id}`}>{wo.contract.reference}</Link> : <span className="num">{wo.contract.reference}</span>) : null],
                 [d.workOrders.team, wo.team?.name ?? d.workOrders.unassigned],
                 [d.workOrders.vehicle, wo.vehicle ? <span className="num">{wo.vehicle.plateNumber}, {wo.vehicle.label}</span> : null],
                 [d.workOrders.started, formatDateTime(wo.actualStart, locale, ctx.org.timezone)],

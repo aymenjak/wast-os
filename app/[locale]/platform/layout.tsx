@@ -28,11 +28,11 @@ export default async function PlatformLayout({ children, params }: { children: R
   return (
     <div className="min-h-dvh">
       <header className="bg-ink-900 text-white">
-        <div className="mx-auto flex h-14 max-w-7xl items-center gap-4 px-4">
+        <div className="mx-auto flex min-h-14 max-w-7xl flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2">
           <Link href={base}><Logo inverted /></Link>
           <span className="rounded-sm bg-hivis-600 px-1.5 py-0.5 text-xs font-bold text-ink-950">{d.platform.title}</span>
           <Link href={`/${locale}/account/security`} className="hidden text-sm text-[#c9d3d1] hover:text-white sm:inline"><bdi>{s.user.name}</bdi> · {d.platform.roles[role]}</Link>
-          <div className="ms-auto [&_a]:text-[#c9d3d1] [&_a[aria-current]]:text-white"><LanguageSwitcher /></div>
+          <div className="ms-auto [&_a]:!text-[#c9d3d1] [&_a:hover]:!text-white [&_a[aria-current]]:!text-white"><LanguageSwitcher /></div>
         </div>
         <nav aria-label={d.platform.title} className="mx-auto flex max-w-7xl gap-1 overflow-x-auto px-4 pb-2 text-sm">
           {nav.map(([href, label]) => <Link key={href} href={href} className="shrink-0 rounded-md px-3 py-1.5 text-[#c9d3d1] hover:bg-ink-800 hover:text-white">{label}</Link>)}

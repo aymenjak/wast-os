@@ -9,9 +9,10 @@ import { toMinor } from "@/lib/money";
 import { getDictionary } from "@/lib/i18n";
 import { recoveryLedger } from "./services/recycling";
 import { territoryLedger } from "./services/territory";
+import { stockLedger } from "./services/stock";
 import type { Locale } from "@/lib/i18n/config";
 
-export const EXPORT_KINDS = ["work-orders", "invoices", "customers", "containers", "recovery", "territory"] as const;
+export const EXPORT_KINDS = ["work-orders", "invoices", "customers", "containers", "recovery", "territory", "stock"] as const;
 export type ExportKind = (typeof EXPORT_KINDS)[number];
 type Table = { header: string[]; rows: (string | number | Date | null)[][] };
 
@@ -92,6 +93,17 @@ export async function buildExport(ctx: OrgContext, kind: ExportKind, from: strin
       return {
         header: [d.common.wilaya, d.common.commune, d.recycling.stream, d.territory.totalKg, d.territory.materialKg, d.territory.energyKg, d.territory.disposedKg, d.territory.untrackedKg],
         rows: rows.map((r) => [r.wilaya, r.commune, stream(r.stream), r.totalKg, r.materialKg, r.energyKg, r.disposedKg, r.untrackedKg]),
+      };
+    }
+    case "stock": {
+      // Stock ledger: every movement with its signed quantity and value (weighted average cost, excl. VAT). STOCK.md.
+      const rows = await stockLedger(ctx, from, to);
+      return {
+        header: [d.common.date, d.stock.code, d.common.name, d.stock.category, d.stock.unit, d.common.status, d.stock.quantity, d.stock.value, d.stock.vehicle, d.stock.receipt, d.stock.supplierInvoiceRef, d.common.reason],
+        rows: rows.map((m) => [
+          day(m.occurredOn), m.item.code, m.item.name, d.enums.StockCategory[m.item.category], d.enums.StockUnit[m.item.unit], d.enums.StockMovementKind[m.kind],
+          Number(m.quantity), Number(m.valueMinor) / 100, m.vehicle?.plateNumber ?? null, m.purchase?.number ?? null, m.purchase?.supplierInvoiceRef ?? null, m.reason,
+        ]),
       };
     }
     case "containers": {

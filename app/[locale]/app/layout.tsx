@@ -1,7 +1,7 @@
+import { LogoutButton } from "@/components/logout-button";
 import Link from "next/link";
 import { prisma } from "@/server/db";
 import { notFound, redirect } from "next/navigation";
-import { LogOut } from "lucide-react";
 import { getDictionary } from "@/lib/i18n";
 import { isLocale, type Locale } from "@/lib/i18n/config";
 import { currentSession, requireOrg } from "@/server/auth/session";
@@ -11,7 +11,7 @@ import { SidebarNav, MobileNav } from "@/components/app-nav";
 import { Logo } from "@/components/ui/misc";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { CommandPalette } from "@/components/command-palette";
-import { logoutAction, switchOrgAction } from "@/app/actions/public";
+import { switchOrgAction } from "@/app/actions/public";
 import { endSupportSessionAction } from "@/app/actions/support";
 import { formatDateTime } from "@/lib/i18n/format";
 
@@ -69,13 +69,7 @@ export default async function AppLayout({ children, params }: { children: React.
             {(session?.user.platformRole === "OWNER" || session?.user.platformRole === "ADMIN") && !ctx.support ? <Link href={`/${locale}/platform`} className="hidden text-sm font-medium text-ink-800 hover:underline md:inline">{d.nav.platform}</Link> : null}
             {session?.user.isPlatformStaff && !ctx.support ? <Link href={`/${locale}/support-console`} className="hidden text-sm font-medium text-ink-800 hover:underline md:inline">{d.nav.supportConsole}</Link> : null}
             {ctx.support ? <span className="hidden text-sm text-ink-700 md:inline">{ctx.userName}</span> : <Link href={`/${locale}/account/security`} className="hidden text-sm text-ink-700 hover:underline md:inline" title={d.mfa.title}>{ctx.userName}</Link>}
-            <form action={logoutAction}>
-              <input type="hidden" name="locale" value={locale} />
-              <button type="submit" className="inline-flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm text-ink-700 hover:bg-ink-100">
-                <LogOut aria-hidden className="size-4 rtl:rotate-180" />
-                <span className="hidden sm:inline">{d.common.signOut}</span>
-              </button>
-            </form>
+            <LogoutButton locale={locale} label={d.common.signOut} />
           </div>
         </header>
         {ctx.support ? (

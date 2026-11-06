@@ -37,7 +37,7 @@ export default async function DropOffPage({ params }: { params: Promise<{ locale
                     return (
                       <li key={c.id}>
                         <div className="flex items-baseline justify-between gap-3 text-sm">
-                          <span><Link className="num font-medium text-brand-700 hover:underline" href={`/${locale}/app/containers/${c.id}`}>{c.code}</Link> · {stream(c.stream)}</span>
+                          <span>{ctx.permissions.has("fleet.read") ? <Link className="num font-medium text-brand-700 hover:underline" href={`/${locale}/app/containers/${c.id}`}>{c.code}</Link> : <span className="num font-medium">{c.code}</span>} · {stream(c.stream)}</span>
                           <span className={`num ${full ? "font-semibold text-danger-700" : "text-ink-700"}`}>{c.lastFillPct === null ? tr.noReading : `${c.lastFillPct}%`}</span>
                         </div>
                         <div className="mt-1 h-2 overflow-hidden rounded-full bg-ink-100" role="meter" aria-valuemin={0} aria-valuemax={100} aria-valuenow={c.lastFillPct ?? 0} aria-label={c.code}>
