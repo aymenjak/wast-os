@@ -9,6 +9,7 @@ import { contractsDueForRenewal } from "@/server/services/contracts";
 import { aiEnabled } from "@/server/services/ai";
 import { iotKpis } from "@/server/services/iot";
 import { stockSummary } from "@/server/services/stock";
+import { fleetAlerts } from "@/server/services/fleet";
 import { prisma } from "@/server/db";
 import { formatDateTime, formatDay, formatMinor, formatNumber, formatPercent } from "@/lib/i18n/format";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
@@ -50,7 +51,9 @@ export default async function Dashboard({ params }: { params: Promise<{ locale: 
   const [stock, unpaidSuppliers] = canStock
     ? await Promise.all([stockSummary(ctx), prisma.stockPurchase.count({ where: { organizationId: ctx.org.id, paidAt: null, voidedAt: null } })])
     : [null, 0];
+  const vehicleAlerts = ctx.permissions.has("fleet.read") ? await fleetAlerts(ctx, to) : [];
   const attention = [
+    ...(vehicleAlerts.length ? [{ href: "/app/fleet", text: d.dashboard.attentionFleet.replace("{n}", formatNumber(vehicleAlerts.length, locale)) }] : []),
     ...(stock?.low.length ? [{ href: "/app/stock", text: d.dashboard.attentionStock.replace("{n}", formatNumber(stock.low.length, locale)) }] : []),
     ...(unpaidSuppliers ? [{ href: "/app/stock/purchases", text: d.dashboard.attentionSuppliers.replace("{n}", formatNumber(unpaidSuppliers, locale)) }] : []),
   ];

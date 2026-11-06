@@ -51,6 +51,7 @@ async function main() {
   if (await prisma.user.findUnique({ where: { email: "owner@demo-collecte.test" } })) {
     await seedIotDemo();
     await seedStockDemo();
+    await seedFleetDocsDemo();
     console.log("Seed data already present — plans refreshed, IoT and stock demos ensured, nothing else changed.");
     return;
   }
@@ -208,6 +209,7 @@ async function main() {
 
   await seedIotDemo();
   await seedStockDemo();
+  await seedFleetDocsDemo();
 
   const plusSix = new Date(Date.now() + 6 * 86400_000).toISOString().slice(0, 10);
   await generateRecurringWorkOrders(dispatcher, { from: today, to: plusSix });
@@ -292,6 +294,23 @@ async function seedStockDemo() {
   await stock.issueStock(ctx, { itemId: items.gloves, quantity: "76", reason: "Dotation des équipes (fictif)", occurredOn: day(-10) }); // leaves 24 pairs: below the reorder level of 30
   await stock.issueStock(ctx, { itemId: items.bags, quantity: "22", occurredOn: day(-4) });
   await stock.adjustStock(ctx, { itemId: items.vest, quantity: "-1", reason: "Inventaire : gilet déchiré (fictif)", occurredOn: day(-2) });
+}
+
+/** Synthetic vehicle documents: one insurance close to expiry, one expired roadworthiness inspection. Idempotent. */
+async function seedFleetDocsDemo() {
+  const owner = await prisma.user.findUnique({ where: { email: "owner@demo-collecte.test" }, include: { memberships: true } });
+  const orgId = owner?.memberships[0]?.organizationId;
+  if (!owner || !orgId || (await prisma.vehicleDocument.count({ where: { organizationId: orgId } }))) return;
+  const ctx = (await loadContext(owner.id, orgId))!;
+  const { addVehicleDocument } = await import("../server/services/fleet");
+  const day = (offset: number) => new Date(Date.now() + offset * 86400_000).toISOString().slice(0, 10);
+  const [t1, t2] = await prisma.vehicle.findMany({ where: { organizationId: orgId }, orderBy: { plateNumber: "asc" }, take: 2 });
+  if (t1) {
+    await addVehicleDocument(ctx, t1.id, { kind: "INSURANCE", reference: "POL-DEMO-001 (fictif)", issuer: "Assureur démo (fictif)", issuedOn: day(-353), expiresOn: day(12) });
+    await addVehicleDocument(ctx, t1.id, { kind: "TECHNICAL_INSPECTION", reference: "CT-DEMO-17 (fictif)", issuedOn: day(-370), expiresOn: day(-5) });
+    await addVehicleDocument(ctx, t1.id, { kind: "REGISTRATION", reference: "00001-120-31", issuedOn: day(-900) });
+  }
+  if (t2) await addVehicleDocument(ctx, t2.id, { kind: "INSURANCE", reference: "POL-DEMO-002 (fictif)", issuedOn: day(-100), expiresOn: day(265) });
 }
 
 main().then(() => prisma.$disconnect()).catch(async (e) => { console.error(e); await prisma.$disconnect(); process.exit(1); });

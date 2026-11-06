@@ -3,7 +3,7 @@ import { prisma } from "../db";
 import { requirePermission, type OrgContext } from "../context";
 import { DomainError, ForbiddenError, NotFoundError } from "../domain/errors";
 import { parse } from "../validation";
-import { addEvidence, addWeightTicket, transitionWorkOrder } from "./work-orders";
+import { addEvidence, addWeightTicket, recordSignature, transitionWorkOrder } from "./work-orders";
 import { listDestinations } from "./recycling";
 import type { WorkOrderStatus } from "@/lib/generated/prisma/enums";
 
@@ -62,6 +62,7 @@ export async function fieldBundle(ctx: OrgContext) {
           civicReport: { select: { trackingCode: true, addressHint: true } },
           wasteCategory: { select: { nameEn: true, nameFr: true, nameAr: true, stream: true } },
           vehicle: { select: { plateNumber: true } },
+          signedAt: true,
           _count: { select: { evidence: true, weightTickets: true } },
         },
       })
@@ -88,6 +89,7 @@ export async function fieldBundle(ctx: OrgContext) {
       plate: j.vehicle?.plateNumber ?? null,
       evidenceCount: j._count.evidence,
       ticketCount: j._count.weightTickets,
+      signed: j.signedAt != null,
     })),
     destinations: destinations.map((x) => ({ id: x.id, name: x.name, kind: x.kind })),
   };
@@ -186,6 +188,23 @@ export async function applyFieldEvidence(ctx: OrgContext, workOrderId: string, k
   const before = await prisma.evidenceFile.findFirst({ where: { organizationId: ctx.org.id, clientRef: r }, select: { id: true } });
   try {
     const ev = await addEvidence(ctx, workOrderId, k, file, { clientRef: r });
+    return { id: r, outcome: before ? ("duplicate" as const) : ("applied" as const), evidenceId: ev.id };
+  } catch (e) {
+    if (!isUniqueViolation(e)) throw e;
+    const ev = await prisma.evidenceFile.findFirst({ where: { organizationId: ctx.org.id, clientRef: r, workOrderId } });
+    if (!ev) throw e;
+    return { id: r, outcome: "duplicate" as const, evidenceId: ev.id };
+  }
+}
+
+/** Customer signature drawn offline on the collection slip; uploaded later with its clientRef and the time it was signed. */
+export async function applyFieldSignature(ctx: OrgContext, workOrderId: string, ref: string, signerName: string, signedAtIso: string, png: { name: string; bytes: Uint8Array }) {
+  assertFieldWriter(ctx);
+  const r = parse(clientRef, ref);
+  const signedAt = checkOccurredAt(signedAtIso);
+  const before = await prisma.evidenceFile.findFirst({ where: { organizationId: ctx.org.id, clientRef: r }, select: { id: true } });
+  try {
+    const ev = await recordSignature(ctx, workOrderId, { signerName }, png, { clientRef: r, signedAt });
     return { id: r, outcome: before ? ("duplicate" as const) : ("applied" as const), evidenceId: ev.id };
   } catch (e) {
     if (!isUniqueViolation(e)) throw e;

@@ -221,6 +221,60 @@ export async function addEvidence(ctx: OrgContext, workOrderId: string, kind: "B
   });
 }
 
+const signatureSchema = z.object({ signerName: z.string().trim().min(2).max(120) });
+const MAX_SIGNATURE_BYTES = 300_000;
+
+/** PNG data URL from the web signature pad → bytes; null for anything that is not a base64 PNG data URL within the limit. */
+export function decodeSignatureDataUrl(value: string): Uint8Array | null {
+  const m = /^data:image\/png;base64,([A-Za-z0-9+/]+={0,2})$/.exec(value);
+  const b64 = m?.[1];
+  if (!b64 || b64.length > Math.ceil((MAX_SIGNATURE_BYTES * 4) / 3) + 4) return null;
+  return new Uint8Array(Buffer.from(b64, "base64"));
+}
+
+/**
+ * Collection slip (bon d'enlèvement): the customer's representative signs on the driver's phone at the end of the job.
+ * One signature per job, PNG only, stored as evidence (hash in the audit trail). Allowed while the job is in progress or
+ * just completed (signed after "finish"), never once the customer confirmed or disputed it in the portal.
+ * `opts.signedAt` is when it was signed on the phone (offline app); `opts.clientRef` makes a replay idempotent.
+ */
+export async function recordSignature(ctx: OrgContext, workOrderId: string, input: unknown, png: { name: string; bytes: Uint8Array }, opts: { clientRef?: string; signedAt?: Date } = {}) {
+  const data = parse(signatureSchema, input);
+  if (png.bytes.length > MAX_SIGNATURE_BYTES) throw new DomainError("errors.upload.tooLarge");
+  if (opts.clientRef) {
+    const existing = await prisma.evidenceFile.findFirst({ where: { organizationId: ctx.org.id, clientRef: opts.clientRef } });
+    if (existing) {
+      if (existing.workOrderId !== workOrderId || existing.kind !== "SIGNATURE") throw new DomainError("errors.validation", { fields: { clientRef: "invalid" } });
+      return existing;
+    }
+  }
+  return prisma.$transaction(async (tx) => {
+    const wo = await tx.workOrder.findFirst({ where: { id: workOrderId, organizationId: ctx.org.id } });
+    if (!wo) throw new NotFoundError("WorkOrder");
+    await assertExecutor(ctx, tx, wo.teamId);
+    if (!["IN_PROGRESS", "COMPLETED"].includes(wo.status) || wo.customerConfirmedAt) throw new DomainError("errors.workOrder.signatureClosed");
+    // Row lock: two phones signing the same job at once cannot both win.
+    await tx.$queryRaw`SELECT id FROM "WorkOrder" WHERE id = ${wo.id} FOR UPDATE`;
+    const fresh = await tx.workOrder.findUniqueOrThrow({ where: { id: wo.id }, select: { signedAt: true } });
+    if (fresh.signedAt) throw new DomainError("errors.workOrder.alreadySigned");
+    const stored = await storeUpload(png, { prefix: `org/${ctx.org.id}/wo`, allow: ["image/png"] });
+    const signedAt = opts.signedAt && opts.signedAt <= new Date() ? opts.signedAt : new Date();
+    const ev = await tx.evidenceFile.create({ data: { ...stored, organizationId: ctx.org.id, kind: "SIGNATURE", workOrderId: wo.id, uploadedById: ctx.userId, clientRef: opts.clientRef ?? null } });
+    await tx.workOrder.update({ where: { id: wo.id }, data: { signerName: data.signerName, signedAt } });
+    await audit(tx, { organizationId: ctx.org.id, actorUserId: ctx.userId, action: "workorder.signed", entityType: "WorkOrder", entityId: wo.id, data: { evidenceId: ev.id, sha256: stored.sha256, signedAt: signedAt.toISOString() } });
+    return ev;
+  });
+}
+
+/** Data of the printable collection slip (bon d'enlèvement): same visibility as the work order page. */
+export async function collectionSlip(ctx: OrgContext, workOrderId: string) {
+  const wo = await getWorkOrder(ctx, workOrderId);
+  if (wo.kind !== "COLLECTION") throw new NotFoundError("WorkOrder");
+  const org = await prisma.organization.findUniqueOrThrow({ where: { id: ctx.org.id }, select: { name: true, legalName: true, address: true, taxId: true, tradeRegister: true, timezone: true } });
+  const signature = wo.evidence.find((e) => e.kind === "SIGNATURE") ?? null;
+  return { wo, org, signature, netKg: wo.weightTickets.reduce((sum, t) => sum + Number(t.netKg), 0) };
+}
+
 const weightSchema = z
   .object({
     ticketNumber: optionalText(60),

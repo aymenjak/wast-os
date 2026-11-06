@@ -1,3 +1,4 @@
+import { runAsTenant } from "@/server/tenant-scope";
 import { NextResponse } from "next/server";
 import { currentSession } from "@/server/auth/session";
 import { vehiclePositions } from "@/server/services/iot";
@@ -10,7 +11,7 @@ export async function GET() {
   const s = await currentSession();
   if (!s?.ctx) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   try {
-    return NextResponse.json({ vehicles: await vehiclePositions(s.ctx) }, { headers: { "Cache-Control": "private, no-store" } });
+    return NextResponse.json({ vehicles: await runAsTenant(s.ctx.org.id, () => vehiclePositions(s.ctx!)) }, { headers: { "Cache-Control": "private, no-store" } });
   } catch (e) {
     if (e instanceof DomainError) return NextResponse.json({ error: "forbidden" }, { status: 403 });
     throw e;

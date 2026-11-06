@@ -1,4 +1,5 @@
 import "server-only";
+import { runAsTenant } from "./tenant-scope";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { DomainError } from "./domain/errors";
@@ -55,7 +56,7 @@ export async function orgAction(
   if (ctx.support) return { ok: false, error: "errors.support.readOnly", nonce: Date.now() };
   let result: string | void | ActionState;
   try {
-    result = await fn(ctx, formToObject(fd), locale);
+    result = await runAsTenant(ctx.org.id, () => fn(ctx, formToObject(fd), locale));
   } catch (e) {
     if (isRedirect(e)) throw e;
     return toActionError(e);

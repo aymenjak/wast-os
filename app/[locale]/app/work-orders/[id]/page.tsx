@@ -11,7 +11,7 @@ import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/badge";
 import { DescriptionList, PageHeader, Table, Td, Th } from "@/components/ui/misc";
 import { AssignForm } from "../../dispatch/assign-form";
-import { EvidenceUpload, RejectsForm, WeightForm, WorkOrderActions } from "./forms";
+import { EvidenceUpload, RejectsForm, SignatureForm, WeightForm, WorkOrderActions } from "./forms";
 import { listDestinations } from "@/server/services/recycling";
 import { MoveForm } from "../../containers/forms";
 
@@ -34,6 +34,8 @@ export default async function WorkOrderDetail({ params }: { params: Promise<{ lo
   const lat = wo.serviceLocation?.latitude;
   const lng = wo.serviceLocation?.longitude;
   const name = (x: { nameEn: string; nameFr: string; nameAr: string }) => (locale === "ar" ? x.nameAr : locale === "fr" ? x.nameFr : x.nameEn);
+  const signature = wo.evidence.find((e) => e.kind === "SIGNATURE");
+  const photos = wo.evidence.filter((e) => e.kind !== "SIGNATURE");
   const netTotal = wo.weightTickets.reduce((s, t) => s + Number(t.netKg), 0);
   const destinations = wo.kind === "COLLECTION" ? await listDestinations(ctx, { activeOnly: true }).catch(() => []) : [];
   // Containers on site / in the yard: shown to whoever can move them during this job.
@@ -113,9 +115,9 @@ export default async function WorkOrderDetail({ params }: { params: Promise<{ lo
           <Card>
             <CardHeader title={d.workOrders.evidence} />
             <CardBody className="space-y-4">
-              {wo.evidence.length === 0 ? <p className="text-sm text-ink-600">{d.workOrders.noEvidence}</p> : (
+              {photos.length === 0 ? <p className="text-sm text-ink-600">{d.workOrders.noEvidence}</p> : (
                 <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                  {wo.evidence.map((e) => (
+                  {photos.map((e) => (
                     <li key={e.id} className="overflow-hidden rounded-md border border-ink-200">
                       {e.mimeType.startsWith("image/") ? (
                         // eslint-disable-next-line @next/next/no-img-element
@@ -129,6 +131,21 @@ export default async function WorkOrderDetail({ params }: { params: Promise<{ lo
               {canExecute && ["ASSIGNED", "IN_PROGRESS", "COMPLETED", "DISPUTED"].includes(wo.status) ? <EvidenceUpload workOrderId={wo.id} /> : null}
             </CardBody>
           </Card>
+
+          {wo.kind === "COLLECTION" && ["IN_PROGRESS", "COMPLETED", "DISPUTED"].includes(wo.status) || wo.signedAt ? (
+            <Card>
+              <CardHeader title={d.workOrders.signature} description={wo.signedAt ? undefined : d.workOrders.signatureLead} action={<Link href={`/${locale}/app/work-orders/${wo.id}/slip`} prefetch={false} className="text-sm font-medium text-brand-800 underline">{d.workOrders.printSlip}</Link>} />
+              <CardBody className="space-y-3">
+                {wo.signedAt && signature ? (
+                  <figure className="space-y-2">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={`/api/files/${signature.id}`} alt={`${d.workOrders.signature}: ${wo.signerName}`} className="h-28 w-auto max-w-full rounded-md border border-ink-200 bg-white" />
+                    <figcaption className="text-sm text-ink-700">{d.workOrders.signedBy.replace("{name}", wo.signerName ?? "").replace("{time}", formatDateTime(wo.signedAt, locale, ctx.org.timezone))}</figcaption>
+                  </figure>
+                ) : canExecute && (wo.status === "IN_PROGRESS" || wo.status === "COMPLETED") && !wo.customerConfirmedAt ? <SignatureForm workOrderId={wo.id} /> : <p className="text-sm text-ink-600">{d.workOrders.notSigned}</p>}
+              </CardBody>
+            </Card>
+          ) : null}
 
           {canMoveContainers ? (
             <Card>

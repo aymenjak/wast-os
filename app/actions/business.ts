@@ -5,6 +5,7 @@ import * as customers from "@/server/services/customers";
 import * as contracts from "@/server/services/contracts";
 import * as requests from "@/server/services/requests";
 import * as wo from "@/server/services/work-orders";
+import * as monthly from "@/server/services/monthly-billing";
 import * as fleet from "@/server/services/fleet";
 import * as invoices from "@/server/services/invoices";
 import * as accounts from "@/server/services/accounts";
@@ -65,6 +66,19 @@ export async function createContractAction(_: ActionState, fd: FormData) {
 export async function setContractStatusAction(_: ActionState, fd: FormData) {
   return orgAction(fd, (ctx, input) => contracts.setContractStatus(ctx, s(input.contractId), s(input.to) as ContractStatus), { revalidate: [`/app/contracts/${s(fd.get("contractId"))}`] });
 }
+export async function setLinePricingAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, (ctx, input) => {
+    // Form keys are flat ("tiers.0.aboveTonnes"): rebuild the rows.
+    const tiers = [0, 1, 2, 3, 4].map((i) => ({ aboveTonnes: input[`tiers.${i}.aboveTonnes`], unitPrice: input[`tiers.${i}.unitPrice`] })).filter((t) => t.aboveTonnes !== undefined || t.unitPrice !== undefined);
+    return contracts.setLinePricing(ctx, s(input.lineId), { minimumCharge: input.minimumCharge, tiers });
+  }, { revalidate: [`/app/contracts/${s(fd.get("contractId"))}`] });
+}
+export async function addSurchargeAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, async (ctx, input) => void (await contracts.addSurcharge(ctx, s(input.contractId), input)), { revalidate: [`/app/contracts/${s(fd.get("contractId"))}`] });
+}
+export async function removeSurchargeAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, (ctx, input) => contracts.removeSurcharge(ctx, s(input.surchargeId)), { revalidate: [`/app/contracts/${s(fd.get("contractId"))}`] });
+}
 
 // ── Requests ──
 export async function createRequestAction(_: ActionState, fd: FormData) {
@@ -111,6 +125,17 @@ export async function uploadEvidenceAction(_: ActionState, fd: FormData) {
     { revalidate: [`/app/work-orders/${s(fd.get("workOrderId"))}`] },
   );
 }
+export async function signWorkOrderAction(_: ActionState, fd: FormData) {
+  return orgAction(
+    fd,
+    async (ctx, input) => {
+      const png = wo.decodeSignatureDataUrl(s(input.signature));
+      if (!png) throw new DomainError("errors.validation", { fields: { signature: "required" } });
+      await wo.recordSignature(ctx, s(input.workOrderId), { signerName: input.signerName }, { name: "signature.png", bytes: png });
+    },
+    { revalidate: [`/app/work-orders/${s(fd.get("workOrderId"))}`] },
+  );
+}
 export async function addWeightAction(_: ActionState, fd: FormData) {
   return orgAction(fd, async (ctx, input) => void (await wo.addWeightTicket(ctx, s(input.workOrderId), input)), { revalidate: [`/app/work-orders/${s(fd.get("workOrderId"))}`] });
 }
@@ -128,6 +153,9 @@ export async function setVehicleStatusAction(_: ActionState, fd: FormData) {
 export async function addMaintenanceAction(_: ActionState, fd: FormData) {
   return orgAction(fd, async (ctx, input) => void (await fleet.addMaintenance(ctx, s(input.vehicleId), input)), { revalidate: [`/app/fleet/${s(fd.get("vehicleId"))}`] });
 }
+export async function addVehicleDocumentAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, async (ctx, input) => void (await fleet.addVehicleDocument(ctx, s(input.vehicleId), input)), { revalidate: [`/app/fleet/${s(fd.get("vehicleId"))}`, "/app/fleet"] });
+}
 export async function createTeamAction(_: ActionState, fd: FormData) {
   return orgAction(fd, async (ctx, input) => void (await fleet.createTeam(ctx, input)), { revalidate: ["/app/fleet"] });
 }
@@ -143,6 +171,12 @@ export async function createDraftInvoiceAction(_: ActionState, fd: FormData) {
   return orgAction(fd, async (ctx, input) => {
     const inv = await invoices.createDraftInvoice(ctx, { ...input, workOrderIds: input.workOrderIds ?? [] });
     return `/app/invoices/${inv.id}`;
+  });
+}
+export async function runMonthlyBillingAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, async (ctx, input) => {
+    await monthly.runMonthlyBilling(ctx, { month: input.month, customerIds: input.customerIds ?? [] });
+    return `/app/invoices?filter=DRAFT`;
   });
 }
 export async function addInvoiceLineAction(_: ActionState, fd: FormData) {

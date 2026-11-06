@@ -1,3 +1,4 @@
+import { runAsTenant } from "@/server/tenant-scope";
 import { NextResponse } from "next/server";
 import { currentSession } from "@/server/auth/session";
 import { buildExport, EXPORT_KINDS, tableToCsv, tableToXlsx, type ExportKind } from "@/server/exports";
@@ -25,7 +26,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ kind: st
   const locale = isLocale(l) ? l : "fr";
   if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to)) return new NextResponse("Bad request", { status: 400 });
   try {
-    const table = await buildExport(s.ctx, kind as ExportKind, from, to, locale);
+    const table = await runAsTenant(s.ctx.org.id, () => buildExport(s.ctx!, kind as ExportKind, from, to, locale));
     await audit(prisma, { organizationId: s.ctx.org.id, actorUserId: s.ctx.userId, action: "export.downloaded", entityType: "Export", entityId: kind, data: { from, to, format } });
     const name = `nexvo-${kind}-${from}-${to}`;
     if (format === "xlsx") {

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { CalendarRange, Plus } from "lucide-react";
 import type { Locale } from "@/lib/i18n/config";
 import { appPage } from "@/server/page";
 import { tableState } from "@/server/table";
@@ -23,7 +23,7 @@ export default async function InvoicesPage({ params, searchParams }: { params: P
   const money = (v: number) => <span className="num">{formatMoney(v, locale, ctx.org.currency)}</span>;
   return (
     <>
-      <PageHeader title={d.invoices.title} actions={ctx.permissions.has("invoices.write") ? <ButtonLink href={`/${locale}/app/invoices/new`}><Plus aria-hidden className="size-4" />{d.invoices.new}</ButtonLink> : null} />
+      <PageHeader title={d.invoices.title} actions={ctx.permissions.has("invoices.write") ? <><ButtonLink variant="secondary" href={`/${locale}/app/invoices/monthly`}><CalendarRange aria-hidden className="size-4" />{d.invoices.monthly}</ButtonLink><ButtonLink href={`/${locale}/app/invoices/new`}><Plus aria-hidden className="size-4" />{d.invoices.new}</ButtonLink></> : null} />
       <MetricStrip className="mb-6 lg:grid-cols-3">
         <Stat label={d.invoices.total} value={money(page.sums.total)} />
         <Stat label={d.invoices.paid} value={money(page.sums.paid)} />

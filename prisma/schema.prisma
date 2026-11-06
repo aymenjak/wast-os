@@ -178,6 +178,8 @@ model Organization {
   sortingCampaigns           SortingCampaign[]
   materialSuppliers          MaterialSupplier[]
   stockItems                 StockItem[]
+  vehicleDocuments           VehicleDocument[]
+  contractSurcharges         ContractSurcharge[]
   stockSuppliers             StockSupplier[]
   stockPurchases             StockPurchase[]
   stockMovements             StockMovement[]
@@ -1127,6 +1129,7 @@ model Contract {
   organization Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   customer     Customer              @relation(fields: [organizationId, customerId], references: [organizationId, id])
   lines        ContractServiceLine[]
+  surcharges   ContractSurcharge[]
   requests     CollectionRequest[]
   workOrders   WorkOrder[]
   invoices     Invoice[]
@@ -1149,12 +1152,45 @@ model ContractServiceLine {
   billingUnit       BillingUnit @default(PER_COLLECTION)
   unitPrice         Decimal     @db.Decimal(14, 2)
   estimatedQuantity Decimal?    @db.Decimal(12, 3)
+  /// PER_TONNE only (D-90): minimum billed per collection, and graduated tiers [{ aboveKg, unitPrice }] above the base price.
+  minimumCharge     Decimal?    @db.Decimal(14, 2)
+  tiers             Json?
 
   organization    Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   contract        Contract        @relation(fields: [organizationId, contractId], references: [organizationId, id], onDelete: Cascade)
   serviceLocation ServiceLocation @relation(fields: [organizationId, serviceLocationId], references: [organizationId, id])
   wasteCategory   WasteCategory   @relation(fields: [organizationId, wasteCategoryId], references: [organizationId, id])
   workOrders      WorkOrder[]
+  invoiceLines    InvoiceLine[]
+
+  @@unique([organizationId, id])
+  @@index([organizationId, contractId])
+}
+
+enum SurchargeKind {
+  /// Percentage of the contract's lines on the invoice (e.g. fuel surcharge 5 %).
+  PERCENT
+  /// Fixed amount per collection billed (e.g. access fee, Saturday service).
+  PER_COLLECTION
+}
+
+/**
+ * Surcharges added as separate invoice lines when work under this contract is invoiced (D-90).
+ */
+model ContractSurcharge {
+  id             String        @id @default(cuid())
+  organizationId String
+  contractId     String
+  label          String
+  kind           SurchargeKind
+  /// PERCENT: percentage (5.00 = 5 %); PER_COLLECTION: amount in DZD excl. VAT.
+  value          Decimal       @db.Decimal(14, 2)
+  active         Boolean       @default(true)
+  createdById    String
+  createdAt      DateTime      @default(now()) @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  contract     Contract     @relation(fields: [organizationId, contractId], references: [organizationId, id], onDelete: Cascade)
 
   @@unique([organizationId, id])
   @@index([organizationId, contractId])
@@ -1291,6 +1327,7 @@ model Vehicle {
   lastSpeedKmh   Int?
 
   organization       Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  documents          VehicleDocument[]
   stockMovements     StockMovement[]
   maintenance        VehicleMaintenance[]
   workOrders         WorkOrder[]
@@ -1377,6 +1414,9 @@ model WorkOrder {
   failureReason       FailureReason?
   failureNotes        String?
   customerConfirmedAt DateTime?       @db.Timestamptz(3)
+  /// Collection slip (bon d'enlèvement): who signed for the customer on site, and when (signature image = EvidenceFile SIGNATURE).
+  signerName          String?
+  signedAt            DateTime?       @db.Timestamptz(3)
   disputeReason       String?
   createdById         String
   createdAt           DateTime        @default(now()) @db.Timestamptz(3)
@@ -1439,6 +1479,8 @@ enum EvidenceKind {
   AFTER
   DOCUMENT
   REPORT_PHOTO
+  /// Customer's handwritten signature on the collection slip (bon d'enlèvement), PNG drawn on the phone.
+  SIGNATURE
 }
 
 model EvidenceFile {
@@ -1610,13 +1652,18 @@ model InvoiceLine {
   lineTotal      Decimal @db.Decimal(14, 2)
   /// A work order can be billed at most once (unique).
   workOrderId    String? @unique
+  /// Monthly flat fee (PER_MONTH contract line) billed for `periodMonth` (YYYY-MM): at most once per line and month.
+  contractLineId String?
+  periodMonth    String?
   position       Int     @default(0)
 
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  invoice      Invoice      @relation(fields: [organizationId, invoiceId], references: [organizationId, id], onDelete: Cascade)
-  workOrder    WorkOrder?   @relation(fields: [organizationId, workOrderId], references: [organizationId, id])
+  organization Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  invoice      Invoice              @relation(fields: [organizationId, invoiceId], references: [organizationId, id], onDelete: Cascade)
+  workOrder    WorkOrder?           @relation(fields: [organizationId, workOrderId], references: [organizationId, id])
+  contractLine ContractServiceLine? @relation(fields: [organizationId, contractLineId], references: [organizationId, id])
 
   @@unique([organizationId, workOrderId])
+  @@unique([organizationId, contractLineId, periodMonth])
   @@index([organizationId, invoiceId])
 }
 
@@ -2087,4 +2134,36 @@ model StockMovement {
   @@index([organizationId, itemId, occurredOn])
   @@index([organizationId, vehicleId, occurredOn])
   @@index([organizationId, purchaseId])
+}
+
+// ───────────── Vehicle documents (insurance, roadworthiness, registration, authorisations) ─────────────
+
+enum VehicleDocumentKind {
+  INSURANCE
+  TECHNICAL_INSPECTION
+  REGISTRATION
+  TRANSPORT_AUTHORISATION
+  OTHER
+}
+
+/// One record per document issued; a renewal is a new record. The latest one per (vehicle, kind) is the one in force.
+model VehicleDocument {
+  id             String              @id @default(cuid())
+  organizationId String
+  vehicleId      String
+  kind           VehicleDocumentKind
+  /// Policy, certificate or registration number as printed.
+  reference      String?
+  issuer         String?
+  issuedOn       DateTime?           @db.Date
+  expiresOn      DateTime?           @db.Date
+  notes          String?
+  recordedById   String
+  createdAt      DateTime            @default(now()) @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  vehicle      Vehicle      @relation(fields: [organizationId, vehicleId], references: [organizationId, id], onDelete: Cascade)
+
+  @@index([organizationId, vehicleId, kind])
+  @@index([organizationId, expiresOn])
 }

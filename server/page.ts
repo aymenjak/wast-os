@@ -1,4 +1,5 @@
 import "server-only";
+import { enterTenantForRequest } from "./tenant-scope";
 import { getDictionary } from "@/lib/i18n";
 import type { Locale } from "@/lib/i18n/config";
 import { requireOrg } from "./auth/session";
@@ -8,6 +9,7 @@ import { notFound } from "next/navigation";
 export async function appPage(params: Promise<{ locale: Locale }>) {
   const { locale } = await params;
   const ctx = await requireOrg(locale);
+  enterTenantForRequest(ctx.org.id);
   return { locale, ctx, d: getDictionary(locale) };
 }
 
