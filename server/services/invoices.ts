@@ -51,11 +51,13 @@ export async function getInvoice(ctx: OrgContext, invoiceId: string) {
 /** Completed, not-yet-invoiced work orders for a customer — the only valid source for billable lines. */
 export async function billableWorkOrders(ctx: OrgContext, customerId: string) {
   requirePermission(ctx, "invoices.write");
-  return prisma.workOrder.findMany({
+  const orders = await prisma.workOrder.findMany({
     where: { organizationId: ctx.org.id, customerId, status: "COMPLETED", invoiceLine: null, kind: "COLLECTION" },
-    include: { serviceLocation: { select: { label: true } }, wasteCategory: true, weightTickets: true },
+    include: PRICING_INCLUDE,
     orderBy: { scheduledDate: "asc" },
   });
+  // A job without a contract price (one-off) needs its price typed in when the draft is created.
+  return orders.map((wo) => ({ ...wo, needsPrice: !contractLineFor(wo) }));
 }
 
 async function recalc(tx: Tx, organizationId: string, invoiceId: string) {
@@ -73,15 +75,29 @@ async function recalc(tx: Tx, organizationId: string, invoiceId: string) {
 export const PRICING_INCLUDE = { weightTickets: true, wasteCategory: true, serviceLocation: true, contract: { include: { lines: true } } } as const;
 type PricedWorkOrder = Prisma.WorkOrderGetPayload<{ include: typeof PRICING_INCLUDE }>;
 
+/** The contract service line that prices this work order (its own line, or the one with the same location and category). */
+export function contractLineFor(wo: PricedWorkOrder) {
+  return (
+    (wo.contractLineId ? wo.contract?.lines.find((l) => l.id === wo.contractLineId) : undefined) ??
+    wo.contract?.lines.find((l) => l.serviceLocationId === wo.serviceLocationId && l.wasteCategoryId === wo.wasteCategoryId)
+  );
+}
+
+function workOrderDescription(wo: PricedWorkOrder, detail = "") {
+  return `${wo.number} · ${wo.wasteCategory?.nameFr ?? ""} · ${wo.serviceLocation?.label ?? ""} · ${wo.scheduledDate.toISOString().slice(0, 10)}${detail}`.slice(0, 300);
+}
+
 /**
  * Invoice line for one completed work order. The price comes from its contract service line (or the line with the same
  * location and category); PER_TONNE bills the recorded net weight; PER_MONTH is billed by the monthly run, not per job.
+ * A one-off job (no contract price) is billed at `jobPrice`, typed by finance when drafting; the line stays linked to the job.
  */
-export function workOrderLine(ctx: OrgContext, wo: PricedWorkOrder) {
-  const cl =
-    (wo.contractLineId ? wo.contract?.lines.find((l) => l.id === wo.contractLineId) : undefined) ??
-    wo.contract?.lines.find((l) => l.serviceLocationId === wo.serviceLocationId && l.wasteCategoryId === wo.wasteCategoryId);
-  if (!cl) throw new DomainError("errors.invoice.noContractPrice", { number: wo.number });
+export function workOrderLine(ctx: OrgContext, wo: PricedWorkOrder, jobPrice?: string) {
+  const cl = contractLineFor(wo);
+  if (!cl) {
+    if (jobPrice === undefined) throw new DomainError("errors.invoice.noContractPrice", { number: wo.number });
+    return { ...manualLineData(ctx, workOrderDescription(wo), "1", toMinor(jobPrice)), workOrderId: wo.id as string | null };
+  }
   let qty = "1";
   let unitPriceMinor = toMinor(cl.unitPrice);
   let detail = "";
@@ -105,14 +121,14 @@ export function workOrderLine(ctx: OrgContext, wo: PricedWorkOrder) {
   const amounts = computeLine({ quantity: qty, unitPriceMinor, taxRateBps: ctx.org.defaultTaxRateBps });
   return {
     organizationId: ctx.org.id,
-    description: `${wo.number} · ${wo.wasteCategory?.nameFr ?? ""} · ${wo.serviceLocation?.label ?? ""} · ${wo.scheduledDate.toISOString().slice(0, 10)}${detail}`.slice(0, 300),
+    description: workOrderDescription(wo, detail),
     quantity: qty,
     unitPrice: fromMinor(unitPriceMinor),
     taxRateBps: ctx.org.defaultTaxRateBps,
     lineSubtotal: fromMinor(amounts.subtotal),
     lineTax: fromMinor(amounts.tax),
     lineTotal: fromMinor(amounts.total),
-    workOrderId: wo.id,
+    workOrderId: wo.id as string | null,
   };
 }
 
@@ -167,6 +183,8 @@ export async function recalcInvoice(tx: Tx, organizationId: string, invoiceId: s
 const draftSchema = z.object({
   customerId: z.string().min(1),
   workOrderIds: z.array(z.string().min(1)).max(200).default([]),
+  /** Prices (excl. tax) of selected jobs that have no contract price, by work order id. */
+  prices: z.record(z.string(), money.refine((v) => Number(v) > 0)).default({}),
   notes: optionalText(2000),
 });
 
@@ -186,11 +204,11 @@ export async function createDraftInvoice(ctx: OrgContext, input: unknown) {
     });
     if (orders.length !== data.workOrderIds.length) throw new NotFoundError("WorkOrder");
 
-    const lines: (Omit<ReturnType<typeof workOrderLine>, "workOrderId"> & { workOrderId: string | null; position: number })[] = orders.map((wo, i) => {
+    const lines: (ReturnType<typeof workOrderLine> & { position: number })[] = orders.map((wo, i) => {
       if (wo.customerId !== customer.id) throw new DomainError("errors.invoice.customerMismatch");
       if (wo.status !== "COMPLETED") throw new DomainError("errors.invoice.workOrderNotCompleted", { number: wo.number });
       if (wo.invoiceLine) throw new DomainError("errors.invoice.alreadyInvoiced", { number: wo.number });
-      return { ...workOrderLine(ctx, wo), position: i };
+      return { ...workOrderLine(ctx, wo, data.prices[wo.id]), position: i };
     });
     const groups = new Map<string, ContractGroup>();
     orders.forEach((o, i) => {

@@ -10,6 +10,9 @@ import { EmptyState, Forbidden, PageHeader, Table, Td, Th } from "@/components/u
 import type { CivicReportStatus } from "@/lib/generated/prisma/enums";
 
 const FILTERS = ["OPEN", "SUBMITTED", "UNDER_REVIEW", "VERIFIED", "ASSIGNED", "IN_PROGRESS", "RESOLVED", "DISPUTED", "ALL"] as const;
+/** A new report should be looked at within 48 hours; past that it is shown as late. */
+const REVIEW_WITHIN_MS = 48 * 3600_000;
+const reviewBy = (createdAt: Date) => new Date(createdAt.getTime() + REVIEW_WITHIN_MS);
 
 export default async function CivicQueue({ params, searchParams }: { params: Promise<{ locale: Locale }>; searchParams: Promise<{ status?: string }> }) {
   const { locale, ctx, d } = await appPage(params);
@@ -39,7 +42,15 @@ export default async function CivicQueue({ params, searchParams }: { params: Pro
                   <Td>{d.enums.CivicCategory[r.category]}<div className="text-xs text-ink-500">{r.addressHint}</div></Td>
                   <Td>{formatDateTime(r.createdAt, locale, ctx.org.timezone)}</Td>
                   <Td><StatusBadge status={r.priority} label={d.enums.Priority[r.priority]} /></Td>
-                  <Td className={r.slaDueAt && r.slaDueAt < now && !["RESOLVED", "CONFIRMED"].includes(r.status) ? "font-medium text-danger-700" : undefined}>{formatDateTime(r.slaDueAt, locale, ctx.org.timezone)}</Td>
+                  {r.slaDueAt || r.status !== "SUBMITTED" ? (
+                    <Td className={r.slaDueAt && r.slaDueAt < now && !["RESOLVED", "CONFIRMED"].includes(r.status) ? "font-medium text-danger-700" : undefined}>{formatDateTime(r.slaDueAt, locale, ctx.org.timezone)}</Td>
+                  ) : (
+                    // Not reviewed yet: the resolution deadline starts at review, so show the review deadline instead.
+                    <Td className={reviewBy(r.createdAt) < now ? "font-medium text-danger-700" : undefined}>
+                      {formatDateTime(reviewBy(r.createdAt), locale, ctx.org.timezone)}
+                      <div className="text-xs text-ink-500">{d.civic.reviewDeadline}</div>
+                    </Td>
+                  )}
                   <Td>{r.workOrder ? <span className="num">{r.workOrder.number}</span> : "—"}{r.workOrder?.team ? <div className="text-xs text-ink-500">{r.workOrder.team.name}</div> : null}</Td>
                   <Td><StatusBadge status={r.status} label={d.enums.CivicReportStatus[r.status]} />{r.reopenCount ? <div className="mt-1 text-xs text-danger-700">{d.civic.reopened} ×{r.reopenCount}</div> : null}</Td>
                 </tr>

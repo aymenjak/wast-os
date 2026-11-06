@@ -25,6 +25,8 @@ const registerSchema = z.object({
   email,
   password,
   locale: z.enum(["ar", "fr", "en"]).default("fr"),
+  // Law 18-07: the person creating the workspace accepts the privacy notice (/privacy) explicitly.
+  acceptPrivacy: z.preprocess((v) => v === "on" || v === true || v === "true", z.boolean().refine((v) => v, "privacyConsent")),
 });
 
 function slugify(name: string) {

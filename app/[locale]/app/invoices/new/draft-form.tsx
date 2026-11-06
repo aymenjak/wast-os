@@ -3,7 +3,7 @@ import { ActionForm, SubmitButton, Field, Textarea } from "@/components/ui/form"
 import { useI18n } from "@/components/i18n-provider";
 import { createDraftInvoiceAction } from "@/app/actions/business";
 
-export function DraftForm({ customerId, orders }: { customerId: string; orders: { id: string; label: string; weight: string | null }[] }) {
+export function DraftForm({ customerId, orders }: { customerId: string; orders: { id: string; label: string; weight: string | null; needsPrice: boolean }[] }) {
   const { t } = useI18n();
   return (
     <ActionForm action={createDraftInvoiceAction} hidden={{ customerId }} className="space-y-4">
@@ -18,6 +18,13 @@ export function DraftForm({ customerId, orders }: { customerId: string; orders: 
                   <span className="flex-1">{o.label}</span>
                   {o.weight ? <span className="num text-xs text-ink-500">{o.weight}</span> : null}
                 </label>
+                {o.needsPrice ? (
+                  // One-off job: no contract price, so finance types it here and the line stays linked to the job.
+                  <div className="flex flex-wrap items-center gap-2 px-3 pb-2.5 ps-10">
+                    <label htmlFor={`price_${o.id}`} className="text-xs text-ink-700">{t("invoices.jobPrice")}</label>
+                    <input id={`price_${o.id}`} name={`price_${o.id}`} inputMode="decimal" autoComplete="off" className="num h-9 w-36 rounded-[var(--radius-control)] border border-ink-300 bg-white px-2 text-sm" />
+                  </div>
+                ) : null}
               </li>
             ))}
           </ul>

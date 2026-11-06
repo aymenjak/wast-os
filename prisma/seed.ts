@@ -57,7 +57,7 @@ async function main() {
   }
 
   // Service provider (synthetic)
-  const reg = await registerOrganization({ organizationName: "Démo Collecte SARL", kind: "SERVICE_PROVIDER", wilaya: "Oran", name: "Samir Démo", email: "owner@demo-collecte.test", password: PASSWORD, locale: "fr" });
+  const reg = await registerOrganization({ organizationName: "Démo Collecte SARL", kind: "SERVICE_PROVIDER", wilaya: "Oran", name: "Samir Démo", email: "owner@demo-collecte.test", password: PASSWORD, locale: "fr", acceptPrivacy: true });
   await prisma.subscription.update({ where: { organizationId: reg.org.id }, data: { planCode: "PRO" } });
   await prisma.organization.update({ where: { id: reg.org.id }, data: { legalName: "Démo Collecte SARL", taxId: "000000000000000", address: "Zone d'activités, Es Senia, Oran" } });
   const owner = (await loadContext(reg.user.id, reg.org.id))!;
@@ -215,7 +215,7 @@ async function main() {
   await generateRecurringWorkOrders(dispatcher, { from: today, to: plusSix });
 
   // Municipality (synthetic) for the civic pilot
-  const muni = await registerOrganization({ organizationName: "APC Démo", kind: "MUNICIPALITY", wilaya: "Alger", name: "Karima Démo", email: "civic@demo-apc.test", password: PASSWORD, locale: "ar" });
+  const muni = await registerOrganization({ organizationName: "APC Démo", kind: "MUNICIPALITY", wilaya: "Alger", name: "Karima Démo", email: "civic@demo-apc.test", password: PASSWORD, locale: "ar", acceptPrivacy: true });
   await prisma.organization.update({ where: { id: muni.org.id }, data: { verificationStatus: "VERIFIED", commune: "Alger Centre" } });
   const mctx = (await loadContext(muni.user.id, muni.org.id))!;
   await createTeam(mctx, { name: "Brigade propreté" });

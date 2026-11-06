@@ -21,6 +21,7 @@ export async function register(page: Page, opts: { org: string; email: string; k
   await page.locator('input[name="name"]').fill("E2E Owner");
   await page.locator('input[name="email"]').fill(opts.email);
   await page.locator('input[name="password"]').fill(PASSWORD);
+  await page.locator('input[name="acceptPrivacy"]').check();
   await page.locator('button[type="submit"]').click();
   await page.waitForURL(/\/app/);
 }

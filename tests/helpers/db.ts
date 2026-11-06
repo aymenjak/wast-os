@@ -26,6 +26,7 @@ export async function newOrg(kind: "SERVICE_PROVIDER" | "MUNICIPALITY" = "SERVIC
     name: `Owner ${counter}`,
     email: `owner${counter}-${Date.now()}@example.test`,
     password: "correct-horse-battery",
+    acceptPrivacy: true,
   });
   if (kind === "MUNICIPALITY") {
     await prisma.organization.update({ where: { id: res.org.id }, data: { verificationStatus: "VERIFIED" } });

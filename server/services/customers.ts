@@ -5,14 +5,14 @@ import { NotFoundError } from "../domain/errors";
 import { audit } from "../audit";
 import { nextNumber } from "../counters";
 import { enforcePlanLimit } from "./accounts";
-import { email, latitude, longitude, optionalText, parse, requiredText } from "../validation";
+import { algeriaLatitude, algeriaLongitude, email, optionalPhone, optionalTaxId, optionalText, parse, requiredText } from "../validation";
 
 export const customerSchema = z.object({
   name: requiredText(160),
   kind: z.enum(["BUSINESS", "INSTITUTION", "RESIDENTIAL"]).default("BUSINESS"),
-  taxId: optionalText(40),
+  taxId: optionalTaxId,
   email: z.preprocess((v) => (v === "" ? undefined : v), email.optional()),
-  phone: optionalText(40),
+  phone: optionalPhone,
   billingAddress: optionalText(300),
   serviceConditions: optionalText(2000),
 });
@@ -83,7 +83,7 @@ const contactSchema = z.object({
   name: requiredText(120),
   jobTitle: optionalText(120),
   email: z.preprocess((v) => (v === "" ? undefined : v), email.optional()),
-  phone: optionalText(40),
+  phone: optionalPhone,
   isPrimary: z.preprocess((v) => v === "on" || v === true || v === "true", z.boolean()),
 });
 
@@ -108,8 +108,8 @@ export const locationSchema = z
     addressLine: requiredText(300),
     commune: optionalText(80),
     wilaya: optionalText(80),
-    latitude: z.preprocess((v) => (v === "" || v == null ? undefined : v), latitude.optional()),
-    longitude: z.preprocess((v) => (v === "" || v == null ? undefined : v), longitude.optional()),
+    latitude: z.preprocess((v) => (v === "" || v == null ? undefined : v), algeriaLatitude.optional()),
+    longitude: z.preprocess((v) => (v === "" || v == null ? undefined : v), algeriaLongitude.optional()),
     accessNotes: optionalText(1000),
   })
   .refine((d) => (d.latitude === undefined) === (d.longitude === undefined), { path: ["longitude"], message: "both" });

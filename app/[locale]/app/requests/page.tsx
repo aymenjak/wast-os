@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { CheckCircle2, Plus } from "lucide-react";
 import type { Locale } from "@/lib/i18n/config";
 import { appPage } from "@/server/page";
 import { listRequests } from "@/server/services/requests";
@@ -13,7 +13,10 @@ import type { RequestStatus } from "@/lib/generated/prisma/enums";
 
 const FILTERS: (RequestStatus | "ALL")[] = ["SUBMITTED", "SCHEDULED", "COMPLETED", "REJECTED", "ALL"];
 
-export default async function RequestsPage({ params, searchParams }: { params: Promise<{ locale: Locale }>; searchParams: Promise<{ status?: string }> }) {
+const NUMBER = /^[A-Z]{2,4}-[A-Z0-9-]{1,20}$/;
+const ID = /^[a-z0-9]{10,40}$/;
+
+export default async function RequestsPage({ params, searchParams }: { params: Promise<{ locale: Locale }>; searchParams: Promise<{ status?: string; created?: string; approved?: string; wo?: string }> }) {
   const { locale, ctx, d } = await appPage(params);
   if (!ctx.permissions.has("requests.read")) return <Forbidden message={d.errors.forbiddenPage} />;
   const sp = await searchParams;
@@ -30,6 +33,19 @@ export default async function RequestsPage({ params, searchParams }: { params: P
           </Link>
         ))}
       </nav>
+      {/* Confirmation after creating or approving (values come from our own redirect; checked before display). */}
+      {sp.approved && NUMBER.test(sp.approved) ? (
+        <div role="status" className="mb-4 flex flex-wrap items-center gap-x-2 rounded-[var(--radius-control)] border border-success-100 bg-success-100/60 px-3 py-2.5 text-sm text-success-700">
+          <CheckCircle2 aria-hidden className="size-4 shrink-0" />
+          <span>{d.requests.approvedNotice}</span>
+          {sp.wo && ID.test(sp.wo) ? <Link href={`/${locale}/app/work-orders/${sp.wo}`} className="num font-medium underline">{sp.approved}</Link> : <span className="num font-medium">{sp.approved}</span>}
+        </div>
+      ) : sp.created && NUMBER.test(sp.created) ? (
+        <div role="status" className="mb-4 flex items-center gap-2 rounded-[var(--radius-control)] border border-success-100 bg-success-100/60 px-3 py-2.5 text-sm text-success-700">
+          <CheckCircle2 aria-hidden className="size-4 shrink-0" />
+          <span>{d.requests.createdNotice.replace("{number}", sp.created)}</span>
+        </div>
+      ) : null}
       <Card>
         {rows.length === 0 ? <EmptyState art="workOrders" title={d.requests.empty} /> : (
           <Table>

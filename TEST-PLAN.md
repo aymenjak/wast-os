@@ -132,7 +132,19 @@ Nomenclature check: `scripts/nomenclature/parse-06-104.py` re-generates `lib/nom
 
 Defects found in screenshot review and fixed: "06-104" rendered as "104-06" inside Arabic sentences (bidi; now an LTR isolate); "t 3,86" unit order in RTL; chart maximum shown in kg next to tonnes; inline rejects form overflowed the ticket table; certificate defaulting to an empty current month (screenshot taken for the previous month); hardcoded "Wilaya" label.
 
-## Latest results (2026-11-06, system review, stock, import, data protection)
+## Latest results (2026-11-06, fixes from a hands-on UI review of every role)
+
+| Suite | Result |
+|---|---|
+| `npm run typecheck` | pass |
+| `npx vitest run` (unit + integration) | 339 passed (new: `qa-fixes` 9 — NIF/phone/site-in-Algeria checks, weak password and privacy consent at sign-up, billing a one-off job at a typed price) |
+| `npm run build` | pass |
+| `npm run test:e2e` | **not run** this round (the sign-up helper now ticks the privacy box) |
+| Production build behind Cloudflare | `/ar`, `/{ar,fr,en}/privacy`, `/ar/register`, `/ar/civic/report`, `/api/health` 200; `/favicon.ico` served (no more `reading 'home'` errors); `/field-sw.js` `no-store` with `cf-cache-status: BYPASS` |
+
+Defects found in the review and fixed: a one-off job could not be invoiced (no field for its price, and a manual line left it unbilled forever); NIF `abc` and phone `12` accepted and printed on an invoice; a site in Paris accepted (a route of ≈1,483 km); `aaaaaaaaaa` accepted as a password; no privacy notice or consent; the driver app waited up to 60 s after the server came back and showed "online" while the server was unreachable; Cloudflare cached the service worker for 4 h; `/favicon.ico` crashed the home page render.
+
+## Earlier results (2026-11-06, system review, stock, import, data protection)
 
 | Suite | Result |
 |---|---|

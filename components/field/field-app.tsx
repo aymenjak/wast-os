@@ -15,6 +15,8 @@ import {
 
 type Job = FieldBundle["jobs"][number];
 const SYNC_EVERY_MS = 60_000;
+/** While work waits or the server did not answer, try again sooner: the driver should not have to press "Send now". */
+const RETRY_EVERY_MS = 15_000;
 const FAILURE_REASONS = ["NO_ACCESS", "CUSTOMER_ABSENT", "WASTE_NOT_READY", "WRONG_WASTE_TYPE", "VEHICLE_BREAKDOWN", "UNSAFE_CONDITIONS", "OTHER"] as const;
 
 function algiersDay(offset = 0) {
@@ -31,6 +33,8 @@ export function FieldApp({ membershipId }: { membershipId: string }) {
   const [outbox, setOutbox] = useState<OutboxItem[]>([]);
   const [syncedAt, setSyncedAt] = useState<string | null>(null);
   const [online, setOnline] = useState(true);
+  // The phone can be on a network while the server cannot be reached (weak signal, server down): shown as not connected.
+  const [reachable, setReachable] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [unauthorized, setUnauthorized] = useState(false);
   const [storageError, setStorageError] = useState(false);
@@ -51,12 +55,14 @@ export function FieldApp({ membershipId }: { membershipId: string }) {
         if (item.error) { blocked.add(item.workOrderId); continue; }
         if (blocked.has(item.workOrderId)) continue; // keep the driver's order within one job
         const r = await sendItem(item);
+        if (r.result === "stop") { setReachable(false); return; } // network or server trouble: try again soon, nothing lost
+        setReachable(true);
         if (r.result === "sent") await outboxDelete(h, item.seq!);
         else if (r.result === "rejected") { await outboxPut(h, { ...item, error: r.error }); blocked.add(item.workOrderId); }
         else if (r.result === "unauthorized") { setUnauthorized(true); return; }
-        else return; // network or server trouble: try again later, nothing lost
       }
       const res = await fetchBundle();
+      setReachable(Boolean(res.bundle || res.unauthorized));
       if (res.unauthorized) setUnauthorized(true);
       else if (res.bundle) {
         const at = new Date().toISOString();
@@ -95,20 +101,23 @@ export function FieldApp({ membershipId }: { membershipId: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [membershipId]);
 
+  const waiting = outbox.some((o) => !o.error);
+  const retrySoon = waiting || !reachable;
   useEffect(() => {
     setOnline(navigator.onLine);
     const up = () => { setOnline(true); void sync(); };
     const down = () => setOnline(false);
     window.addEventListener("online", up);
     window.addEventListener("offline", down);
-    const timer = window.setInterval(() => void sync(), SYNC_EVERY_MS);
+    const timer = window.setInterval(() => void sync(), retrySoon ? RETRY_EVERY_MS : SYNC_EVERY_MS);
     return () => { window.removeEventListener("online", up); window.removeEventListener("offline", down); window.clearInterval(timer); };
-  }, [sync]);
+  }, [sync, retrySoon]);
 
   // Service worker: keeps this page and its scripts on the phone for the next offline opening.
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
-    navigator.serviceWorker.register("/field-sw.js", { scope: "/" }).then(async () => {
+    // updateViaCache "none": update checks skip the HTTP cache whatever caching headers a proxy adds.
+    navigator.serviceWorker.register("/field-sw.js", { scope: "/", updateViaCache: "none" }).then(async () => {
       const reg = await navigator.serviceWorker.ready;
       const urls = performance.getEntriesByType("resource").map((e) => e.name).filter((u) => u.includes("/_next/static/"));
       reg.active?.postMessage({ type: "precache", urls });
@@ -135,6 +144,7 @@ export function FieldApp({ membershipId }: { membershipId: string }) {
     return overlay(bundle?.jobs ?? [], outbox).sort((a, b) => (rank[a.status] ?? 2) - (rank[b.status] ?? 2) || a.scheduledDate.localeCompare(b.scheduledDate) || a.number.localeCompare(b.number));
   }, [bundle, outbox]);
   const pending = outbox.filter((o) => !o.error).length;
+  const connected = online && reachable;
   const rejected = outbox.filter((o) => o.error).length;
   const job = selected ? jobs.find((j) => j.id === selected) ?? null : null;
 
@@ -151,9 +161,9 @@ export function FieldApp({ membershipId }: { membershipId: string }) {
       <header className="sticky top-0 z-10 border-b border-ink-200 bg-white/95 px-4 py-3 backdrop-blur">
         <div className="flex items-center justify-between gap-3">
           <h1 className="text-lg font-semibold text-ink-900">{f.myJobs}</h1>
-          <span role="status" data-testid="net-status" className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-medium ${online ? "bg-success-100 text-success-700" : "bg-warning-100 text-warning-700"}`}>
-            <span aria-hidden className={`size-2 rounded-full ${online ? "bg-success-700" : "bg-warning-700"}`} />
-            {online ? f.online : f.offline.split(":")[0]}
+          <span role="status" data-testid="net-status" className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-medium ${connected ? "bg-success-100 text-success-700" : "bg-warning-100 text-warning-700"}`}>
+            <span aria-hidden className={`size-2 rounded-full ${connected ? "bg-success-700" : "bg-warning-700"}`} />
+            {connected ? f.online : (online ? f.unreachable : f.offline).split(":")[0]}
           </span>
         </div>
         <div className="mt-2 flex items-center justify-between gap-3 text-sm">
@@ -161,14 +171,14 @@ export function FieldApp({ membershipId }: { membershipId: string }) {
             {pending ? f.pending.replace("{n}", String(pending)) : f.allSent}
           </span>
           <button type="button" onClick={() => void sync()} disabled={!online || syncing || !db} className={buttonClass("secondary", "md", "min-h-11")}>
-            {syncing ? f.syncing : f.syncNow}
+            {syncing ? (pending ? f.syncing : f.refreshing) : f.syncNow}
           </button>
         </div>
         {syncedAt ? <p className="mt-1 text-xs text-ink-500">{f.updated.replace("{time}", time(syncedAt))}</p> : null}
       </header>
 
       <main id="main" className="flex-1 space-y-3 px-4 py-4 pb-[calc(env(safe-area-inset-bottom)+1.5rem)]">
-        {!online ? <Banner tone="warning">{f.offline}</Banner> : null}
+        {!online ? <Banner tone="warning">{f.offline}</Banner> : !reachable ? <Banner tone="warning">{f.unreachable}</Banner> : null}
         {storageError ? <Banner tone="danger">{f.storageError}</Banner> : null}
         {unauthorized ? (
           <Banner tone="danger">
@@ -180,7 +190,7 @@ export function FieldApp({ membershipId }: { membershipId: string }) {
 
         {!loaded ? null : job ? (
           <JobView key={job.id} job={job} items={outbox.filter((o) => o.workOrderId === job.id)} destinations={bundle?.destinations ?? []}
-            onBack={() => setSelected(null)} enqueue={enqueue} discard={discard} online={online} dayLabel={dayLabel} />
+            onBack={() => setSelected(null)} enqueue={enqueue} discard={discard} online={connected} dayLabel={dayLabel} />
         ) : !bundle ? (
           storageError ? null : <Banner tone="info">{f.noData}</Banner>
         ) : jobs.length === 0 ? (

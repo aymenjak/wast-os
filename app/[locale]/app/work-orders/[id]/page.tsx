@@ -60,7 +60,7 @@ export default async function WorkOrderDetail({ params }: { params: Promise<{ lo
         // On phones the actions are a bar fixed to the bottom of the screen: a driver who records the weight at the bottom of
         // a long page can finish without scrolling back up (found in the pre-pilot field test).
         <div className="mb-6 max-sm:fixed max-sm:inset-x-0 max-sm:bottom-0 max-sm:z-30 max-sm:mb-0 max-sm:max-h-[70vh] max-sm:overflow-y-auto max-sm:border-t max-sm:border-ink-200 max-sm:bg-white max-sm:pb-[env(safe-area-inset-bottom)] max-sm:shadow-[0_-4px_16px_rgba(0,0,0,0.08)] print:hidden">
-          <Card className="max-sm:rounded-none max-sm:border-0 max-sm:shadow-none"><CardBody className="max-sm:py-3"><WorkOrderActions workOrderId={wo.id} actions={actions} today={orgToday(ctx)} /></CardBody></Card>
+          <Card className="max-sm:rounded-none max-sm:border-0 max-sm:shadow-none"><CardBody className="max-sm:py-3"><WorkOrderActions key={photos.length} workOrderId={wo.id} actions={actions} today={orgToday(ctx)} /></CardBody></Card>
         </div>
       ) : null}
 

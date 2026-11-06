@@ -27,8 +27,8 @@ describe("CSV parsing", () => {
 describe("preview and import", () => {
   const fr = [
     "Nom du client;Type;NIF;Téléphone;Nom du site;Adresse;Commune;Wilaya;Latitude;Longitude",
-    "Supérette Test (synthetic);entreprise;000111;0550 00 00 00;Dépôt;Rue 1;Bir El Djir;Oran;35,73;-0,56",
-    "Supérette Test (synthetic);entreprise;000111;;Magasin 2;Rue 2;Es Senia;Oran;;",
+    "Supérette Test (synthetic);entreprise;000111222333444;0550 00 00 00;Dépôt;Rue 1;Bir El Djir;Oran;35,73;-0,56",
+    "Supérette Test (synthetic);entreprise;000111222333444;;Magasin 2;Rue 2;Es Senia;Oran;;",
     "École Test (synthetic);institution;;;;;;;;",
     "Hôtel Existant (synthetic);;;;Annexe;Rue 3;;;;",
   ].join("\n");
@@ -42,7 +42,7 @@ describe("preview and import", () => {
 
   it("imports all at once, with sites and coordinates, then reports nothing new on a second run", async () => {
     expect(await importCustomers(a, fr)).toEqual({ customers: 2, locations: 2, skipped: 1 });
-    const s = await prisma.customer.findFirstOrThrow({ where: { organizationId: a.org.id, taxId: "000111" }, include: { locations: { orderBy: { label: "asc" } } } });
+    const s = await prisma.customer.findFirstOrThrow({ where: { organizationId: a.org.id, taxId: "000111222333444" }, include: { locations: { orderBy: { label: "asc" } } } });
     expect(s.locations.map((l) => l.label)).toEqual(["Dépôt", "Magasin 2"]);
     expect(Number(s.locations[0]!.latitude)).toBe(35.73);
     expect((await prisma.customer.findFirstOrThrow({ where: { organizationId: a.org.id, name: "École Test (synthetic)" } })).kind).toBe("INSTITUTION");

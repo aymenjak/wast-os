@@ -1,5 +1,6 @@
+import { notFound } from "next/navigation";
 import { getDictionary } from "@/lib/i18n";
-import type { Locale } from "@/lib/i18n/config";
+import { isLocale, type Locale } from "@/lib/i18n/config";
 import { ButtonLink } from "@/components/ui/button";
 import { RouteHero } from "@/components/route-hero";
 import { Reveal } from "@/components/home/reveal";
@@ -12,6 +13,8 @@ import { Recycle, TriangleAlert, Warehouse, MapPinned } from "lucide-react";
 
 export default async function Home({ params }: { params: Promise<{ locale: Locale }> }) {
   const { locale } = await params;
+  // The page renders alongside the layout, so it checks the segment too (e.g. a browser asking for /favicon.ico).
+  if (!isLocale(locale)) notFound();
   const d = getDictionary(locale);
   const flow = [d.home.flow.request, d.home.flow.dispatch, d.home.flow.field, d.home.flow.invoice, d.home.flow.payment];
   const pillars = [d.home.pillars.evidence, d.home.pillars.mobile, d.home.pillars.bilingual, d.home.pillars.tenancy];

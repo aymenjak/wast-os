@@ -54,7 +54,7 @@ export default async function PublicLayout({ children, params }: { children: Rea
             <li><Link className="hover:text-white" href={`/${locale}/pricing`}>{d.nav.pricing}</Link></li>
           </ul>
           <div className="space-y-2">
-            <p>{d.footer.privacy}</p>
+            <p><Link className="underline hover:text-white" href={`/${locale}/privacy`}>{d.footer.privacy}</Link></p>
             <p>{d.footer.rights.replace("{year}", String(new Date().getFullYear()))}</p>
             <LanguageSwitcher />
           </div>

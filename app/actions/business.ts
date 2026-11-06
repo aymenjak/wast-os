@@ -83,12 +83,16 @@ export async function removeSurchargeAction(_: ActionState, fd: FormData) {
 // ── Requests ──
 export async function createRequestAction(_: ActionState, fd: FormData) {
   return orgAction(fd, async (ctx, input) => {
-    await requests.createRequest(ctx, input);
-    return ctx.role === "CUSTOMER_PORTAL" ? "/portal" : "/app/requests";
+    const req = await requests.createRequest(ctx, input);
+    return ctx.role === "CUSTOMER_PORTAL" ? "/portal" : `/app/requests?created=${encodeURIComponent(req.number)}`;
   });
 }
 export async function validateRequestAction(_: ActionState, fd: FormData) {
-  return orgAction(fd, async (ctx, input) => void (await requests.validateRequest(ctx, s(input.requestId))), { revalidate: ["/app/requests", "/app/dispatch"] });
+  return orgAction(fd, async (ctx, input) => {
+    const wo = await requests.validateRequest(ctx, s(input.requestId));
+    // Back to the queue with a confirmation that names the new work order (the approved row leaves the list).
+    return `/app/requests?approved=${encodeURIComponent(wo.number)}&wo=${encodeURIComponent(wo.id)}`;
+  }, { revalidate: ["/app/requests", "/app/dispatch"] });
 }
 export async function rejectRequestAction(_: ActionState, fd: FormData) {
   return orgAction(fd, (ctx, input) => requests.rejectRequest(ctx, s(input.requestId), input), { revalidate: ["/app/requests"] });
@@ -169,7 +173,11 @@ export async function removeTeamMemberAction(_: ActionState, fd: FormData) {
 // ── Invoices & payments ──
 export async function createDraftInvoiceAction(_: ActionState, fd: FormData) {
   return orgAction(fd, async (ctx, input) => {
-    const inv = await invoices.createDraftInvoice(ctx, { ...input, workOrderIds: input.workOrderIds ?? [] });
+    // "price_<workOrderId>" fields carry the price of a selected job that has no contract price; blank ones are left out.
+    const prices = Object.fromEntries(
+      Object.entries(input).filter(([k, v]) => k.startsWith("price_") && typeof v === "string" && v.trim() !== "").map(([k, v]) => [k.slice(6), v]),
+    );
+    const inv = await invoices.createDraftInvoice(ctx, { ...input, workOrderIds: input.workOrderIds ?? [], prices });
     return `/app/invoices/${inv.id}`;
   });
 }

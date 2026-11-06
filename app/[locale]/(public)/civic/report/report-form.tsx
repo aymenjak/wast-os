@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { CheckCircle2 } from "lucide-react";
+import { Check, CheckCircle2, Copy } from "lucide-react";
 import { ActionForm, Field, Input, Select, SubmitButton, Textarea } from "@/components/ui/form";
 import { LocationPicker } from "@/components/map/location-picker";
 import { useI18n } from "@/components/i18n-provider";
@@ -14,6 +14,7 @@ export function ReportForm({ municipalities }: { municipalities: { slug: string;
   // One id per form instance: a retried submission (double tap, flaky network) is deduplicated server-side.
   const clientSubmissionId = useMemo(() => crypto.randomUUID(), []);
   const [code, setCode] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   if (code)
     return (
@@ -21,7 +22,18 @@ export function ReportForm({ municipalities }: { municipalities: { slug: string;
         <div className="flex items-center gap-2 font-semibold text-success-700"><CheckCircle2 aria-hidden className="size-5" />{t("civic.submitted")}</div>
         <p className="mt-2 text-sm text-ink-700">{t("civic.submittedLead")}</p>
         <p className="mt-4 text-xs text-ink-500">{t("civic.trackingCode")}</p>
-        <p data-testid="tracking-code" className="num mt-1 text-2xl font-semibold tracking-wider text-ink-950">{code}</p>
+        <div className="mt-1 flex flex-wrap items-center gap-3">
+          <p data-testid="tracking-code" dir="ltr" className="num text-2xl font-semibold tracking-wider text-ink-950">{code}</p>
+          {/* The code is the citizen's only way back to the report: make it easy to keep. */}
+          <button
+            type="button"
+            onClick={() => navigator.clipboard?.writeText(code).then(() => setCopied(true), () => undefined)}
+            className="inline-flex items-center gap-1.5 rounded-[var(--radius-control)] border border-ink-300 bg-white px-3 py-1.5 text-sm font-medium text-ink-800 hover:bg-ink-50"
+          >
+            {copied ? <Check aria-hidden className="size-4" /> : <Copy aria-hidden className="size-4" />}
+            {copied ? t("civic.copied") : t("civic.copyCode")}
+          </button>
+        </div>
         <Link href={`/${locale}/civic/track/${code}`} className="mt-4 inline-block text-sm font-medium text-brand-700 hover:underline">{t("nav.trackReport")}</Link>
       </div>
     );
@@ -60,6 +72,9 @@ export function ReportForm({ municipalities }: { municipalities: { slug: string;
         <Field label={t("civic.yourName")} name="reporterName" optional>{(p) => <Input {...p} autoComplete="name" />}</Field>
         <Field label={t("civic.contact")} name="reporterContact" optional>{(p) => <Input {...p} autoComplete="email" />}</Field>
       </div>
+      <p className="text-xs text-ink-600">
+        {t("civic.privacyNote")} <Link href={`/${locale}/privacy`} className="text-brand-800 underline">{t("auth.privacyRead")}</Link>
+      </p>
       <SubmitButton size="lg" className="w-full sm:w-auto">{t("civic.submit")}</SubmitButton>
     </ActionForm>
   );
