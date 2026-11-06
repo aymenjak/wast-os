@@ -1,7 +1,9 @@
 import Link from "next/link";
 import type { Locale } from "@/lib/i18n/config";
 import { appPage } from "@/server/page";
-import { listTeams, listVehicles, staffOptions } from "@/server/services/fleet";
+import { fleetAlerts, listTeams, listVehicles, staffOptions } from "@/server/services/fleet";
+import { orgToday } from "@/server/services/reports";
+import { FleetAlerts } from "@/components/fleet-alerts";
 import { formatDay, formatNumber } from "@/lib/i18n/format";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/badge";
@@ -13,11 +15,12 @@ export default async function FleetPage({ params }: { params: Promise<{ locale: 
   const { locale, ctx, d } = await appPage(params);
   if (!ctx.permissions.has("fleet.read")) return <Forbidden message={d.errors.forbiddenPage} />;
   const canWrite = ctx.permissions.has("fleet.write");
-  const [vehicles, teams, staff] = await Promise.all([listVehicles(ctx), listTeams(ctx), canWrite ? staffOptions(ctx) : Promise.resolve([])]);
+  const [vehicles, teams, staff, alerts] = await Promise.all([listVehicles(ctx), listTeams(ctx), canWrite ? staffOptions(ctx) : Promise.resolve([]), fleetAlerts(ctx, orgToday(ctx))]);
   const staffOpts = staff.map((s) => ({ id: s.id, name: `${s.user.name}, ${d.enums.OrgRole[s.role]}` }));
   return (
     <>
       <PageHeader title={d.fleet.title} />
+      {alerts.length ? <Card className="mb-6"><CardHeader title={d.fleet.alertsTitle} description={d.fleet.alertsLead} /><FleetAlerts alerts={alerts} d={d} locale={locale} /></Card> : null}
       <div className="grid gap-6 xl:grid-cols-5">
         <Card className="xl:col-span-3">
           <CardHeader title={d.fleet.vehicles} />

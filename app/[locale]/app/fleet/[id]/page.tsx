@@ -11,7 +11,7 @@ import { StatusBadge } from "@/components/ui/badge";
 import { DescriptionList, EmptyState, PageHeader, Table, Td, Th } from "@/components/ui/misc";
 import { InlineAction } from "@/components/inline-action";
 import { setVehicleStatusAction } from "@/app/actions/business";
-import { MaintenanceForm } from "../forms";
+import { MaintenanceForm, VehicleDocumentForm } from "../forms";
 
 export default async function VehicleDetail({ params }: { params: Promise<{ locale: Locale; id: string }> }) {
   const { locale, ctx, d } = await appPage(params);
@@ -51,6 +51,28 @@ export default async function VehicleDetail({ params }: { params: Promise<{ loca
                 ) : null],
               ]} />
             </CardBody>
+          </Card>
+          <Card>
+            <CardHeader title={d.fleet.documents} description={d.fleet.documentsLead} />
+            {v.documents.length === 0 ? <CardBody><p className="text-sm text-ink-600">{d.fleet.noDocuments}</p></CardBody> : (
+              <Table>
+                <thead><tr><Th>{d.fleet.documentKind}</Th><Th>{d.fleet.reference}</Th><Th>{d.fleet.issuer}</Th><Th>{d.fleet.expiresOn}</Th><Th>{d.common.status}</Th></tr></thead>
+                <tbody>{v.documents.map((doc, i) => {
+                  const current = v.documents.findIndex((x) => x.kind === doc.kind) === i;
+                  const expired = !!doc.expiresOn && doc.expiresOn.toISOString().slice(0, 10) < today;
+                  return (
+                    <tr key={doc.id} className={current ? "" : "opacity-60"}>
+                      <Td>{d.enums.VehicleDocumentKind[doc.kind]}</Td>
+                      <Td>{doc.reference ? <bdi className="num">{doc.reference}</bdi> : "—"}</Td>
+                      <Td>{doc.issuer ?? "—"}</Td>
+                      <Td><bdi>{formatDay(doc.expiresOn, locale)}</bdi></Td>
+                      <Td>{!current ? d.fleet.superseded : expired ? <span className="font-medium text-danger-700">{d.fleet.expired.replace("{n}", String(Math.round((Date.parse(`${today}T00:00:00Z`) - doc.expiresOn!.getTime()) / 86_400_000)))}</span> : d.fleet.inForce}</Td>
+                    </tr>
+                  );
+                })}</tbody>
+              </Table>
+            )}
+            {canWrite ? <CardBody className="border-t border-ink-100"><VehicleDocumentForm vehicleId={v.id} /></CardBody> : null}
           </Card>
           <Card>
             <CardHeader title={d.stock.vehicleConsumption} description={used.rows.length ? formatMinor(used.totalMinor, locale) : undefined}

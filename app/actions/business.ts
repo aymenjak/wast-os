@@ -128,6 +128,9 @@ export async function setVehicleStatusAction(_: ActionState, fd: FormData) {
 export async function addMaintenanceAction(_: ActionState, fd: FormData) {
   return orgAction(fd, async (ctx, input) => void (await fleet.addMaintenance(ctx, s(input.vehicleId), input)), { revalidate: [`/app/fleet/${s(fd.get("vehicleId"))}`] });
 }
+export async function addVehicleDocumentAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, async (ctx, input) => void (await fleet.addVehicleDocument(ctx, s(input.vehicleId), input)), { revalidate: [`/app/fleet/${s(fd.get("vehicleId"))}`, "/app/fleet"] });
+}
 export async function createTeamAction(_: ActionState, fd: FormData) {
   return orgAction(fd, async (ctx, input) => void (await fleet.createTeam(ctx, input)), { revalidate: ["/app/fleet"] });
 }

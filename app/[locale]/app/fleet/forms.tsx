@@ -2,7 +2,7 @@
 import { X } from "lucide-react";
 import { ActionForm, Field, Input, Select, SubmitButton, Textarea } from "@/components/ui/form";
 import { useI18n } from "@/components/i18n-provider";
-import { addMaintenanceAction, addTeamMemberAction, createTeamAction, createVehicleAction, removeTeamMemberAction } from "@/app/actions/business";
+import { addMaintenanceAction, addVehicleDocumentAction, addTeamMemberAction, createTeamAction, createVehicleAction, removeTeamMemberAction } from "@/app/actions/business";
 
 export function VehicleForm() {
   const { t } = useI18n();
@@ -66,6 +66,23 @@ export function MaintenanceForm({ vehicleId, today }: { vehicleId: string; today
       <Field label={t("fleet.odometer")} name="odometerKm" optional>{(p) => <Input {...p} type="number" min={0} dir="ltr" />}</Field>
       <Field label={t("fleet.nextDue")} name="nextDueAt" optional>{(p) => <Input {...p} type="date" />}</Field>
       <div className="sm:col-span-2"><SubmitButton size="sm">{t("fleet.addMaintenance")}</SubmitButton></div>
+    </ActionForm>
+  );
+}
+
+const DOCUMENT_KINDS = ["INSURANCE", "TECHNICAL_INSPECTION", "REGISTRATION", "TRANSPORT_AUTHORISATION", "OTHER"] as const;
+
+export function VehicleDocumentForm({ vehicleId }: { vehicleId: string }) {
+  const { t } = useI18n();
+  return (
+    <ActionForm action={addVehicleDocumentAction} hidden={{ vehicleId }} resetOnSuccess successMessage={t("common.saved")} className="grid gap-3 sm:grid-cols-2">
+      <Field label={t("fleet.documentKind")} name="kind">{(p) => <Select {...p} defaultValue="INSURANCE">{DOCUMENT_KINDS.map((k) => <option key={k} value={k}>{t(`enums.VehicleDocumentKind.${k}`)}</option>)}</Select>}</Field>
+      <Field label={t("fleet.reference")} name="reference" optional>{(p) => <Input {...p} maxLength={80} dir="ltr" />}</Field>
+      <Field label={t("fleet.issuer")} name="issuer" optional>{(p) => <Input {...p} maxLength={120} />}</Field>
+      <Field label={t("fleet.issuedOn")} name="issuedOn" optional>{(p) => <Input {...p} type="date" />}</Field>
+      <Field label={t("fleet.expiresOn")} name="expiresOn" optional>{(p) => <Input {...p} type="date" />}</Field>
+      <Field label={t("common.notes")} name="notes" optional>{(p) => <Input {...p} maxLength={500} />}</Field>
+      <div className="sm:col-span-2"><SubmitButton size="sm" variant="secondary">{t("fleet.addDocument")}</SubmitButton></div>
     </ActionForm>
   );
 }

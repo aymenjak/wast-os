@@ -178,6 +178,7 @@ model Organization {
   sortingCampaigns           SortingCampaign[]
   materialSuppliers          MaterialSupplier[]
   stockItems                 StockItem[]
+  vehicleDocuments           VehicleDocument[]
   stockSuppliers             StockSupplier[]
   stockPurchases             StockPurchase[]
   stockMovements             StockMovement[]
@@ -1291,6 +1292,7 @@ model Vehicle {
   lastSpeedKmh   Int?
 
   organization       Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  documents          VehicleDocument[]
   stockMovements     StockMovement[]
   maintenance        VehicleMaintenance[]
   workOrders         WorkOrder[]
@@ -2087,4 +2089,36 @@ model StockMovement {
   @@index([organizationId, itemId, occurredOn])
   @@index([organizationId, vehicleId, occurredOn])
   @@index([organizationId, purchaseId])
+}
+
+// ───────────── Vehicle documents (insurance, roadworthiness, registration, authorisations) ─────────────
+
+enum VehicleDocumentKind {
+  INSURANCE
+  TECHNICAL_INSPECTION
+  REGISTRATION
+  TRANSPORT_AUTHORISATION
+  OTHER
+}
+
+/// One record per document issued; a renewal is a new record. The latest one per (vehicle, kind) is the one in force.
+model VehicleDocument {
+  id             String              @id @default(cuid())
+  organizationId String
+  vehicleId      String
+  kind           VehicleDocumentKind
+  /// Policy, certificate or registration number as printed.
+  reference      String?
+  issuer         String?
+  issuedOn       DateTime?           @db.Date
+  expiresOn      DateTime?           @db.Date
+  notes          String?
+  recordedById   String
+  createdAt      DateTime            @default(now()) @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  vehicle      Vehicle      @relation(fields: [organizationId, vehicleId], references: [organizationId, id], onDelete: Cascade)
+
+  @@index([organizationId, vehicleId, kind])
+  @@index([organizationId, expiresOn])
 }
