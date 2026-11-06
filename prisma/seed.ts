@@ -50,7 +50,8 @@ async function main() {
 
   if (await prisma.user.findUnique({ where: { email: "owner@demo-collecte.test" } })) {
     await seedIotDemo();
-    console.log("Seed data already present — plans refreshed, IoT demo ensured, nothing else changed.");
+    await seedStockDemo();
+    console.log("Seed data already present — plans refreshed, IoT and stock demos ensured, nothing else changed.");
     return;
   }
 
@@ -206,6 +207,7 @@ async function main() {
   }
 
   await seedIotDemo();
+  await seedStockDemo();
 
   const plusSix = new Date(Date.now() + 6 * 86400_000).toISOString().slice(0, 10);
   await generateRecurringWorkOrders(dispatcher, { from: today, to: plusSix });
@@ -254,6 +256,42 @@ async function seedIotDemo() {
     const { key } = await registerDevice(ctx, { kind: "GPS_TRACKER", name: `GPS ${vehicle.plateNumber}`, serial: "DEMO-GPS-1", vehicleId: vehicle.id });
     await ingest((await authenticateDevice(`Bearer ${key}`))!, { positions: [{ recordedAt: new Date(now - 5 * 60_000).toISOString(), lat: 35.6971, lng: -0.6308, speedKmh: 24, heading: 90 }] });
   }
+}
+
+/** Synthetic stock demo: supplies, one supplier, two purchases, issues to the trucks, one item below its reorder level. Idempotent. */
+async function seedStockDemo() {
+  const owner = await prisma.user.findUnique({ where: { email: "owner@demo-collecte.test" }, include: { memberships: true } });
+  const orgId = owner?.memberships[0]?.organizationId;
+  if (!owner || !orgId || (await prisma.stockItem.count({ where: { organizationId: orgId } }))) return;
+  const ctx = (await loadContext(owner.id, orgId))!;
+  const stock = await import("../server/services/stock");
+  const day = (offset: number) => new Date(Date.now() + offset * 86400_000).toISOString().slice(0, 10);
+  const items = Object.fromEntries(await Promise.all(([
+    ["oil", { code: "HUILE-15W40", name: "Huile moteur 15W40 (fictif)", category: "LUBRICANT", unit: "LITRE", reorderLevel: "40" }],
+    ["filter", { code: "FILTRE-HUILE", name: "Filtre à huile benne (fictif)", category: "SPARE_PART", unit: "UNIT", reorderLevel: "4" }],
+    ["tyre", { code: "PNEU-315-80", name: "Pneu 315/80 R22.5 (fictif)", category: "TYRE", unit: "UNIT", reorderLevel: "2" }],
+    ["gloves", { code: "GANTS-NIT", name: "Gants de manutention (fictif)", category: "PPE", unit: "PAIR", reorderLevel: "30" }],
+    ["bags", { code: "SACS-100L", name: "Sacs poubelle 100 L (fictif)", category: "CONSUMABLE", unit: "ROLL", reorderLevel: "10" }],
+    ["vest", { code: "GILET-HV", name: "Gilet haute visibilité (fictif)", category: "PPE", unit: "UNIT", reorderLevel: "5" }],
+  ] as const).map(async ([k, v]) => [k, (await stock.createItem(ctx, v)).id] as const)));
+  const supplier = await stock.createSupplier(ctx, { name: "Pièces & Fournitures Démo (fictif)", taxId: "000000000000000 (fictif)" });
+  // Prices are illustrative placeholders for the demo, not market prices.
+  await stock.createPurchase(ctx, { supplierId: supplier.id, supplierInvoiceRef: "FD-0001 (fictif)", receivedOn: day(-20), vat: "6460", paid: "on", lines: [
+    { itemId: items.oil, quantity: "100", unitCost: "180" }, { itemId: items.filter, quantity: "10", unitCost: "1500" }, { itemId: items.gloves, quantity: "100", unitCost: "60" }, { itemId: items.bags, quantity: "40", unitCost: "250" },
+  ] });
+  await stock.createPurchase(ctx, { supplierId: supplier.id, supplierInvoiceRef: "FD-0002 (fictif)", receivedOn: day(-6), vat: "9120", lines: [
+    { itemId: items.oil, quantity: "60", unitCost: "200" }, { itemId: items.tyre, quantity: "2", unitCost: "18000" },
+  ] });
+  await stock.openingStock(ctx, { itemId: items.vest, quantity: "12", unitCost: "450", occurredOn: day(-30) });
+  const trucks = await prisma.vehicle.findMany({ where: { organizationId: orgId }, orderBy: { plateNumber: "asc" }, take: 2 });
+  for (const [i, t] of trucks.entries()) {
+    await stock.issueStock(ctx, { itemId: items.oil, quantity: i ? "18" : "24", vehicleId: t.id, reason: "Vidange (fictif)", occurredOn: day(-15 + i) });
+    await stock.issueStock(ctx, { itemId: items.filter, quantity: "2", vehicleId: t.id, reason: "Vidange (fictif)", occurredOn: day(-15 + i) });
+  }
+  if (trucks[0]) await stock.issueStock(ctx, { itemId: items.tyre, quantity: "2", vehicleId: trucks[0].id, reason: "Remplacement pneus avant (fictif)", occurredOn: day(-3) });
+  await stock.issueStock(ctx, { itemId: items.gloves, quantity: "76", reason: "Dotation des équipes (fictif)", occurredOn: day(-10) }); // leaves 24 pairs: below the reorder level of 30
+  await stock.issueStock(ctx, { itemId: items.bags, quantity: "22", occurredOn: day(-4) });
+  await stock.adjustStock(ctx, { itemId: items.vest, quantity: "-1", reason: "Inventaire : gilet déchiré (fictif)", occurredOn: day(-2) });
 }
 
 main().then(() => prisma.$disconnect()).catch(async (e) => { console.error(e); await prisma.$disconnect(); process.exit(1); });

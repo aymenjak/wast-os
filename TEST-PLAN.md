@@ -28,6 +28,7 @@
 | T Territory (R3) | integration `territory` (4); e2e `territory.spec` (3) |
 | S Sorting yard (R2) | integration `yard` (6); e2e `yard.spec` (3) |
 | O Offline driver mode | integration `field-offline` (9: bundle scope, full offline job replayed twice without duplicates and with phone times, 3 concurrent deliveries keep one ticket, refusals, clock bounds, malformed input, other team, cross-tenant, support/portal); e2e `field-offline.spec` (4: page and jobs open with network cut, job done offline sent once on reconnect, API header/origin/session checks, Arabic RTL at 390 px) |
+| ST Stock & procurement | unit `stock` (7: average cost, rounding, empty exactly, low flag); integration `stock` (13: codes per tenant, average across receipts, no negative, 10 concurrent issues, corrections, purchase validation, void rules, paid once, report per vehicle/category, roles, cross-tenant, append-only, audit); e2e `stock.spec` (2) |
 | L Containers | integration (transitions, history, field-worker scope, cross-tenant location rejected); e2e (register + deliver) |
 | M Command palette search | integration (tenant + permission scoping, accent-insensitive, LIKE wildcards literal); e2e (Ctrl+K → result → navigate) |
 | J ar/fr/en desktop & mobile | e2e `i18n-a11y` (lang/dir, translated H1, axe WCAG 2.2 AA serious/critical = 0 on 6 public pages × 3 locales with reduced motion, no overflow at 360 px); screenshots in `docs/screenshots` reviewed |

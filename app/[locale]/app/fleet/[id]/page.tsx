@@ -4,7 +4,8 @@ import { orgToday } from "@/server/services/reports";
 import type { Locale } from "@/lib/i18n/config";
 import { appPage, orNotFound } from "@/server/page";
 import { getVehicle } from "@/server/services/fleet";
-import { formatDay, formatMoney, formatNumber } from "@/lib/i18n/format";
+import { vehicleConsumption } from "@/server/services/stock";
+import { formatDay, formatMinor, formatMoney, formatNumber } from "@/lib/i18n/format";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/badge";
 import { DescriptionList, EmptyState, PageHeader, Table, Td, Th } from "@/components/ui/misc";
@@ -17,6 +18,9 @@ export default async function VehicleDetail({ params }: { params: Promise<{ loca
   const { id } = await params;
   const v = await orNotFound(getVehicle(ctx, id));
   const canWrite = ctx.permissions.has("fleet.write");
+  const today = orgToday(ctx);
+  const since = new Date(Date.parse(`${today}T00:00:00Z`) - 89 * 86_400_000).toISOString().slice(0, 10);
+  const used = await vehicleConsumption(ctx, v.id, since, today);
   return (
     <>
       <PageHeader
@@ -47,6 +51,23 @@ export default async function VehicleDetail({ params }: { params: Promise<{ loca
                 ) : null],
               ]} />
             </CardBody>
+          </Card>
+          <Card>
+            <CardHeader title={d.stock.vehicleConsumption} description={used.rows.length ? formatMinor(used.totalMinor, locale) : undefined}
+              action={<Link className="text-sm font-medium text-brand-800 hover:underline" href={`/${locale}/app/stock`}>{d.stock.openStock}</Link>} />
+            {used.rows.length === 0 ? <CardBody><p className="text-sm text-ink-600">{d.stock.vehicleNone}</p></CardBody> : (
+              <Table>
+                <thead><tr><Th>{d.common.date}</Th><Th>{d.stock.item}</Th><Th numeric>{d.stock.quantity}</Th><Th numeric>{d.stock.value}</Th></tr></thead>
+                <tbody>{used.rows.map((m) => (
+                  <tr key={m.id}>
+                    <Td><bdi>{formatDay(m.occurredOn, locale)}</bdi></Td>
+                    <Td><Link className="hover:underline" href={`/${locale}/app/stock/${m.item.id}`}>{m.item.name}</Link>{m.reason ? <div className="text-xs text-ink-600">{m.reason}</div> : null}</Td>
+                    <Td numeric><span className="num">{formatNumber(-Number(m.quantity), locale, 3)}</span> {d.enums.StockUnit[m.item.unit]}</Td>
+                    <Td numeric>{formatMinor(-Number(m.valueMinor), locale)}</Td>
+                  </tr>
+                ))}</tbody>
+              </Table>
+            )}
           </Card>
           <Card>
             <CardHeader title={d.fleet.maintenance} />
