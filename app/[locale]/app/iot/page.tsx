@@ -6,7 +6,7 @@ import { IntegrationForm } from "./integrations";
 import { formatDateTime } from "@/lib/i18n/format";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { EmptyState, PageHeader, Table, Td, Th } from "@/components/ui/misc";
+import { Forbidden, EmptyState, PageHeader, Table, Td, Th } from "@/components/ui/misc";
 import { Meter } from "@/components/charts/charts";
 import { InlineAction } from "@/components/inline-action";
 import { resolveAlertAction, revokeDeviceAction, revokeIntegrationAction } from "@/app/actions/business";
@@ -16,6 +16,7 @@ const SILENT_MS = 24 * 3600_000;
 
 export default async function IotPage({ params }: { params: Promise<{ locale: Locale }> }) {
   const { locale, ctx, d } = await appPage(params);
+  if (!ctx.permissions.has("fleet.read")) return <Forbidden message={d.errors.forbiddenPage} />;
   const [o, forecasts, integrations] = await Promise.all([iotOverview(ctx), fillForecasts(ctx), listIntegrations(ctx)]);
   const canWrite = ctx.permissions.has("fleet.write");
   const now = Date.now();

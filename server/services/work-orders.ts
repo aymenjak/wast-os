@@ -1,3 +1,4 @@
+import { decryptPII } from "../crypto";
 import { z } from "zod";
 import { prisma, type Tx } from "../db";
 import { hasPermission, requirePermission, type OrgContext } from "../context";
@@ -178,7 +179,7 @@ async function syncCivicReport(tx: Tx, ctx: OrgContext, reportId: string, woStat
   await tx.civicReportEvent.create({
     data: { reportId: report.id, fromStatus: report.status, toStatus: target, actorType: "SYSTEM", actorUserId: ctx.userId },
   });
-  if (target === "RESOLVED") await notifyCitizen(tx, report.organizationId, report.reporterContact, report.trackingCode, "RESOLVED", "civic.resolved");
+  if (target === "RESOLVED") await notifyCitizen(tx, report.organizationId, decryptPII(report.reporterContact), report.trackingCode, "RESOLVED", "civic.resolved");
 }
 
 /** Customer (portal) confirms or disputes a completed collection. */

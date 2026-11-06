@@ -72,15 +72,33 @@ Checklist adapted from Trail of Bits' `insecure-defaults` skill (read, not insta
 
 Also run: `npm audit --omit=dev` → 0 vulnerabilities (2026-10-31).
 
+## Database and data protection (2026-11-06)
+
+What protects the data if the database, a backup or the application is compromised. Checked against OWASP guidance (IDOR prevention, password storage, ASVS 5.0 cryptography) — sources in DECISIONS D-83–D-86.
+
+| Layer | Measure | Verified by |
+|---|---|---|
+| Identifiers in URLs | Random 25-character ids (not sequential, not guessable) **and** a server-side organization + permission check on every read and write. OWASP's IDOR cheat sheet treats random ids as defence in depth only and advises *against* encrypting identifiers; the access check is the control. | `tenant-isolation.test.ts`, cross-tenant tests in every module |
+| Passwords | scrypt (N=2^17, r=8, p=1, per-user salt), meets the OWASP minimum | `server/auth/password.ts` |
+| Sessions, reset links, device keys | Stored as SHA-256 hashes only: a database copy holds no usable session or link | `server/auth/tokens.ts` |
+| Secrets (2FA, payment keys) | AES-256-GCM with `APP_ENCRYPTION_KEY` (fails closed without it) | `mfa.test.ts`, `payments-chargily.test.ts` |
+| Citizens' personal data | Name and contact on civic reports encrypted with AES-256-GCM; shown in clear only to reviewers, decrypted only to send the status email. Older rows: `scripts/ops/encrypt-existing-pii.ts` | `review-fixes.test.ts` |
+| Application database account | Separate least-privilege role (`scripts/ops/db-roles.sql`): rows only — no TRUNCATE, ALTER, DROP, CREATE, no access to migration history; the append-only triggers on `AuditEvent` and `StockMovement` cannot be disabled by the app | manual check 2026-11-06 (every forbidden statement refused) |
+| Append-only ledgers | Database triggers refuse UPDATE/DELETE on the audit trail and the stock ledger | `audit-trail.test.ts`, `stock.test.ts` |
+| Backups | Streamed into `age` encryption with the owner's public key; the private key stays off the server; the script refuses to write a plain dump unless `--plaintext` | drill 2026-11-06: encrypted file, no readable data, restore OK |
+| In transit | HTTPS + HSTS for users; `sslmode=require` on the database connection when the database is on another host (DEPLOYMENT.md §2) | header check |
+
+**Next layer (planned, needs a dedicated change): PostgreSQL row-level security.** Policies `organizationId = current_setting('app.org_id', true)` with `FORCE ROW LEVEL SECURITY` on every tenant table, the tenant set per transaction with `set_config(..., true)` (transaction-scoped, safe with connection pools), and a Prisma client extension that wraps each request's queries. It makes the database itself refuse cross-tenant rows even if application code forgets a filter. It touches every query path (about 40 services), so it is done as its own reviewed change with the full test suite, not mixed into other work.
+
 ## Known gaps (must close before production)
 
 Updated after the pre-pilot review (PILOT-READINESS.md, 2026-11-01).
 
 1. ~~Per-process rate limiter~~ · ~~no CSP~~ · ~~no lockout~~ · ~~no password reset~~ · ~~no HSTS~~ (all done). Still missing: session list/revoke UI, WebAuthn/passkeys.
 2. Lockout can be used to lock a known user out for 15 min (accepted trade-off; IP-based limit also applies).
-3. No Postgres row-level security (defence in depth; tenant filtering verified by scan + tests).
+3. No Postgres row-level security yet (defence in depth; tenant filtering verified by scan + tests). Plan in §Database and data protection. Since 2026-11-06 the app runs as a least-privilege database role.
 4. No antivirus scanning of PDFs; PNG/WebP metadata not stripped (JPEG stripped; photos re-encoded on the phone carry no EXIF).
 5. Audit trail is append-only in the database (trigger, verified) but not yet exported to external append-only storage.
 6. No independent penetration test.
 7. Uploaded files on local disk only (single-server pilot); S3-compatible provider still to implement for multi-instance.
-8. Offline driver mode: jobs (customer names, addresses, instructions) and unsent photos are stored unencrypted in the phone browser's IndexedDB until sent; anyone holding an unlocked phone can read them. Mitigations today: one database per account, only yesterday–tomorrow, jobs list replaced on each sync. To do: wipe on sign-out when the outbox is empty, and a device policy (screen lock) for pilot phones.
+8. Offline driver mode: jobs (customer names, addresses, instructions) and unsent photos are stored unencrypted in the phone browser's IndexedDB until sent; anyone holding an unlocked phone can read them. Mitigations today: one database per account, only yesterday–tomorrow, jobs list replaced on each sync. Since 2026-11-06 signing out (app header or offline page) deletes the phone's offline copies that have nothing left to send; a copy with unsent work is kept so nothing is lost. Still to do: a device policy (screen lock) for pilot phones.

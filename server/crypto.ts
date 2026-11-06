@@ -36,3 +36,22 @@ export function decryptSecret(token: string): string {
   d.setAuthTag(Buffer.from(tag, "base64url"));
   return Buffer.concat([d.update(Buffer.from(data, "base64url")), d.final()]).toString("utf8");
 }
+
+/**
+ * Personal data at rest (citizen name and contact on civic reports): AES-256-GCM like the secrets above, so a copy of
+ * the database or a backup does not reveal who reported what. Null stays null. Values written before encryption was
+ * introduced (no "v1." prefix) are returned as they are; scripts/ops/encrypt-existing-pii.ts converts them.
+ */
+export function encryptPII(value: string | null | undefined): string | null {
+  return value == null || value === "" ? null : encryptSecret(value);
+}
+
+export function decryptPII(value: string | null | undefined): string | null {
+  if (value == null) return null;
+  if (!value.startsWith("v1.")) return value;
+  try {
+    return decryptSecret(value);
+  } catch {
+    return null; // wrong key or tampered value: show nothing rather than ciphertext
+  }
+}

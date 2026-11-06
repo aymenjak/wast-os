@@ -6,11 +6,13 @@ import { Logo } from "@/components/ui/misc";
 import { ButtonLink } from "@/components/ui/button";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { PublicMobileNav } from "@/components/public-mobile-nav";
+import { workspaceHref } from "@/server/auth/session";
 
 export default async function PublicLayout({ children, params }: { children: React.ReactNode; params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
   const d = getDictionary(locale);
+  const home = await workspaceHref(locale);
   const links = [
     { href: `/${locale}/business`, label: d.nav.business },
     { href: `/${locale}/civic`, label: d.nav.civic },
@@ -31,10 +33,12 @@ export default async function PublicLayout({ children, params }: { children: Rea
           </nav>
           <div className="ms-auto hidden items-center gap-3 md:flex">
             <LanguageSwitcher />
-            <Link href={`/${locale}/login`} className="text-sm font-medium text-ink-800 hover:text-ink-950">{d.nav.signIn}</Link>
-            <ButtonLink href={`/${locale}/register`} size="sm">{d.nav.startTrial}</ButtonLink>
+            {home ? <ButtonLink href={home} size="sm" prefetch={false}>{d.nav.myWorkspace}</ButtonLink> : <>
+              <Link href={`/${locale}/login`} className="text-sm font-medium text-ink-800 hover:text-ink-950">{d.nav.signIn}</Link>
+              <ButtonLink href={`/${locale}/register`} size="sm">{d.nav.startTrial}</ButtonLink>
+            </>}
           </div>
-          <PublicMobileNav links={[...links, { href: `/${locale}/login`, label: d.nav.signIn }, { href: `/${locale}/register`, label: d.nav.startTrial }]} />
+          <PublicMobileNav links={[...links, ...(home ? [{ href: home, label: d.nav.myWorkspace }] : [{ href: `/${locale}/login`, label: d.nav.signIn }, { href: `/${locale}/register`, label: d.nav.startTrial }])]} />
         </div>
       </header>
       <main id="main" className="flex-1">{children}</main>

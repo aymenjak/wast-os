@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import type { Locale } from "@/lib/i18n/config";
 import { formatNumber } from "@/lib/i18n/format";
-import { appPage } from "@/server/page";
+import { appPage, orNotFound } from "@/server/page";
 import { getMovement } from "@/server/services/hazardous";
 import { PrintButton } from "@/app/[locale]/app/invoices/[id]/forms";
 
@@ -29,7 +29,7 @@ function Line({ ar, fr, value, red = false }: { ar: string; fr: string; value?: 
 export default async function LabelsPage({ params }: { params: Promise<{ locale: Locale; id: string }> }) {
   const { locale, ctx, d } = await appPage(params);
   const { id } = await params;
-  const m = await getMovement(ctx, id);
+  const m = await orNotFound(getMovement(ctx, id));
   if (!m) notFound();
   const h = d.hazardous;
   const destAddress = [m.destination.address, m.destination.wilaya].filter(Boolean).join(", ");

@@ -46,7 +46,7 @@ export default async function StockReportPage({ params, searchParams }: { params
               <thead><tr><Th>{s.vehicle}</Th><Th numeric>{s.consumed}</Th></tr></thead>
               <tbody>{r.byVehicle.map((x) => (
                 <tr key={x.vehicle?.id ?? "none"}>
-                  <Td>{x.vehicle ? <Link className="hover:underline" href={`/${locale}/app/fleet/${x.vehicle.id}`}><bdi className="num">{x.vehicle.plateNumber}</bdi> · {x.vehicle.label}</Link> : <span className="text-ink-600">{s.notForVehicle}</span>}</Td>
+                  <Td>{x.vehicle ? (p.has("fleet.read") ? <Link className="hover:underline" href={`/${locale}/app/fleet/${x.vehicle.id}`}><bdi className="num">{x.vehicle.plateNumber}</bdi> · {x.vehicle.label}</Link> : <span><bdi className="num">{x.vehicle.plateNumber}</bdi> · {x.vehicle.label}</span>) : <span className="text-ink-600">{s.notForVehicle}</span>}</Td>
                   <Td numeric>{money(x.valueMinor)}</Td>
                 </tr>
               ))}</tbody>

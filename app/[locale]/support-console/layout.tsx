@@ -21,11 +21,11 @@ export default async function ConsoleLayout({ children, params }: { children: Re
   return (
     <div className="min-h-dvh">
       <header className="bg-ink-900">
-        <div className="mx-auto flex h-14 max-w-6xl items-center gap-4 px-4 text-white">
+        <div className="mx-auto flex min-h-14 max-w-6xl flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2 text-white">
           <Link href={`/${locale}/support-console`}><Logo inverted /></Link>
           <span className="text-sm text-[#c9d3d1]">{d.support.consoleTitle}</span>
           {s.user.platformRole === "OWNER" || s.user.platformRole === "ADMIN" ? <Link href={`/${locale}/platform`} className="text-sm text-[#c9d3d1] hover:text-white">{d.nav.platform}</Link> : null}
-          <div className="ms-auto [&_a]:text-[#c9d3d1] [&_a[aria-current]]:text-white"><LanguageSwitcher /></div>
+          <div className="ms-auto [&_a]:!text-[#c9d3d1] [&_a:hover]:!text-white [&_a[aria-current]]:!text-white"><LanguageSwitcher /></div>
         </div>
       </header>
       <main id="main" className="mx-auto max-w-6xl px-4 py-8">{children}</main>

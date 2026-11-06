@@ -28,7 +28,7 @@ export function DeviceForm({ containers, vehicles, endpoint }: { containers: { i
           <p className="font-semibold text-warning-700">{t("iot.keyOnce")}</p>
           <code className="num block rounded bg-white px-2 py-1.5 text-xs break-all">{key}</code>
           <p className="text-ink-700">{t("iot.howTo")}</p>
-          <pre dir="ltr" className="overflow-x-auto rounded bg-ink-900 p-3 text-xs text-white">{`curl -X POST ${endpoint} \\
+          <pre dir="ltr" tabIndex={0} className="overflow-x-auto rounded bg-ink-900 p-3 text-xs text-white">{`curl -X POST ${endpoint} \\
   -H "Authorization: Bearer ${key}" \\
   -H "Content-Type: application/json" \\
   -d '${kind === "FILL_SENSOR" ? `{"readings":[{"measuredAt":"${new Date().toISOString()}","fillPct":42,"batteryPct":90}]}` : `{"positions":[{"recordedAt":"${new Date().toISOString()}","lat":35.6971,"lng":-0.6308,"speedKmh":25}]}`}'`}</pre>

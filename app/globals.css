@@ -137,3 +137,17 @@
 /* Illustration motion (nexvo-illustration skill); only applied through motion-safe: utilities. */
 @keyframes nexvo-route { to { stroke-dashoffset: -26; } }
 @keyframes nexvo-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-1.5px); } }
+
+/* Fade-in sections: with reduced motion the browser shows them at once, from the first paint (the JS preference is only
+   read after hydration, to keep server and client HTML identical). */
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal] { opacity: 1 !important; transform: none !important; }
+}
+
+/* Capability strip with reduced motion: static, wrapped, no edge fade (components/home/marquee.tsx). */
+@media (prefers-reduced-motion: reduce) {
+  [data-marquee] { mask-image: none !important; -webkit-mask-image: none !important; padding-inline: 1rem; }
+  [data-marquee-track] { transform: none !important; width: auto !important; justify-content: center; }
+  [data-marquee-track] > ul:first-child { flex-wrap: wrap; justify-content: center; gap: 0.5rem; }
+  [data-marquee-dup] { display: none !important; }
+}

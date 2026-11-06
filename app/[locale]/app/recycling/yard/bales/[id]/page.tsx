@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import QRCode from "qrcode";
 import type { Locale } from "@/lib/i18n/config";
 import { formatDay, formatNumber } from "@/lib/i18n/format";
-import { appPage } from "@/server/page";
+import { appPage, orNotFound } from "@/server/page";
 import { getBale } from "@/server/services/yard";
 import { PrintButton } from "@/app/[locale]/app/invoices/[id]/forms";
 
@@ -11,7 +11,7 @@ import { PrintButton } from "@/app/[locale]/app/invoices/[id]/forms";
 export default async function BaleLabel({ params }: { params: Promise<{ locale: Locale; id: string }> }) {
   const { locale, ctx, d } = await appPage(params);
   const { id } = await params;
-  const b = await getBale(ctx, id);
+  const b = await orNotFound(getBale(ctx, id));
   if (!b) notFound();
   const stream = d.enums.MaterialStream[b.stream];
   const payload = ["NEXVO", b.number, b.stream, b.grade ?? "", `${Number(b.weightKg)}kg`, b.createdAt.toISOString().slice(0, 10)].join("|");

@@ -1,14 +1,15 @@
 "use client";
 import Image from "next/image";
 import { useRef, useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
+import { useReducedMotionSafe } from "./use-reduced-motion";
 
 type Tab = { id: string; label: string; caption: string; src: string; width: number; height: number; phone?: boolean };
 
 /** Tabs over REAL product screenshots (synthetic demo data), in a browser or phone frame. Keyboard: arrows/Home/End. */
 export function ProductTour({ tabs, label, note }: { tabs: Tab[]; label: string; note: string }) {
   const [active, setActive] = useState(0);
-  const reduce = useReducedMotion();
+  const reduce = useReducedMotionSafe();
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
   const t = tabs[active]!;
   const move = (i: number) => { const n = (i + tabs.length) % tabs.length; setActive(n); refs.current[n]?.focus(); };

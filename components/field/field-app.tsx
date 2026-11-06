@@ -9,7 +9,7 @@ import { INTL_LOCALE } from "@/lib/i18n/config";
 import { logoutAction } from "@/app/actions/public";
 import {
   fetchBundle, kvGet, kvSet, newRef, openFieldDb, outboxAdd, outboxAll, outboxDelete, outboxPut, overlay, sendItem,
-  type FieldBundle, type OutboxItem,
+  type FieldBundle, type OutboxItem, wipeSentFieldData,
 } from "@/lib/client/field-store";
 
 type Job = FieldBundle["jobs"][number];
@@ -36,6 +36,7 @@ export function FieldApp({ membershipId }: { membershipId: string }) {
   const [loaded, setLoaded] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
   const busy = useRef(false);
+  const wiped = useRef(false);
 
   const refreshOutbox = useCallback(async (h: IDBDatabase) => setOutbox(await outboxAll(h)), []);
 
@@ -209,7 +210,16 @@ export function FieldApp({ membershipId }: { membershipId: string }) {
 
       <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-ink-200 bg-white px-4 py-3 text-sm">
         <a href={`/${locale}/app/work-orders`} className="text-brand-800 underline">{d.workOrders.myWork}</a>
-        <form action={logoutAction} onSubmit={(e) => { if (pending && !window.confirm(f.signOutPending.replace("{n}", String(pending)))) e.preventDefault(); }}>
+        <form action={logoutAction} onSubmit={async (e) => {
+          if (wiped.current) return;
+          if (pending && !window.confirm(f.signOutPending.replace("{n}", String(pending)))) { e.preventDefault(); return; }
+          e.preventDefault();
+          const form = e.currentTarget;
+          db?.close();
+          await wipeSentFieldData();
+          wiped.current = true;
+          form.requestSubmit();
+        }}>
           <input type="hidden" name="locale" value={locale} />
           <button type="submit" className={buttonClass("ghost", "md", "min-h-11")}>{f.signOut}</button>
         </form>

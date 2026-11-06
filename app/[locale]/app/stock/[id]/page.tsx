@@ -50,7 +50,7 @@ export default async function StockItemPage({ params }: { params: Promise<{ loca
                     <Td numeric><span className={`num ${q < 0 ? "text-danger-700" : "text-success-700"}`} dir="ltr">{q > 0 ? "+" : ""}{n(q)}</span></Td>
                     <Td numeric>{formatMinor(Number(m.valueMinor), locale)}</Td>
                     <Td>
-                      {m.vehicle ? <Link className="num hover:underline" href={`/${locale}/app/fleet/${m.vehicle.id}`}>{m.vehicle.plateNumber}</Link> : null}
+                      {m.vehicle ? (p.has("fleet.read") ? <Link className="num hover:underline" href={`/${locale}/app/fleet/${m.vehicle.id}`}>{m.vehicle.plateNumber}</Link> : <span className="num">{m.vehicle.plateNumber}</span>) : null}
                       {m.purchase ? <Link className="num hover:underline" href={`/${locale}/app/stock/purchases/${m.purchase.id}`}>{m.purchase.number}</Link> : null}
                       {m.reason ? <div className="text-xs text-ink-600">{m.reason}</div> : null}
                     </Td>

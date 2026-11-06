@@ -54,7 +54,7 @@ export default async function TerritoryPage({ params, searchParams }: { params: 
               {REFERENCE_TARGETS.map((x) => (
                 <li key={x.id} className="flex flex-wrap items-baseline justify-between gap-2 px-5 py-3">
                   <span><span className="font-semibold">{formatPercent(x.rate, locale)}</span> · {x.year} · {tr.scope[x.id]} <span className="text-xs text-ink-600">({tr.gradeB})</span></span>
-                  <span className="text-sm text-ink-700">{tr.gapMaterial}: <span className="num font-medium">{r.total.materialRate === null ? "—" : `${((r.total.materialRate - x.rate) * 100).toFixed(1)} pt`}</span> · <a className="text-brand-700 hover:underline print:hidden" href={x.url} target="_blank" rel="noreferrer">{tr.source}</a></span>
+                  <span className="text-sm text-ink-700">{tr.gapMaterial}: <span className="num font-medium">{r.total.materialRate === null ? "—" : `${((r.total.materialRate - x.rate) * 100).toFixed(1)} pt`}</span> · <a className="text-brand-700 underline underline-offset-2 print:hidden" href={x.url} target="_blank" rel="noreferrer">{tr.source}</a></span>
                 </li>
               ))}
             </ul>

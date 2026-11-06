@@ -18,7 +18,7 @@ export default async function CustomersPage({ params, searchParams }: { params: 
   const page = await customersTable(ctx, s);
   return (
     <>
-      <PageHeader title={d.customers.title} actions={ctx.permissions.has("customers.write") ? <ButtonLink href={`/${locale}/app/customers/new`}><Plus aria-hidden className="size-4" />{d.customers.new}</ButtonLink> : null} />
+      <PageHeader title={d.customers.title} actions={ctx.permissions.has("customers.write") && !ctx.support ? <><ButtonLink variant="secondary" href={`/${locale}/app/customers/import`}>{d.customers.importLink}</ButtonLink><ButtonLink href={`/${locale}/app/customers/new`}><Plus aria-hidden className="size-4" />{d.customers.new}</ButtonLink></> : null} />
       <Card>
         <TableToolbar sp={sp} d={d} locale={locale} q={s.q} active={s.filter} exportKind={ctx.support ? undefined : "customers"}
           filters={[{ value: null, label: d.common.all }, { value: "ACTIVE", label: d.enums.CustomerStatus.ACTIVE }, { value: "INACTIVE", label: d.enums.CustomerStatus.INACTIVE }]} />

@@ -98,7 +98,7 @@ export default async function CustomerDetail({ params }: { params: Promise<{ loc
               </ul>
               {c.workOrders.length === 0 ? <EmptyState title={d.workOrders.empty} /> : null}
             </Card>
-            <Card>
+            {ctx.permissions.has("invoices.read") ? <Card>
               <CardHeader title={d.customers.recentInvoices} />
               <ul className="divide-y divide-ink-100 text-sm">
                 {c.invoices.map((i) => (
@@ -110,7 +110,7 @@ export default async function CustomerDetail({ params }: { params: Promise<{ loc
                 ))}
               </ul>
               {c.invoices.length === 0 ? <EmptyState title={d.invoices.empty} /> : null}
-            </Card>
+            </Card> : null}
           </div>
         </div>
 

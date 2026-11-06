@@ -1,5 +1,6 @@
 "use client";
-import { motion, useInView, useReducedMotion } from "motion/react";
+import { motion, useInView } from "motion/react";
+import { useReducedMotionSafe } from "./use-reduced-motion";
 import { useRef } from "react";
 
 /**
@@ -9,7 +10,7 @@ import { useRef } from "react";
 export function SensorBin({ t }: { t: { fill: string; threshold: string; forecast: string; q: string; a: string; example: string } }) {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-60px" });
-  const reduce = useReducedMotion();
+  const reduce = useReducedMotionSafe();
   const level = inView || reduce ? 0.82 : 0.12;
   const H = 150; // inner height of the bin body
   return (
@@ -39,7 +40,7 @@ export function SensorBin({ t }: { t: { fill: string; threshold: string; forecas
           <div className="rounded-md bg-white p-3"><dt className="text-ink-600">{t.threshold}</dt><dd className="display text-2xl font-bold text-danger-700">80 %</dd></div>
         </dl>
         <p className="text-sm text-ink-700">{t.forecast}</p>
-        <motion.div initial={reduce ? false : { opacity: 0, y: 10 }} animate={inView || reduce ? { opacity: 1, y: 0 } : {}} transition={{ delay: reduce ? 0 : 2.3, duration: 0.5 }} className="space-y-2 text-sm">
+        <motion.div data-reveal initial={reduce ? false : { opacity: 0, y: 10 }} animate={inView || reduce ? { opacity: 1, y: 0 } : {}} transition={{ delay: reduce ? 0 : 2.3, duration: 0.5 }} className="space-y-2 text-sm">
           <p className="ms-auto w-fit max-w-[90%] rounded-2xl rounded-ee-sm bg-ink-900 px-3 py-2 text-white">{t.q}</p>
           <p className="w-fit max-w-[95%] rounded-2xl rounded-es-sm border border-ink-200 bg-white px-3 py-2 text-ink-900">{t.a}</p>
           <p className="text-xs text-ink-600">{t.example}</p>

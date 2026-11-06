@@ -1,10 +1,11 @@
 "use client";
-import { motion, useMotionTemplate, useMotionValue, useReducedMotion, useSpring } from "motion/react";
+import { motion, useMotionTemplate, useMotionValue, useSpring } from "motion/react";
+import { useReducedMotionSafe } from "./use-reduced-motion";
 import type { ReactNode } from "react";
 
 /** Card with a soft hi-vis spotlight that follows the pointer and a slight tilt (pointer devices only). */
 export function SpotlightCard({ children, className = "" }: { children: ReactNode; className?: string }) {
-  const reduce = useReducedMotion();
+  const reduce = useReducedMotionSafe();
   const x = useMotionValue(-200), y = useMotionValue(-200);
   const rx = useSpring(0, { stiffness: 200, damping: 20 }), ry = useSpring(0, { stiffness: 200, damping: 20 });
   const bg = useMotionTemplate`radial-gradient(320px circle at ${x}px ${y}px, rgba(232,89,12,0.12), transparent 70%)`;
