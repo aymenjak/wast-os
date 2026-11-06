@@ -4,6 +4,8 @@ import { prisma, type Tx } from "../db";
 import { hasPermission, requirePermission, type OrgContext } from "../context";
 import { DomainError, ForbiddenError, InvalidTransitionError, NotFoundError } from "../domain/errors";
 import { applyPayment, computeLine, computeTotals, reversePayment } from "../domain/invoice-math";
+import { percentOf, tonnagePrice } from "../domain/pricing";
+import { readTiers } from "./contracts";
 import { audit } from "../audit";
 import { nextSequence } from "../counters";
 import { dateOnly, isoDate, money, optionalText, parse, quantity, requiredText } from "../validation";
@@ -81,18 +83,29 @@ export function workOrderLine(ctx: OrgContext, wo: PricedWorkOrder) {
     wo.contract?.lines.find((l) => l.serviceLocationId === wo.serviceLocationId && l.wasteCategoryId === wo.wasteCategoryId);
   if (!cl) throw new DomainError("errors.invoice.noContractPrice", { number: wo.number });
   let qty = "1";
+  let unitPriceMinor = toMinor(cl.unitPrice);
+  let detail = "";
   if (cl.billingUnit === "PER_TONNE") {
     const netKgMinor = wo.weightTickets.reduce((s, t) => s + toMinor(t.netKg), 0);
     if (netKgMinor <= 0) throw new DomainError("errors.invoice.weightRequired", { number: wo.number });
-    qty = (netKgMinor / 100 / 1000).toFixed(3); // kg (2dp) → tonnes (3dp)
+    const tiers = readTiers(cl.tiers);
+    const minimumMinor = cl.minimumCharge != null ? toMinor(cl.minimumCharge) : null;
+    if (tiers.length || minimumMinor != null) {
+      // Tiered or minimum price: one line for the job (quantity 1), the breakdown in the description (D-90).
+      const p = tonnagePrice(netKgMinor, unitPriceMinor, tiers.map((t) => ({ aboveKg: t.aboveKg, unitPriceMinor: toMinor(t.unitPrice) })), minimumMinor);
+      const t = (kgMinor: number) => (kgMinor / 100_000).toFixed(3);
+      detail = ` · ${t(netKgMinor)} t : ${p.parts.map((x) => `${t(x.kgMinor)} t × ${fromMinor(x.unitPriceMinor)}`).join(" + ")}${p.minimumApplied ? ` → minimum ${fromMinor(minimumMinor!)}` : ""}`;
+      unitPriceMinor = p.totalMinor;
+    } else {
+      qty = (netKgMinor / 100 / 1000).toFixed(3); // kg (2dp) → tonnes (3dp)
+    }
   } else if (cl.billingUnit === "PER_MONTH") {
     throw new DomainError("errors.invoice.monthlyNotPerWorkOrder", { number: wo.number });
   }
-  const unitPriceMinor = toMinor(cl.unitPrice);
   const amounts = computeLine({ quantity: qty, unitPriceMinor, taxRateBps: ctx.org.defaultTaxRateBps });
   return {
     organizationId: ctx.org.id,
-    description: `${wo.number} · ${wo.wasteCategory?.nameFr ?? ""} · ${wo.serviceLocation?.label ?? ""} · ${wo.scheduledDate.toISOString().slice(0, 10)}`,
+    description: `${wo.number} · ${wo.wasteCategory?.nameFr ?? ""} · ${wo.serviceLocation?.label ?? ""} · ${wo.scheduledDate.toISOString().slice(0, 10)}${detail}`.slice(0, 300),
     quantity: qty,
     unitPrice: fromMinor(unitPriceMinor),
     taxRateBps: ctx.org.defaultTaxRateBps,
@@ -100,6 +113,49 @@ export function workOrderLine(ctx: OrgContext, wo: PricedWorkOrder) {
     lineTax: fromMinor(amounts.tax),
     lineTotal: fromMinor(amounts.total),
     workOrderId: wo.id,
+  };
+}
+
+type Surcharge = { contractId: string; label: string; kind: "PERCENT" | "PER_COLLECTION"; value: Prisma.Decimal | string; contract: { reference: string } };
+export type ContractGroup = { subtotalMinor: number; collections: number };
+
+/** Active surcharges of these contracts (one query), for surchargeLines(). */
+export async function activeSurcharges(db: Tx | typeof prisma, organizationId: string, contractIds: string[]): Promise<Surcharge[]> {
+  if (!contractIds.length) return [];
+  return db.contractSurcharge.findMany({ where: { organizationId, contractId: { in: contractIds }, active: true }, include: { contract: { select: { reference: true } } }, orderBy: { createdAt: "asc" } });
+}
+
+/**
+ * Surcharge lines for an invoice (D-90): a PERCENT surcharge on the subtotal of that contract's lines on the invoice,
+ * a PER_COLLECTION one per collection billed under it. Each is its own visible line, never folded into a price.
+ */
+export function surchargeLines(ctx: OrgContext, surcharges: Surcharge[], groups: Map<string, ContractGroup>) {
+  const out: ReturnType<typeof manualLineData>[] = [];
+  for (const sc of surcharges) {
+    const g = groups.get(sc.contractId);
+    if (!g) continue;
+    if (sc.kind === "PERCENT") {
+      const amount = percentOf(g.subtotalMinor, Math.round(Number(sc.value) * 100));
+      if (amount > 0) out.push(manualLineData(ctx, `${sc.label} ${Number(sc.value)} % · ${sc.contract.reference}`, "1", amount));
+    } else if (g.collections > 0) {
+      out.push(manualLineData(ctx, `${sc.label} · ${sc.contract.reference}`, String(g.collections), toMinor(sc.value)));
+    }
+  }
+  return out;
+}
+
+function manualLineData(ctx: OrgContext, description: string, qty: string, unitPriceMinor: number) {
+  const amounts = computeLine({ quantity: qty, unitPriceMinor, taxRateBps: ctx.org.defaultTaxRateBps });
+  return {
+    organizationId: ctx.org.id,
+    description: description.slice(0, 300),
+    quantity: qty,
+    unitPrice: fromMinor(unitPriceMinor),
+    taxRateBps: ctx.org.defaultTaxRateBps,
+    lineSubtotal: fromMinor(amounts.subtotal),
+    lineTax: fromMinor(amounts.tax),
+    lineTotal: fromMinor(amounts.total),
+    workOrderId: null,
   };
 }
 
@@ -130,12 +186,22 @@ export async function createDraftInvoice(ctx: OrgContext, input: unknown) {
     });
     if (orders.length !== data.workOrderIds.length) throw new NotFoundError("WorkOrder");
 
-    const lines = orders.map((wo, i) => {
+    const lines: (Omit<ReturnType<typeof workOrderLine>, "workOrderId"> & { workOrderId: string | null; position: number })[] = orders.map((wo, i) => {
       if (wo.customerId !== customer.id) throw new DomainError("errors.invoice.customerMismatch");
       if (wo.status !== "COMPLETED") throw new DomainError("errors.invoice.workOrderNotCompleted", { number: wo.number });
       if (wo.invoiceLine) throw new DomainError("errors.invoice.alreadyInvoiced", { number: wo.number });
       return { ...workOrderLine(ctx, wo), position: i };
     });
+    const groups = new Map<string, ContractGroup>();
+    orders.forEach((o, i) => {
+      if (!o.contractId) return;
+      const g = groups.get(o.contractId) ?? { subtotalMinor: 0, collections: 0 };
+      g.subtotalMinor += toMinor(lines[i]!.lineSubtotal);
+      g.collections++;
+      groups.set(o.contractId, g);
+    });
+    const extra = surchargeLines(ctx, await activeSurcharges(tx, ctx.org.id, [...groups.keys()]), groups);
+    lines.push(...extra.map((l, k) => ({ ...l, position: lines.length + k })));
     const contractIds = [...new Set(orders.map((o) => o.contractId).filter(Boolean))];
     const invoice = await tx.invoice.create({
       data: {

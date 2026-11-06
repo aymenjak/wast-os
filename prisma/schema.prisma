@@ -179,6 +179,7 @@ model Organization {
   materialSuppliers          MaterialSupplier[]
   stockItems                 StockItem[]
   vehicleDocuments           VehicleDocument[]
+  contractSurcharges         ContractSurcharge[]
   stockSuppliers             StockSupplier[]
   stockPurchases             StockPurchase[]
   stockMovements             StockMovement[]
@@ -1128,6 +1129,7 @@ model Contract {
   organization Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   customer     Customer              @relation(fields: [organizationId, customerId], references: [organizationId, id])
   lines        ContractServiceLine[]
+  surcharges   ContractSurcharge[]
   requests     CollectionRequest[]
   workOrders   WorkOrder[]
   invoices     Invoice[]
@@ -1150,6 +1152,9 @@ model ContractServiceLine {
   billingUnit       BillingUnit @default(PER_COLLECTION)
   unitPrice         Decimal     @db.Decimal(14, 2)
   estimatedQuantity Decimal?    @db.Decimal(12, 3)
+  /// PER_TONNE only (D-90): minimum billed per collection, and graduated tiers [{ aboveKg, unitPrice }] above the base price.
+  minimumCharge     Decimal?    @db.Decimal(14, 2)
+  tiers             Json?
 
   organization    Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   contract        Contract        @relation(fields: [organizationId, contractId], references: [organizationId, id], onDelete: Cascade)
@@ -1157,6 +1162,35 @@ model ContractServiceLine {
   wasteCategory   WasteCategory   @relation(fields: [organizationId, wasteCategoryId], references: [organizationId, id])
   workOrders      WorkOrder[]
   invoiceLines    InvoiceLine[]
+
+  @@unique([organizationId, id])
+  @@index([organizationId, contractId])
+}
+
+enum SurchargeKind {
+  /// Percentage of the contract's lines on the invoice (e.g. fuel surcharge 5 %).
+  PERCENT
+  /// Fixed amount per collection billed (e.g. access fee, Saturday service).
+  PER_COLLECTION
+}
+
+/**
+ * Surcharges added as separate invoice lines when work under this contract is invoiced (D-90).
+ */
+model ContractSurcharge {
+  id             String        @id @default(cuid())
+  organizationId String
+  contractId     String
+  label          String
+  kind           SurchargeKind
+  /// PERCENT: percentage (5.00 = 5 %); PER_COLLECTION: amount in DZD excl. VAT.
+  value          Decimal       @db.Decimal(14, 2)
+  active         Boolean       @default(true)
+  createdById    String
+  createdAt      DateTime      @default(now()) @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  contract     Contract     @relation(fields: [organizationId, contractId], references: [organizationId, id], onDelete: Cascade)
 
   @@unique([organizationId, id])
   @@index([organizationId, contractId])

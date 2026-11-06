@@ -6,7 +6,7 @@ import { computeLine, computeTotals } from "../domain/invoice-math";
 import { audit } from "../audit";
 import { parse } from "../validation";
 import { fromMinor, toMinor } from "@/lib/money";
-import { PRICING_INCLUDE, recalcInvoice, workOrderLine } from "./invoices";
+import { activeSurcharges, PRICING_INCLUDE, recalcInvoice, surchargeLines, workOrderLine, type ContractGroup } from "./invoices";
 
 /**
  * Month-end billing run (D-89): one DRAFT invoice per customer with
@@ -25,7 +25,7 @@ function bounds(month: string) {
   return { from, to };
 }
 
-type LineData = ReturnType<typeof workOrderLine> | (Omit<ReturnType<typeof workOrderLine>, "workOrderId"> & { workOrderId: null; contractLineId: string; periodMonth: string });
+type LineData = ReturnType<typeof workOrderLine> | (Omit<ReturnType<typeof workOrderLine>, "workOrderId"> & { workOrderId: null; contractLineId?: string; periodMonth?: string });
 
 export type MonthlyCustomer = {
   customerId: string;
@@ -34,6 +34,9 @@ export type MonthlyCustomer = {
   flatFees: number;
   lines: LineData[];
   problems: { number: string; error: string }[];
+  /** Per contract, what its surcharges apply to. */
+  groups: Map<string, ContractGroup>;
+  surcharges: number;
   subtotalMinor: number;
   totalMinor: number;
 };
@@ -56,15 +59,22 @@ export async function monthlyBillingPreview(ctx: OrgContext, monthInput: unknown
         invoiceLines: { none: { periodMonth: month } },
         contract: { status: { in: ["ACTIVE", "EXPIRED", "TERMINATED"] }, startDate: { lte: to }, OR: [{ endDate: null }, { endDate: { gte: from } }] },
       },
-      include: { contract: { select: { reference: true, customerId: true, customer: { select: { name: true } } } }, serviceLocation: { select: { label: true } }, wasteCategory: { select: { nameFr: true } } },
+      include: { contract: { select: { id: true, reference: true, customerId: true, customer: { select: { name: true } } } }, serviceLocation: { select: { label: true } }, wasteCategory: { select: { nameFr: true } } },
       orderBy: { id: "asc" },
     }),
   ]);
 
   const byCustomer = new Map<string, MonthlyCustomer>();
+  const count = (c: MonthlyCustomer, contractId: string | null, subtotal: string, collection: boolean) => {
+    if (!contractId) return;
+    const g = c.groups.get(contractId) ?? { subtotalMinor: 0, collections: 0 };
+    g.subtotalMinor += toMinor(subtotal);
+    if (collection) g.collections++;
+    c.groups.set(contractId, g);
+  };
   const entry = (id: string, name: string) => {
     let c = byCustomer.get(id);
-    if (!c) byCustomer.set(id, (c = { customerId: id, name, collections: 0, flatFees: 0, lines: [], problems: [], subtotalMinor: 0, totalMinor: 0 }));
+    if (!c) byCustomer.set(id, (c = { customerId: id, name, collections: 0, flatFees: 0, lines: [], problems: [], groups: new Map(), surcharges: 0, subtotalMinor: 0, totalMinor: 0 }));
     return c;
   };
   for (const fee of fees) {
@@ -85,6 +95,7 @@ export async function monthlyBillingPreview(ctx: OrgContext, monthInput: unknown
       periodMonth: month,
     });
     c.flatFees++;
+    count(c, fee.contractId, c.lines[c.lines.length - 1]!.lineSubtotal, false);
   }
   for (const wo of orders) {
     let line: ReturnType<typeof workOrderLine>;
@@ -100,6 +111,14 @@ export async function monthlyBillingPreview(ctx: OrgContext, monthInput: unknown
     const c = entry(wo.customerId!, wo.customer?.name ?? "—");
     c.lines.push(line);
     c.collections++;
+    count(c, wo.contractId, line.lineSubtotal, true);
+  }
+  const allContracts = [...new Set([...byCustomer.values()].flatMap((c) => [...c.groups.keys()]))];
+  const surcharges = await activeSurcharges(prisma, ctx.org.id, allContracts);
+  for (const c of byCustomer.values()) {
+    const extra = surchargeLines(ctx, surcharges, c.groups);
+    c.lines.push(...extra);
+    c.surcharges = extra.length;
   }
   const customers = [...byCustomer.values()]
     .map((c) => {

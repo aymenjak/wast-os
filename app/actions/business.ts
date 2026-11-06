@@ -66,6 +66,19 @@ export async function createContractAction(_: ActionState, fd: FormData) {
 export async function setContractStatusAction(_: ActionState, fd: FormData) {
   return orgAction(fd, (ctx, input) => contracts.setContractStatus(ctx, s(input.contractId), s(input.to) as ContractStatus), { revalidate: [`/app/contracts/${s(fd.get("contractId"))}`] });
 }
+export async function setLinePricingAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, (ctx, input) => {
+    // Form keys are flat ("tiers.0.aboveTonnes"): rebuild the rows.
+    const tiers = [0, 1, 2, 3, 4].map((i) => ({ aboveTonnes: input[`tiers.${i}.aboveTonnes`], unitPrice: input[`tiers.${i}.unitPrice`] })).filter((t) => t.aboveTonnes !== undefined || t.unitPrice !== undefined);
+    return contracts.setLinePricing(ctx, s(input.lineId), { minimumCharge: input.minimumCharge, tiers });
+  }, { revalidate: [`/app/contracts/${s(fd.get("contractId"))}`] });
+}
+export async function addSurchargeAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, async (ctx, input) => void (await contracts.addSurcharge(ctx, s(input.contractId), input)), { revalidate: [`/app/contracts/${s(fd.get("contractId"))}`] });
+}
+export async function removeSurchargeAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, (ctx, input) => contracts.removeSurcharge(ctx, s(input.surchargeId)), { revalidate: [`/app/contracts/${s(fd.get("contractId"))}`] });
+}
 
 // ── Requests ──
 export async function createRequestAction(_: ActionState, fd: FormData) {
