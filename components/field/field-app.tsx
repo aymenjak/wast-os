@@ -1,4 +1,5 @@
 "use client";
+import { SignaturePad } from "@/components/signature-pad";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useI18n } from "@/components/i18n-provider";
 import { StatusBadge } from "@/components/ui/badge";
@@ -242,7 +243,10 @@ function JobView({ job, items, destinations, onBack, enqueue, discard, online, d
   const { dict: d, locale, t } = useI18n();
   const f = d.fieldApp;
   const intl = INTL_LOCALE[locale];
-  const [mode, setMode] = useState<"idle" | "fail">("idle");
+  const [mode, setMode] = useState<"idle" | "fail" | "sign">("idle");
+  const [ink, setInk] = useState<string | null>(null);
+  const [signer, setSigner] = useState("");
+  const canSign = job.kind === "COLLECTION" && !job.signed && (job.status === "IN_PROGRESS" || job.status === "COMPLETED");
   const [photoBusy, setPhotoBusy] = useState(false);
   const [weightError, setWeightError] = useState<string | null>(null);
   const category = job.category ? job.category[locale] : null;
@@ -277,6 +281,19 @@ function JobView({ job, items, destinations, onBack, enqueue, discard, online, d
     if (ticket) data.ticketNumber = ticket;
     e.currentTarget.reset();
     await enqueue({ kind: "weight", workOrderId: job.id, data });
+  }
+
+  async function onSign(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const name = signer.trim();
+    if (!ink || name.length < 2) return;
+    // data: URL → Blob decoded here, without fetch (offline emulation and some browsers refuse fetch() while offline).
+    const bin = atob(ink.slice(ink.indexOf(",") + 1));
+    const blob = new Blob([Uint8Array.from(bin, (c) => c.charCodeAt(0))], { type: "image/png" });
+    await enqueue({ kind: "signature", workOrderId: job.id, data: { signerName: name }, photo: { blob, name: "signature.png", kind: "SIGNATURE" } });
+    setInk(null);
+    setSigner("");
+    setMode("idle");
   }
 
   async function onFail(e: React.FormEvent<HTMLFormElement>) {
@@ -354,6 +371,29 @@ function JobView({ job, items, destinations, onBack, enqueue, discard, online, d
           <button type="button" disabled={job.evidenceCount < 1} className={buttonClass("primary", "lg", big)} onClick={() => void enqueue({ kind: "complete", workOrderId: job.id, data: {} })}>{f.finish}</button>
           <button type="button" className={buttonClass("ghost", "lg", big)} onClick={() => setMode("fail")}>{f.cannotDo}</button>
         </div>
+      ) : null}
+
+      {canSign && mode === "idle" ? (
+        <button type="button" className={buttonClass("secondary", "lg", big)} onClick={() => setMode("sign")} data-testid="sign-open">{f.signature}</button>
+      ) : null}
+      {job.signed ? <p className="text-center text-sm font-medium text-brand-800" data-testid="signed">{f.signed}</p> : null}
+
+      {mode === "sign" ? (
+        <form onSubmit={onSign} className="space-y-3 rounded-[var(--radius-card)] border border-ink-200 bg-white p-4" noValidate>
+          <h3 className="font-semibold text-ink-900">{f.signature}</h3>
+          <label className="block text-sm font-medium text-ink-800">{f.signerName}
+            <Input name="signerName" value={signer} onChange={(e) => setSigner(e.target.value)} maxLength={120} autoComplete="off" className="mt-1 h-12 text-lg" />
+          </label>
+          <div>
+            <p className="mb-1 text-sm font-medium text-ink-800">{f.signHere}</p>
+            <SignaturePad label={f.signHere} clearLabel={f.clear} onInk={setInk} />
+          </div>
+          {!ink || signer.trim().length < 2 ? <p className="text-sm text-ink-600">{f.signatureEmpty}</p> : null}
+          <div className="grid grid-cols-2 gap-2">
+            <button type="button" className={buttonClass("secondary", "lg", "min-h-14")} onClick={() => setMode("idle")}>{f.cancel}</button>
+            <button type="submit" disabled={!ink || signer.trim().length < 2} className={buttonClass("primary", "lg", "min-h-14")}>{f.saveSignature}</button>
+          </div>
+        </form>
       ) : null}
 
       {mode === "fail" ? (

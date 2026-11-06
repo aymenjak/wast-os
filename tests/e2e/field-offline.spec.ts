@@ -54,8 +54,18 @@ test.describe.serial("Offline driver mode", () => {
     await page.locator('input[name="grossKg"]').fill("1250");
     await page.locator('input[name="tareKg"]').fill("250");
     await page.getByRole("button", { name: "Save the weight" }).click();
+    // Customer signature on the collection slip, drawn with the network still cut.
+    await page.getByTestId("sign-open").click();
+    await page.locator('input[name="signerName"]').fill("Gardien du marché (synthetic)");
+    const pad = (await page.getByTestId("signature-pad").boundingBox())!;
+    await page.mouse.move(pad.x + 20, pad.y + pad.height / 2);
+    await page.mouse.down();
+    for (let i = 1; i <= 10; i++) await page.mouse.move(pad.x + 20 + i * 20, pad.y + pad.height / 2 + (i % 2 ? 15 : -15));
+    await page.mouse.up();
+    await page.getByRole("button", { name: "Save the signature" }).click();
+    await expect(page.getByTestId("signed")).toBeVisible();
     await page.getByRole("button", { name: "Finish the job" }).click();
-    await expect(page.getByTestId("pending")).toHaveText("4 waiting to send");
+    await expect(page.getByTestId("pending")).toHaveText("5 waiting to send");
     await expect(page.getByText("Completed").first()).toBeVisible();
     // Nothing reached the server yet.
     expect((await sql<{ status: string }>(`SELECT status FROM "WorkOrder" WHERE id = $1`, [woId]))[0]!.status).toBe("ASSIGNED");
@@ -63,12 +73,12 @@ test.describe.serial("Offline driver mode", () => {
     await context.setOffline(false);
     await page.getByRole("button", { name: "Send now" }).click();
     await expect(page.getByTestId("pending")).toHaveText("Everything is sent", { timeout: 20_000 });
-    const [wo] = await sql<{ status: string; actualStart: Date | null; tickets: number; photos: number }>(
-      `SELECT status, "actualStart",
+    const [wo] = await sql<{ status: string; actualStart: Date | null; signerName: string | null; tickets: number; photos: number }>(
+      `SELECT status, "actualStart", "signerName",
          (SELECT count(*)::int FROM "WeightTicket" t WHERE t."workOrderId" = w.id) AS tickets,
          (SELECT count(*)::int FROM "EvidenceFile" e WHERE e."workOrderId" = w.id) AS photos
        FROM "WorkOrder" w WHERE id = $1`, [woId]);
-    expect(wo).toMatchObject({ status: "COMPLETED", tickets: 1, photos: 1 });
+    expect(wo).toMatchObject({ status: "COMPLETED", signerName: "Gardien du marché (synthetic)", tickets: 1, photos: 2 });
     expect(wo!.actualStart).not.toBeNull();
 
     // Sending again changes nothing.
@@ -76,7 +86,7 @@ test.describe.serial("Offline driver mode", () => {
     await expect(page.getByTestId("pending")).toHaveText("Everything is sent");
     const [again] = await sql<{ tickets: number; photos: number }>(
       `SELECT (SELECT count(*)::int FROM "WeightTicket" WHERE "workOrderId" = $1) AS tickets, (SELECT count(*)::int FROM "EvidenceFile" WHERE "workOrderId" = $1) AS photos`, [woId]);
-    expect(again).toEqual({ tickets: 1, photos: 1 });
+    expect(again).toEqual({ tickets: 1, photos: 2 });
   });
 
   test("the API refuses calls without the app header, from another site, or without a session", async ({ page, request }) => {

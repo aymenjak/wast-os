@@ -6,7 +6,7 @@
  */
 import type { FieldBundle } from "@/server/services/field";
 
-export type OutboxKind = "start" | "complete" | "fail" | "weight" | "photo";
+export type OutboxKind = "start" | "complete" | "fail" | "weight" | "photo" | "signature";
 export type OutboxItem = {
   seq?: number;
   id: string; // clientRef, made on the phone
@@ -14,7 +14,7 @@ export type OutboxItem = {
   workOrderId: string;
   occurredAt: string;
   data?: Record<string, unknown>;
-  photo?: { blob: Blob; name: string; kind: "BEFORE" | "AFTER" };
+  photo?: { blob: Blob; name: string; kind: "BEFORE" | "AFTER" | "SIGNATURE" };
   error?: string; // set when the server refused it (permanent)
 };
 
@@ -87,6 +87,7 @@ export function overlay(jobs: Job[], outbox: OutboxItem[]): Job[] {
     if (o.kind === "fail" && (j.status === "IN_PROGRESS" || j.status === "ASSIGNED")) j.status = "FAILED";
     if (o.kind === "photo") j.evidenceCount += 1;
     if (o.kind === "weight") j.ticketCount += 1;
+    if (o.kind === "signature") { j.signed = true; j.evidenceCount += 1; }
   }
   return [...byId.values()];
 }
@@ -101,11 +102,15 @@ export async function sendItem(item: OutboxItem): Promise<{ result: SendResult; 
   const headers: Record<string, string> = { "x-nexvo-field": "1" };
   let res: Response;
   try {
-    if (item.kind === "photo") {
+    if (item.kind === "photo" || item.kind === "signature") {
       const fd = new FormData();
       fd.set("workOrderId", item.workOrderId);
-      fd.set("kind", item.photo?.kind ?? "AFTER");
+      fd.set("kind", item.kind === "signature" ? "SIGNATURE" : (item.photo?.kind ?? "AFTER"));
       fd.set("clientRef", item.id);
+      if (item.kind === "signature") {
+        fd.set("signerName", String(item.data?.signerName ?? ""));
+        fd.set("signedAt", item.occurredAt);
+      }
       fd.set("file", item.photo!.blob, item.photo!.name);
       res = await fetch("/api/field/v1/evidence", { method: "POST", headers, body: fd, credentials: "same-origin" });
     } else {

@@ -4,7 +4,8 @@ import { useState } from "react";
 import { Camera } from "lucide-react";
 import { ActionForm, Field, Input, Select, SubmitButton, Textarea, Checkbox } from "@/components/ui/form";
 import { useI18n } from "@/components/i18n-provider";
-import { addWeightAction, uploadEvidenceAction, workOrderTransitionAction , recordRejectsAction } from "@/app/actions/business";
+import { addWeightAction, uploadEvidenceAction, workOrderTransitionAction, recordRejectsAction, signWorkOrderAction } from "@/app/actions/business";
+import { SignaturePad } from "@/components/signature-pad";
 
 const FAILURE_REASONS = ["NO_ACCESS", "CUSTOMER_ABSENT", "WASTE_NOT_READY", "WRONG_WASTE_TYPE", "VEHICLE_BREAKDOWN", "UNSAFE_CONDITIONS", "OTHER"] as const;
 
@@ -78,6 +79,23 @@ export function EvidenceUpload({ workOrderId }: { workOrderId: string }) {
         {(p) => <input {...p} type="file" accept="image/jpeg,image/png,image/webp,application/pdf" capture="environment" required onChange={async (e) => { setCompressing(true); try { await compressInputFile(e.currentTarget); } finally { setCompressing(false); } }} className="block w-full text-sm file:me-3 file:rounded-md file:border-0 file:bg-white file:px-3 file:py-2 file:text-sm file:font-medium file:ring-1 file:ring-ink-200" />}
       </Field>
       <SubmitButton variant="subtle" busy={compressing}><Camera aria-hidden className="size-4" />{t("workOrders.upload")}</SubmitButton>
+    </ActionForm>
+  );
+}
+
+/** Collection slip: the customer's representative signs on the screen; the PNG goes in a hidden field. */
+export function SignatureForm({ workOrderId }: { workOrderId: string }) {
+  const { t } = useI18n();
+  const [ink, setInk] = useState<string | null>(null);
+  return (
+    <ActionForm action={signWorkOrderAction} hidden={{ workOrderId, signature: ink ?? "" }} className="space-y-3">
+      <Field label={t("workOrders.signerName")} name="signerName">{(p) => <Input {...p} required minLength={2} maxLength={120} autoComplete="off" />}</Field>
+      <div>
+        <p className="mb-1 text-sm font-medium text-ink-800">{t("workOrders.signHere")}</p>
+        <SignaturePad label={t("workOrders.signatureBox")} clearLabel={t("workOrders.clearSignature")} onInk={setInk} />
+      </div>
+      {ink ? null : <p className="text-sm text-ink-600">{t("workOrders.signatureEmpty")}</p>}
+      <SubmitButton disabled={!ink}>{t("workOrders.saveSignature")}</SubmitButton>
     </ActionForm>
   );
 }

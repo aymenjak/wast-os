@@ -1379,6 +1379,9 @@ model WorkOrder {
   failureReason       FailureReason?
   failureNotes        String?
   customerConfirmedAt DateTime?       @db.Timestamptz(3)
+  /// Collection slip (bon d'enlèvement): who signed for the customer on site, and when (signature image = EvidenceFile SIGNATURE).
+  signerName          String?
+  signedAt            DateTime?       @db.Timestamptz(3)
   disputeReason       String?
   createdById         String
   createdAt           DateTime        @default(now()) @db.Timestamptz(3)
@@ -1441,6 +1444,8 @@ enum EvidenceKind {
   AFTER
   DOCUMENT
   REPORT_PHOTO
+  /// Customer's handwritten signature on the collection slip (bon d'enlèvement), PNG drawn on the phone.
+  SIGNATURE
 }
 
 model EvidenceFile {

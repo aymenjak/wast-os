@@ -111,6 +111,17 @@ export async function uploadEvidenceAction(_: ActionState, fd: FormData) {
     { revalidate: [`/app/work-orders/${s(fd.get("workOrderId"))}`] },
   );
 }
+export async function signWorkOrderAction(_: ActionState, fd: FormData) {
+  return orgAction(
+    fd,
+    async (ctx, input) => {
+      const png = wo.decodeSignatureDataUrl(s(input.signature));
+      if (!png) throw new DomainError("errors.validation", { fields: { signature: "required" } });
+      await wo.recordSignature(ctx, s(input.workOrderId), { signerName: input.signerName }, { name: "signature.png", bytes: png });
+    },
+    { revalidate: [`/app/work-orders/${s(fd.get("workOrderId"))}`] },
+  );
+}
 export async function addWeightAction(_: ActionState, fd: FormData) {
   return orgAction(fd, async (ctx, input) => void (await wo.addWeightTicket(ctx, s(input.workOrderId), input)), { revalidate: [`/app/work-orders/${s(fd.get("workOrderId"))}`] });
 }

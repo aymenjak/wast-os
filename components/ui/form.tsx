@@ -141,7 +141,7 @@ export function Checkbox({ label, ...p }: ComponentProps<"input"> & { label: Rea
   );
 }
 
-export function SubmitButton({ children, variant = "primary", className, size = "md", name, value, busy = false }: { children: ReactNode; variant?: "primary" | "secondary" | "danger" | "subtle"; className?: string; size?: "sm" | "md" | "lg"; name?: string; value?: string; busy?: boolean }) {
+export function SubmitButton({ children, variant = "primary", className, size = "md", name, value, busy = false, disabled = false }: { children: ReactNode; variant?: "primary" | "secondary" | "danger" | "subtle"; className?: string; size?: "sm" | "md" | "lg"; name?: string; value?: string; busy?: boolean; disabled?: boolean }) {
   const formStatus = useFormStatus();
   const pending = formStatus.pending || busy;
   const { t } = useI18n();
@@ -153,7 +153,7 @@ export function SubmitButton({ children, variant = "primary", className, size = 
   }[variant];
   const s = { sm: "h-8 px-3 text-sm", md: "h-10 px-4 text-sm", lg: "h-12 px-5 text-base" }[size];
   return (
-    <button type="submit" name={name} value={value} disabled={pending} aria-busy={pending} className={cn("inline-flex items-center justify-center gap-2 rounded-[var(--radius-control)] font-medium transition-colors disabled:opacity-60", v, s, className)}>
+    <button type="submit" name={name} value={value} disabled={pending || disabled} aria-busy={pending} className={cn("inline-flex items-center justify-center gap-2 rounded-[var(--radius-control)] font-medium transition-colors disabled:opacity-60", v, s, className)}>
       {pending ? t("common.loading") : children}
     </button>
   );
