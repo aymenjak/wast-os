@@ -5,6 +5,7 @@ import * as customers from "@/server/services/customers";
 import * as contracts from "@/server/services/contracts";
 import * as requests from "@/server/services/requests";
 import * as wo from "@/server/services/work-orders";
+import * as monthly from "@/server/services/monthly-billing";
 import * as fleet from "@/server/services/fleet";
 import * as invoices from "@/server/services/invoices";
 import * as accounts from "@/server/services/accounts";
@@ -157,6 +158,12 @@ export async function createDraftInvoiceAction(_: ActionState, fd: FormData) {
   return orgAction(fd, async (ctx, input) => {
     const inv = await invoices.createDraftInvoice(ctx, { ...input, workOrderIds: input.workOrderIds ?? [] });
     return `/app/invoices/${inv.id}`;
+  });
+}
+export async function runMonthlyBillingAction(_: ActionState, fd: FormData) {
+  return orgAction(fd, async (ctx, input) => {
+    await monthly.runMonthlyBilling(ctx, { month: input.month, customerIds: input.customerIds ?? [] });
+    return `/app/invoices?filter=DRAFT`;
   });
 }
 export async function addInvoiceLineAction(_: ActionState, fd: FormData) {

@@ -1156,6 +1156,7 @@ model ContractServiceLine {
   serviceLocation ServiceLocation @relation(fields: [organizationId, serviceLocationId], references: [organizationId, id])
   wasteCategory   WasteCategory   @relation(fields: [organizationId, wasteCategoryId], references: [organizationId, id])
   workOrders      WorkOrder[]
+  invoiceLines    InvoiceLine[]
 
   @@unique([organizationId, id])
   @@index([organizationId, contractId])
@@ -1617,13 +1618,18 @@ model InvoiceLine {
   lineTotal      Decimal @db.Decimal(14, 2)
   /// A work order can be billed at most once (unique).
   workOrderId    String? @unique
+  /// Monthly flat fee (PER_MONTH contract line) billed for `periodMonth` (YYYY-MM): at most once per line and month.
+  contractLineId String?
+  periodMonth    String?
   position       Int     @default(0)
 
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  invoice      Invoice      @relation(fields: [organizationId, invoiceId], references: [organizationId, id], onDelete: Cascade)
-  workOrder    WorkOrder?   @relation(fields: [organizationId, workOrderId], references: [organizationId, id])
+  organization Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  invoice      Invoice              @relation(fields: [organizationId, invoiceId], references: [organizationId, id], onDelete: Cascade)
+  workOrder    WorkOrder?           @relation(fields: [organizationId, workOrderId], references: [organizationId, id])
+  contractLine ContractServiceLine? @relation(fields: [organizationId, contractLineId], references: [organizationId, id])
 
   @@unique([organizationId, workOrderId])
+  @@unique([organizationId, contractLineId, periodMonth])
   @@index([organizationId, invoiceId])
 }
 

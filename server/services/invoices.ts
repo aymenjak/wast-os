@@ -9,6 +9,7 @@ import { nextSequence } from "../counters";
 import { dateOnly, isoDate, money, optionalText, parse, quantity, requiredText } from "../validation";
 import { fromMinor, toMinor } from "@/lib/money";
 import type { InvoiceStatus } from "@/lib/generated/prisma/enums";
+import type { Prisma } from "@/lib/generated/prisma/client";
 
 function assertInvoiceRead(ctx: OrgContext) {
   if (!(hasPermission(ctx, "invoices.read") || hasPermission(ctx, "portal.access"))) throw new ForbiddenError("invoices.read");
@@ -66,6 +67,47 @@ async function recalc(tx: Tx, organizationId: string, invoiceId: string) {
   });
 }
 
+/** What a work order needs loaded to be priced. */
+export const PRICING_INCLUDE = { weightTickets: true, wasteCategory: true, serviceLocation: true, contract: { include: { lines: true } } } as const;
+type PricedWorkOrder = Prisma.WorkOrderGetPayload<{ include: typeof PRICING_INCLUDE }>;
+
+/**
+ * Invoice line for one completed work order. The price comes from its contract service line (or the line with the same
+ * location and category); PER_TONNE bills the recorded net weight; PER_MONTH is billed by the monthly run, not per job.
+ */
+export function workOrderLine(ctx: OrgContext, wo: PricedWorkOrder) {
+  const cl =
+    (wo.contractLineId ? wo.contract?.lines.find((l) => l.id === wo.contractLineId) : undefined) ??
+    wo.contract?.lines.find((l) => l.serviceLocationId === wo.serviceLocationId && l.wasteCategoryId === wo.wasteCategoryId);
+  if (!cl) throw new DomainError("errors.invoice.noContractPrice", { number: wo.number });
+  let qty = "1";
+  if (cl.billingUnit === "PER_TONNE") {
+    const netKgMinor = wo.weightTickets.reduce((s, t) => s + toMinor(t.netKg), 0);
+    if (netKgMinor <= 0) throw new DomainError("errors.invoice.weightRequired", { number: wo.number });
+    qty = (netKgMinor / 100 / 1000).toFixed(3); // kg (2dp) → tonnes (3dp)
+  } else if (cl.billingUnit === "PER_MONTH") {
+    throw new DomainError("errors.invoice.monthlyNotPerWorkOrder", { number: wo.number });
+  }
+  const unitPriceMinor = toMinor(cl.unitPrice);
+  const amounts = computeLine({ quantity: qty, unitPriceMinor, taxRateBps: ctx.org.defaultTaxRateBps });
+  return {
+    organizationId: ctx.org.id,
+    description: `${wo.number} · ${wo.wasteCategory?.nameFr ?? ""} · ${wo.serviceLocation?.label ?? ""} · ${wo.scheduledDate.toISOString().slice(0, 10)}`,
+    quantity: qty,
+    unitPrice: fromMinor(unitPriceMinor),
+    taxRateBps: ctx.org.defaultTaxRateBps,
+    lineSubtotal: fromMinor(amounts.subtotal),
+    lineTax: fromMinor(amounts.tax),
+    lineTotal: fromMinor(amounts.total),
+    workOrderId: wo.id,
+  };
+}
+
+/** Totals of an invoice from its lines (exported for the monthly run). */
+export async function recalcInvoice(tx: Tx, organizationId: string, invoiceId: string) {
+  return recalc(tx, organizationId, invoiceId);
+}
+
 const draftSchema = z.object({
   customerId: z.string().min(1),
   workOrderIds: z.array(z.string().min(1)).max(200).default([]),
@@ -84,7 +126,7 @@ export async function createDraftInvoice(ctx: OrgContext, input: unknown) {
     if (!customer) throw new NotFoundError("Customer");
     const orders = await tx.workOrder.findMany({
       where: { id: { in: data.workOrderIds }, organizationId: ctx.org.id },
-      include: { invoiceLine: true, weightTickets: true, wasteCategory: true, serviceLocation: true, contract: { include: { lines: true } } },
+      include: { invoiceLine: true, ...PRICING_INCLUDE },
     });
     if (orders.length !== data.workOrderIds.length) throw new NotFoundError("WorkOrder");
 
@@ -92,32 +134,7 @@ export async function createDraftInvoice(ctx: OrgContext, input: unknown) {
       if (wo.customerId !== customer.id) throw new DomainError("errors.invoice.customerMismatch");
       if (wo.status !== "COMPLETED") throw new DomainError("errors.invoice.workOrderNotCompleted", { number: wo.number });
       if (wo.invoiceLine) throw new DomainError("errors.invoice.alreadyInvoiced", { number: wo.number });
-      const cl =
-        (wo.contractLineId ? wo.contract?.lines.find((l) => l.id === wo.contractLineId) : undefined) ??
-        wo.contract?.lines.find((l) => l.serviceLocationId === wo.serviceLocationId && l.wasteCategoryId === wo.wasteCategoryId);
-      if (!cl) throw new DomainError("errors.invoice.noContractPrice", { number: wo.number });
-      let qty = "1";
-      if (cl.billingUnit === "PER_TONNE") {
-        const netKgMinor = wo.weightTickets.reduce((s, t) => s + toMinor(t.netKg), 0);
-        if (netKgMinor <= 0) throw new DomainError("errors.invoice.weightRequired", { number: wo.number });
-        qty = (netKgMinor / 100 / 1000).toFixed(3); // kg (2dp) → tonnes (3dp)
-      } else if (cl.billingUnit === "PER_MONTH") {
-        throw new DomainError("errors.invoice.monthlyNotPerWorkOrder", { number: wo.number });
-      }
-      const unitPriceMinor = toMinor(cl.unitPrice);
-      const amounts = computeLine({ quantity: qty, unitPriceMinor, taxRateBps: ctx.org.defaultTaxRateBps });
-      return {
-        organizationId: ctx.org.id,
-        description: `${wo.number} · ${wo.wasteCategory?.nameFr ?? ""} · ${wo.serviceLocation?.label ?? ""} · ${wo.scheduledDate.toISOString().slice(0, 10)}`,
-        quantity: qty,
-        unitPrice: fromMinor(unitPriceMinor),
-        taxRateBps: ctx.org.defaultTaxRateBps,
-        lineSubtotal: fromMinor(amounts.subtotal),
-        lineTax: fromMinor(amounts.tax),
-        lineTotal: fromMinor(amounts.total),
-        workOrderId: wo.id,
-        position: i,
-      };
+      return { ...workOrderLine(ctx, wo), position: i };
     });
     const contractIds = [...new Set(orders.map((o) => o.contractId).filter(Boolean))];
     const invoice = await tx.invoice.create({
@@ -233,8 +250,8 @@ export async function voidInvoice(ctx: OrgContext, invoiceId: string, input: unk
     const paid = await tx.payment.count({ where: { invoiceId, status: "RECORDED" } });
     if (paid > 0) throw new DomainError("errors.invoice.hasPayments");
     await tx.invoice.update({ where: { id: invoiceId }, data: { status: "VOID", voidReason: reason } });
-    // Release work orders so they can be billed on a corrected invoice.
-    await tx.invoiceLine.updateMany({ where: { invoiceId, organizationId: ctx.org.id }, data: { workOrderId: null } });
+    // Release work orders and monthly fees so they can be billed on a corrected invoice (periodMonth stays as history).
+    await tx.invoiceLine.updateMany({ where: { invoiceId, organizationId: ctx.org.id }, data: { workOrderId: null, contractLineId: null } });
     await audit(tx, { organizationId: ctx.org.id, actorUserId: ctx.userId, action: "invoice.voided", entityType: "Invoice", entityId: invoiceId, data: { reason } });
   });
 }
